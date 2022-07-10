@@ -14,6 +14,7 @@ type Sides
     | D10
 
 
+init : Sides -> Int -> Die
 init sides_ =
     Random.initialSeed >> Die sides_ >> (|>) 0
 
