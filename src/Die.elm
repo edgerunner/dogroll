@@ -4,14 +4,15 @@ import Random exposing (Seed)
 
 
 type Die
-    = Die Sides Seed Int
+    = Die Sides Seed Roll
 
 
-type Sides
-    = D4
-    | D6
-    | D8
-    | D10
+type alias Sides =
+    Int
+
+
+type alias Roll =
+    Int
 
 
 init : Sides -> Int -> Die
@@ -21,48 +22,32 @@ init sides_ =
 
 d4 : Int -> Die
 d4 =
-    init D4
+    init 4
 
 
 d6 : Int -> Die
 d6 =
-    init D6
+    init 6
 
 
 d8 : Int -> Die
 d8 =
-    init D8
+    init 8
 
 
 d10 : Int -> Die
 d10 =
-    init D10
+    init 10
 
 
 sides : Die -> Int
-sides (Die d _ _) =
-    sidesToInt d
-
-
-sidesToInt : Sides -> Int
-sidesToInt d =
-    case d of
-        D4 ->
-            4
-
-        D6 ->
-            6
-
-        D8 ->
-            8
-
-        D10 ->
-            10
+sides (Die sides_ _ _) =
+    sides_
 
 
 roll : Die -> Die
 roll (Die sides_ seed_ _) =
-    sidesToInt sides_
+    sides_
         |> Random.int 1
         |> Random.step
         |> (|>) seed_
