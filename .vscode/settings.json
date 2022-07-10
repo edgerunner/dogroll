@@ -1,4 +1,5 @@
 {
     "elmLS.elmTestPath": "node_modules/.bin/elm-test-rs",
-    "elmLS.elmTestRunner.showElmTestOutput": true
+    "elmLS.elmTestRunner.showElmTestOutput": true,
+    "elmLS.elmFormatPath": "node_modules/.bin/elm-format"
 }
