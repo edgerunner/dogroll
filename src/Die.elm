@@ -1,7 +1,9 @@
-module Die exposing (Die, d4, d6, d8, d10, sides)
+module Die exposing (Die, d4, d6, d8, d10, sides, roll, lastRoll)
+
+import Random exposing (Seed)
 
 type Die
-    = Die Sides
+    = Die Sides Seed Int
 
 
 type Sides
@@ -10,26 +12,47 @@ type Sides
     | D8
     | D10
 
-d4 : Die
+init sides_ = 
+    Random.initialSeed >> Die sides_ >> (|>) 0
+
+d4 : Int -> Die
 d4 =
-    Die D4
+    init D4
 
-d6 : Die
+d6 : Int -> Die
 d6 =
-    Die D6
+    init D6
 
-d8 : Die
+d8 : Int -> Die
 d8 =
-    Die D8
+    init D8
 
-d10 : Die
+d10 : Int -> Die
 d10 =
-    Die D10
+    init D10
 
 sides : Die -> Int
-sides (Die d) =
+sides (Die d _ _) =
+    sidesToInt d
+
+sidesToInt : Sides -> Int
+sidesToInt d =
     case d of
         D4 -> 4
         D6 -> 6
         D8 -> 8
         D10 -> 10
+
+roll : Die -> Die
+roll (Die sides_ seed_ _) =
+    sidesToInt sides_
+        |> Random.int 1
+        |> Random.step
+        |> (|>) seed_
+        |> (\(newRoll, newSeed) -> Die sides_ newSeed newRoll)
+
+
+lastRoll : Die -> Int
+lastRoll (Die _ _ roll_) =
+    roll_
+    
