@@ -17,7 +17,7 @@ type alias Roll =
 
 init : Sides -> Int -> Die
 init sides_ =
-    Random.initialSeed >> Die sides_ >> (|>) 0
+    Random.initialSeed >> Die sides_ >> (|>) 0 >> roll
 
 
 d4 : Int -> Die
@@ -47,8 +47,7 @@ sides (Die sides_ _ _) =
 
 roll : Die -> Die
 roll (Die sides_ seed_ _) =
-    sides_
-        |> Random.int 1
+    Random.int 1 sides_
         |> Random.step
         |> (|>) seed_
         |> (\( newRoll, newSeed ) -> Die sides_ newSeed newRoll)

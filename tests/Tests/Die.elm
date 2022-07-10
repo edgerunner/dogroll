@@ -39,6 +39,18 @@ suite =
                                 ]
                    )
             )
+        , fuzz multipleDice
+            "starting with a rolled face"
+            ((\d -> ( d, d ))
+                >> Tuple.mapBoth Die.sides Die.lastRoll
+                >> (\( sides, side ) ->
+                        side
+                            |> Expect.all
+                                [ Expect.atLeast 1
+                                , Expect.atMost sides
+                                ]
+                   )
+            )
         , test "string representation"
             (\() ->
                 dice
