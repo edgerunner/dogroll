@@ -37,6 +37,11 @@ suite =
                             , Expect.atMost sides
                             ] 
                     )
-            
+            )
+        , test "string representation"
+            (\() ->
+                dice
+                    |> List.map ((|>) 0 >> Die.toString)
+                    |> Expect.equal [ "d4", "d6", "d8", "d10" ]
             )
         ]

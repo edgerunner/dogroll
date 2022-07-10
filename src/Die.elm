@@ -1,4 +1,4 @@
-module Die exposing (Die, d4, d6, d8, d10, sides, roll, lastRoll)
+module Die exposing (Die, d10, d4, d6, d8, lastRoll, roll, sides, toString)
 
 import Random exposing (Seed)
 
@@ -56,3 +56,7 @@ lastRoll : Die -> Int
 lastRoll (Die _ _ roll_) =
     roll_
     
+
+toString : Die -> String
+toString =
+    sides >> String.fromInt >> String.cons 'd'
