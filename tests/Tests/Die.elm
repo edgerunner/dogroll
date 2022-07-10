@@ -1,6 +1,6 @@
 module Tests.Die exposing (..)
 
-import Die exposing (Die)
+import Die exposing (Die, Size(..))
 import Expect
 import Fuzz
 import Test exposing (Test, describe, fuzz, test)
@@ -19,35 +19,35 @@ multipleDice =
 suite : Test
 suite =
     describe "Die"
-        [ test "reporting number of sides"
+        [ test "reporting die size"
             (\() ->
                 dice
                     |> List.map ((|>) 0)
-                    |> List.map Die.sides
-                    |> Expect.equal [ 4, 6, 8, 10 ]
+                    |> List.map Die.size
+                    |> Expect.equal [ D4, D6, D8, D10 ]
             )
         , fuzz multipleDice
             "rolling"
             (Die.roll
                 >> (\d -> ( d, d ))
-                >> Tuple.mapBoth Die.sides Die.face
-                >> (\( sides, side ) ->
-                        side
+                >> Tuple.mapBoth Die.faces Die.face
+                >> (\( faces, face ) ->
+                        face
                             |> Expect.all
                                 [ Expect.atLeast 1
-                                , Expect.atMost sides
+                                , Expect.atMost faces
                                 ]
                    )
             )
         , fuzz multipleDice
             "starting with a rolled face"
             ((\d -> ( d, d ))
-                >> Tuple.mapBoth Die.sides Die.face
-                >> (\( sides, side ) ->
-                        side
+                >> Tuple.mapBoth Die.faces Die.face
+                >> (\( faces, face ) ->
+                        face
                             |> Expect.all
                                 [ Expect.atLeast 1
-                                , Expect.atMost sides
+                                , Expect.atMost faces
                                 ]
                    )
             )
