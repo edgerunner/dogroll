@@ -29,27 +29,22 @@ suite =
         , fuzz multipleDice
             "rolling"
             (Die.roll
-                >> (\d -> ( d, d ))
-                >> Tuple.mapBoth Die.faces Die.face
-                >> (\( faces, face ) ->
-                        face
+                >> (\die ->
+                        Die.face die
                             |> Expect.all
                                 [ Expect.atLeast 1
-                                , Expect.atMost faces
+                                , Expect.atMost (Die.faces die)
                                 ]
                    )
             )
         , fuzz multipleDice
             "starting with a rolled face"
-            ((\d -> ( d, d ))
-                >> Tuple.mapBoth Die.faces Die.face
-                >> (\( faces, face ) ->
-                        face
-                            |> Expect.all
-                                [ Expect.atLeast 1
-                                , Expect.atMost faces
-                                ]
-                   )
+            (\die ->
+                Die.face die
+                    |> Expect.all
+                        [ Expect.atLeast 1
+                        , Expect.atMost (Die.faces die)
+                        ]
             )
         , test "string representation"
             (\() ->
