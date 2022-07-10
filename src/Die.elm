@@ -1,4 +1,4 @@
-module Die exposing (Die, d10, d4, d6, d8, lastRoll, roll, sides, toString)
+module Die exposing (Die, d10, d4, d6, d8, face, roll, sides, toString)
 
 import Random exposing (Seed)
 
@@ -53,8 +53,8 @@ roll (Die sides_ seed_ _) =
         |> (\( newRoll, newSeed ) -> Die sides_ newSeed newRoll)
 
 
-lastRoll : Die -> Int
-lastRoll (Die _ _ roll_) =
+face : Die -> Int
+face (Die _ _ roll_) =
     roll_
 
 

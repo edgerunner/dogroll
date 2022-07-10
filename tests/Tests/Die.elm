@@ -30,7 +30,7 @@ suite =
             "rolling"
             (Die.roll
                 >> (\d -> ( d, d ))
-                >> Tuple.mapBoth Die.sides Die.lastRoll
+                >> Tuple.mapBoth Die.sides Die.face
                 >> (\( sides, side ) ->
                         side
                             |> Expect.all
@@ -42,7 +42,7 @@ suite =
         , fuzz multipleDice
             "starting with a rolled face"
             ((\d -> ( d, d ))
-                >> Tuple.mapBoth Die.sides Die.lastRoll
+                >> Tuple.mapBoth Die.sides Die.face
                 >> (\( sides, side ) ->
                         side
                             |> Expect.all
