@@ -4,20 +4,16 @@ import Random exposing (Seed)
 
 
 type Die
-    = Die Sides Seed Roll
+    = Die Sides Seed
 
 
 type alias Sides =
     Int
 
 
-type alias Roll =
-    Int
-
-
 init : Sides -> Int -> Die
 init sides_ =
-    Random.initialSeed >> Die sides_ >> (|>) 0 >> roll
+    Random.initialSeed >> Die sides_
 
 
 d4 : Int -> Die
@@ -41,21 +37,27 @@ d10 =
 
 
 sides : Die -> Int
-sides (Die sides_ _ _) =
+sides (Die sides_ _) =
     sides_
 
 
-roll : Die -> Die
-roll (Die sides_ seed_ _) =
+next : Die -> ( Int, Seed )
+next (Die sides_ seed_) =
     Random.int 1 sides_
         |> Random.step
         |> (|>) seed_
-        |> (\( newRoll, newSeed ) -> Die sides_ newSeed newRoll)
+
+
+roll : Die -> Die
+roll die =
+    next die
+        |> Tuple.second
+        |> Die (sides die)
 
 
 face : Die -> Int
-face (Die _ _ roll_) =
-    roll_
+face =
+    next >> Tuple.first
 
 
 toString : Die -> String
