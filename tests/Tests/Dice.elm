@@ -3,7 +3,7 @@ module Tests.Dice exposing (suite)
 import Dice
 import Die
 import Expect
-import Test exposing (Test, describe, test, todo)
+import Test exposing (Test, describe, fuzz, test, todo)
 import Tests.Helpers as Helpers
 
 
@@ -30,6 +30,17 @@ suite =
                     |> Dice.sizes
                     |> Expect.equalLists [ Die.D8, Die.D8, Die.D4 ]
             )
-        , todo "rolling all dice at once"
+        , fuzz Helpers.diceFuzzer
+            "rolling all dice at once"
+            (Dice.roll
+                >> Dice.toList
+                >> List.map
+                    (\die ->
+                        Helpers.between1and
+                            (Die.faces die)
+                            (Die.face die)
+                    )
+                >> Helpers.allPass
+            )
         , todo "getting the best raise"
         ]

@@ -1,20 +1,9 @@
 module Tests.Die exposing (suite)
 
-import Die exposing (Die, Size(..))
+import Die exposing (Size(..))
 import Expect
-import Fuzz exposing (Fuzzer)
 import Test exposing (Test, describe, fuzz, test)
 import Tests.Helpers as Helpers
-
-
-dice : List (Int -> Die)
-dice =
-    [ Die.d4, Die.d6, Die.d8, Die.d10 ]
-
-
-multipleDice : Fuzzer Die
-multipleDice =
-    Fuzz.map2 (|>) Fuzz.int (Fuzz.oneOf (List.map Fuzz.constant dice))
 
 
 suite : Test
@@ -22,12 +11,12 @@ suite =
     describe "Die"
         [ test "reporting die size"
             (\() ->
-                dice
+                Helpers.dieInitializers
                     |> List.map ((|>) 0)
                     |> List.map Die.size
                     |> Expect.equal [ D4, D6, D8, D10 ]
             )
-        , fuzz multipleDice
+        , fuzz Helpers.dieFuzzer
             "rolling"
             (Die.roll
                 >> (\die ->
@@ -35,7 +24,7 @@ suite =
                             |> Helpers.between1and (Die.faces die)
                    )
             )
-        , fuzz multipleDice
+        , fuzz Helpers.dieFuzzer
             "starting with a rolled face"
             (\die ->
                 Die.face die
@@ -46,7 +35,7 @@ suite =
             )
         , test "string representation"
             (\() ->
-                dice
+                Helpers.dieInitializers
                     |> List.map ((|>) 0 >> Die.toString)
                     |> Expect.equal [ "d4", "d6", "d8", "d10" ]
             )

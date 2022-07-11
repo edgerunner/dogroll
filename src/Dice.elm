@@ -1,4 +1,4 @@
-module Dice exposing (Dice, combine, faces, init, sizes)
+module Dice exposing (Dice, combine, faces, init, roll, sizes, toList)
 
 import Die exposing (Die)
 import Random
@@ -22,24 +22,29 @@ init seed count die =
         |> Dice
 
 
-dieList : Dice -> List Die
-dieList (Dice list) =
+toList : Dice -> List Die
+toList (Dice list) =
     list
 
 
 faces : Dice -> List Int
 faces =
-    dieList
+    toList
         >> List.map Die.face
 
 
 combine : Dice -> Dice -> Dice
 combine left right =
     [ left, right ]
-        |> List.concatMap dieList
+        |> List.concatMap toList
         |> Dice
 
 
 sizes : Dice -> List Die.Size
 sizes =
-    dieList >> List.map Die.size
+    toList >> List.map Die.size
+
+
+roll : Dice -> Dice
+roll =
+    toList >> List.map Die.roll >> Dice
