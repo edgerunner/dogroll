@@ -1,4 +1,4 @@
-module Dice exposing (Dice, faces, init)
+module Dice exposing (Dice, combine, faces, init, sizes)
 
 import Die exposing (Die)
 import Random
@@ -31,3 +31,15 @@ faces : Dice -> List Int
 faces =
     dieList
         >> List.map Die.face
+
+
+combine : Dice -> Dice -> Dice
+combine left right =
+    [ left, right ]
+        |> List.concatMap dieList
+        |> Dice
+
+
+sizes : Dice -> List Die.Size
+sizes =
+    dieList >> List.map Die.size
