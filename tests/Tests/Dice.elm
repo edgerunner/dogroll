@@ -1,9 +1,10 @@
 module Tests.Dice exposing (suite)
 
 import Dice
+import Dice.Type exposing (Gun(..), Quality(..), Stat(..), Type(..))
 import Die
 import Die.Size
-import Expect
+import Expect exposing (Expectation)
 import Test exposing (Test, describe, fuzz, test)
 import Tests.Helpers as Helpers
 
@@ -89,4 +90,45 @@ suite =
                         |> Expect.equal "2d8+1d4"
                 )
             ]
+        , describe "Type"
+            [ test "Stat dice"
+                (\_ ->
+                    Stat Acuity [ (), () ]
+                        |> expectDiceFromType "4d6"
+                )
+            , test "Trait dice"
+                (\_ ->
+                    Trait "I'm a good shot" Die.Size.D8 [ (), () ]
+                        |> expectDiceFromType "3d8"
+                )
+            , test "Relationship dice"
+                (\_ ->
+                    Relationship "My riding instructor" Die.Size.D4 []
+                        |> expectDiceFromType "1d4"
+                )
+            , [ ( "Normal thing", Belonging "A horse" Normal NotGun, "1d6" )
+              , ( "Excellent thing", Belonging "A fine horse" Excellent NotGun, "2d6" )
+              , ( "Big thing", Belonging "Workhorse" Big NotGun, "1d8" )
+              , ( "Excellent+Big", Belonging "Heirloom sabre" ExcellentPlusBig NotGun, "2d8" )
+              , ( "Crap thing", Belonging "Nag" Crap NotGun, "1d4" )
+              , ( "Normal gun", Belonging "A gun" Normal Gun, "1d6+1d4" )
+              , ( "Excellent gun", Belonging "Heirloom revolver" Excellent Gun, "2d6+1d4" )
+              , ( "Big gun", Belonging "Magnum" Big Gun, "1d8+1d4" )
+              , ( "Excellent+Big gun", Belonging "Ornate hand cannon" ExcellentPlusBig Gun, "2d8+1d4" )
+              , ( "Crap gun", Belonging "Misfiring muzzle" Crap Gun, "2d4" )
+              ]
+                |> List.map
+                    (\( desc, subject, expected ) ->
+                        test desc
+                            (always (expectDiceFromType expected subject))
+                    )
+                |> describe "Belonging dice"
+            ]
         ]
+
+
+expectDiceFromType : String -> Type -> Expectation
+expectDiceFromType name =
+    Dice.Type.toDice seed
+        >> Dice.toString
+        >> Expect.equal name
