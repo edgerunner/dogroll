@@ -1,4 +1,4 @@
-module Tests.Helpers exposing (allPass, between1and, diceFuzzer, dieFuzzer, dieInitializers, passOrFail)
+module Tests.Helpers exposing (allPass, between1and, combinedDiceFuzzer, diceFuzzer, dieFuzzer, dieInitializers, passOrFail)
 
 import Dice exposing (Dice)
 import Die exposing (Die)
@@ -54,3 +54,9 @@ diceFuzzer =
         Fuzz.int
         (Fuzz.intRange 1 8)
         (Fuzz.oneOf (List.map Fuzz.constant dieInitializers))
+
+
+combinedDiceFuzzer : Fuzzer Dice
+combinedDiceFuzzer =
+    Fuzz.list diceFuzzer
+        |> Fuzz.map (List.take 4 >> Dice.combine)

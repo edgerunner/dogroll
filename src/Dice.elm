@@ -19,7 +19,7 @@ init seed count die =
     Random.initialSeed seed
         |> Random.step dieListGen
         |> Tuple.first
-        |> Dice
+        |> makeDice
 
 
 toList : Dice -> List Die
@@ -35,7 +35,7 @@ faces =
 
 combine : List Dice -> Dice
 combine =
-    List.concatMap toList >> Dice
+    List.concatMap toList >> makeDice
 
 
 sizes : Dice -> List Die.Size
@@ -45,4 +45,9 @@ sizes =
 
 roll : Dice -> Dice
 roll =
-    toList >> List.map Die.roll >> Dice
+    toList >> List.map Die.roll >> makeDice
+
+
+makeDice : List Die -> Dice
+makeDice =
+    List.sortBy (Die.face >> negate) >> Dice

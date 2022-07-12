@@ -3,7 +3,7 @@ module Tests.Dice exposing (suite)
 import Dice
 import Die
 import Expect
-import Test exposing (Test, describe, fuzz, test, todo)
+import Test exposing (Test, describe, fuzz, test)
 import Tests.Helpers as Helpers
 
 
@@ -43,5 +43,25 @@ suite =
                     )
                 >> Helpers.allPass
             )
-        , todo "getting the best raise"
+        , fuzz Helpers.combinedDiceFuzzer
+            "are always sorted"
+            (\pool ->
+                let
+                    faces =
+                        Dice.faces pool
+
+                    sorted =
+                        faces |> List.sort |> List.reverse
+
+                    dieByDie =
+                        pool
+                            |> Dice.toList
+                            |> List.map Die.face
+                in
+                faces
+                    |> Expect.all
+                        [ Expect.equalLists sorted
+                        , Expect.equalLists dieByDie
+                        ]
+            )
         ]
