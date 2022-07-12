@@ -1,13 +1,14 @@
 module Dice.Type exposing (..)
 
 import Dice exposing (Dice)
+import Dice.Pips as Pips exposing (Pips)
 import Die.Size exposing (Size(..))
 
 
 type Type
-    = Stat Stat (List ())
-    | Trait String Size (List ())
-    | Relationship String Size (List ())
+    = Stat Stat Pips
+    | Trait String Size Pips
+    | Relationship String Size Pips
     | Belonging String Quality Gun
 
 
@@ -106,31 +107,36 @@ size type_ =
                     D4
 
 
-count : Type -> Int
-count type_ =
+pips : Type -> Pips
+pips type_ =
     case type_ of
-        Stat _ pips ->
-            List.length pips + 2
+        Stat _ pips_ ->
+            Pips.add Pips.two pips_
 
-        Trait _ _ pips ->
-            List.length pips + 1
+        Trait _ _ pips_ ->
+            Pips.add Pips.one pips_
 
-        Relationship _ _ pips ->
-            List.length pips + 1
+        Relationship _ _ pips_ ->
+            Pips.add Pips.one pips_
 
         Belonging _ quality _ ->
             case quality of
                 Normal ->
-                    1
+                    Pips.one
 
                 Excellent ->
-                    2
+                    Pips.two
 
                 Big ->
-                    1
+                    Pips.one
 
                 ExcellentPlusBig ->
-                    2
+                    Pips.two
 
                 Crap ->
-                    1
+                    Pips.one
+
+
+count : Type -> Int
+count =
+    pips >> Pips.toInt

@@ -1,6 +1,7 @@
 module Tests.Dice exposing (suite)
 
 import Dice
+import Dice.Pips
 import Dice.Type exposing (Gun(..), Quality(..), Stat(..), Type(..))
 import Die
 import Die.Size
@@ -93,17 +94,17 @@ suite =
         , describe "Type"
             [ test "Stat dice"
                 (\_ ->
-                    Stat Acuity [ (), () ]
+                    Stat Acuity Dice.Pips.two
                         |> expectDiceFromType "4d6"
                 )
             , test "Trait dice"
                 (\_ ->
-                    Trait "I'm a good shot" Die.Size.D8 [ (), () ]
+                    Trait "I'm a good shot" Die.Size.D8 Dice.Pips.two
                         |> expectDiceFromType "3d8"
                 )
             , test "Relationship dice"
                 (\_ ->
-                    Relationship "My riding instructor" Die.Size.D4 []
+                    Relationship "My riding instructor" Die.Size.D4 Dice.Pips.zero
                         |> expectDiceFromType "1d4"
                 )
             , [ ( "Normal thing", Belonging "A horse" Normal NotGun, "1d6" )
