@@ -1,4 +1,4 @@
-module Tests.Helpers exposing (allPass, between1and, combinedDiceFuzzer, diceFuzzer, dieFuzzer, dieInitializers, passOrFail)
+module Tests.Helpers exposing (allPass, between1and, combinedDiceFuzzer, diceFuzzer, dieFuzzer, passOrFail)
 
 import Dice exposing (Dice)
 import Die exposing (Die)
@@ -38,14 +38,9 @@ allPass =
     List.foldl passOrFail Expect.pass
 
 
-dieInitializers : List (Int -> Die)
-dieInitializers =
-    Die.Size.all |> List.map Die.init
-
-
 dieFuzzer : Fuzzer Die
 dieFuzzer =
-    Fuzz.map2 (|>) Fuzz.int (Fuzz.oneOf (List.map Fuzz.constant dieInitializers))
+    Fuzz.map2 Die.init (Fuzz.oneOf (List.map Fuzz.constant Die.Size.all)) Fuzz.int
 
 
 diceFuzzer : Fuzzer Dice
@@ -54,7 +49,7 @@ diceFuzzer =
         Dice.init
         Fuzz.int
         (Fuzz.intRange 1 8)
-        (Fuzz.oneOf (List.map Fuzz.constant dieInitializers))
+        (Fuzz.oneOf (List.map Fuzz.constant Die.Size.all))
 
 
 combinedDiceFuzzer : Fuzzer Dice

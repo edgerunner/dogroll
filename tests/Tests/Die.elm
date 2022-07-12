@@ -12,9 +12,8 @@ suite =
     describe "Die"
         [ test "reporting die size"
             (\() ->
-                Helpers.dieInitializers
-                    |> List.map ((|>) 0)
-                    |> List.map Die.size
+                Die.Size.all
+                    |> List.map (\size -> Die.init size 0 |> Die.size)
                     |> Expect.equal [ D10, D8, D6, D4 ]
             )
         , fuzz Helpers.dieFuzzer
@@ -33,8 +32,8 @@ suite =
             )
         , test "string representation"
             (\() ->
-                Helpers.dieInitializers
-                    |> List.map ((|>) 0 >> Die.toString)
+                Die.Size.all
+                    |> List.map (\size -> Die.init size 0 |> Die.toString)
                     |> Expect.equal [ "d10", "d8", "d6", "d4" ]
             )
         ]

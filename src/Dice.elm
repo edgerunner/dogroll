@@ -9,12 +9,12 @@ type Dice
     = Dice (List Die)
 
 
-init : Int -> Int -> (Int -> Die) -> Dice
-init seed count die =
+init : Int -> Int -> Size -> Dice
+init seed count size =
     let
         dieListGen =
             Random.int Random.minInt Random.maxInt
-                |> Random.map die
+                |> Random.map (Die.init size)
                 |> Random.list count
     in
     Random.initialSeed seed
