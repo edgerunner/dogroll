@@ -64,4 +64,28 @@ suite =
                         , Expect.equalLists dieByDie
                         ]
             )
+        , describe
+            "string representation"
+            [ test "single type"
+                (\_ ->
+                    Dice.init seed 2 Die.d4
+                        |> Dice.toString
+                        |> Expect.equal "2d4"
+                )
+            , test "one of single type"
+                (\_ ->
+                    Dice.init seed 1 Die.d10
+                        |> Dice.toString
+                        |> Expect.equal "1d10"
+                )
+            , test "multiple types"
+                (\_ ->
+                    Dice.combine
+                        [ Dice.init seed 1 Die.d4
+                        , Dice.init seed 2 Die.d8
+                        ]
+                        |> Dice.toString
+                        |> Expect.equal "2d8+1d4"
+                )
+            ]
         ]
