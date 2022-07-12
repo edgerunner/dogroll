@@ -2,6 +2,7 @@ module Tests.Helpers exposing (allPass, between1and, combinedDiceFuzzer, diceFuz
 
 import Dice exposing (Dice)
 import Die exposing (Die)
+import Die.Size exposing (Size(..))
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
 
@@ -39,7 +40,7 @@ allPass =
 
 dieInitializers : List (Int -> Die)
 dieInitializers =
-    [ Die.d4, Die.d6, Die.d8, Die.d10 ]
+    Die.Size.all |> List.map Die.init
 
 
 dieFuzzer : Fuzzer Die

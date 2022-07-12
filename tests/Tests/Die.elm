@@ -15,7 +15,7 @@ suite =
                 Helpers.dieInitializers
                     |> List.map ((|>) 0)
                     |> List.map Die.size
-                    |> Expect.equal [ D4, D6, D8, D10 ]
+                    |> Expect.equal [ D10, D8, D6, D4 ]
             )
         , fuzz Helpers.dieFuzzer
             "rolling"
@@ -35,6 +35,6 @@ suite =
             (\() ->
                 Helpers.dieInitializers
                     |> List.map ((|>) 0 >> Die.toString)
-                    |> Expect.equal [ "d4", "d6", "d8", "d10" ]
+                    |> Expect.equal [ "d10", "d8", "d6", "d4" ]
             )
         ]

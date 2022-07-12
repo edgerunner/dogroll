@@ -18,7 +18,7 @@ suite =
     describe "Dice"
         [ test "initializing multiple dice"
             (\_ ->
-                Dice.init seed 4 Die.d6
+                Dice.init seed 4 (Die.init Die.Size.D6)
                     |> Dice.faces
                     |> List.map (Helpers.between1and 6)
                     |> Helpers.allPass
@@ -26,8 +26,8 @@ suite =
         , test "combining dice"
             (\_ ->
                 Dice.combine
-                    [ Dice.init seed 2 Die.d8
-                    , Dice.init seed 1 Die.d4
+                    [ Dice.init seed 2 (Die.init Die.Size.D8)
+                    , Dice.init seed 1 (Die.init Die.Size.D4)
                     ]
                     |> Dice.sizes
                     |> Expect.equalLists [ Die.Size.D8, Die.Size.D8, Die.Size.D4 ]
@@ -69,21 +69,21 @@ suite =
             "string representation"
             [ test "single type"
                 (\_ ->
-                    Dice.init seed 2 Die.d4
+                    Dice.init seed 2 (Die.init Die.Size.D4)
                         |> Dice.toString
                         |> Expect.equal "2d4"
                 )
             , test "one of single type"
                 (\_ ->
-                    Dice.init seed 1 Die.d10
+                    Dice.init seed 1 (Die.init Die.Size.D10)
                         |> Dice.toString
                         |> Expect.equal "1d10"
                 )
             , test "multiple types"
                 (\_ ->
                     Dice.combine
-                        [ Dice.init seed 1 Die.d4
-                        , Dice.init seed 2 Die.d8
+                        [ Dice.init seed 1 (Die.init Die.Size.D4)
+                        , Dice.init seed 2 (Die.init Die.Size.D8)
                         ]
                         |> Dice.toString
                         |> Expect.equal "2d8+1d4"
