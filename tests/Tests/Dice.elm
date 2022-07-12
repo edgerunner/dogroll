@@ -25,8 +25,9 @@ suite =
         , test "combining dice"
             (\_ ->
                 Dice.combine
-                    (Dice.init seed 2 Die.d8)
-                    (Dice.init seed 1 Die.d4)
+                    [ Dice.init seed 2 Die.d8
+                    , Dice.init seed 1 Die.d4
+                    ]
                     |> Dice.sizes
                     |> Expect.equalLists [ Die.D8, Die.D8, Die.D4 ]
             )

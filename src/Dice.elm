@@ -33,11 +33,9 @@ faces =
         >> List.map Die.face
 
 
-combine : Dice -> Dice -> Dice
-combine left right =
-    [ left, right ]
-        |> List.concatMap toList
-        |> Dice
+combine : List Dice -> Dice
+combine =
+    List.concatMap toList >> Dice
 
 
 sizes : Dice -> List Die.Size
