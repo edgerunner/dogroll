@@ -1,6 +1,7 @@
 module Dice exposing (Dice, combine, faces, init, roll, sizes, toList, toString)
 
 import Die exposing (Die)
+import Die.Size exposing (Size(..))
 import Random
 
 
@@ -38,7 +39,7 @@ combine =
     List.concatMap toList >> makeDice
 
 
-sizes : Dice -> List Die.Size
+sizes : Dice -> List Size
 sizes =
     toList >> List.map Die.size
 
@@ -57,37 +58,22 @@ toString : Dice -> String
 toString =
     let
         countSizes =
-            toList
-                >> List.foldl
-                    (\die rec ->
-                        case Die.size die of
-                            Die.D4 ->
-                                { rec | d4 = rec.d4 + 1 }
-
-                            Die.D6 ->
-                                { rec | d6 = rec.d6 + 1 }
-
-                            Die.D8 ->
-                                { rec | d8 = rec.d8 + 1 }
-
-                            Die.D10 ->
-                                { rec | d10 = rec.d10 + 1 }
-                    )
-                    { d4 = 0, d6 = 0, d8 = 0, d10 = 0 }
+            sizes >> Die.Size.count
 
         sizesToString { d4, d6, d8, d10 } =
-            [ sizeToString "d10" d10
-            , sizeToString "d8" d8
-            , sizeToString "d6" d6
-            , sizeToString "d4" d4
+            [ sizeToString D10 d10
+            , sizeToString D8 d8
+            , sizeToString D6 d6
+            , sizeToString D4 d4
             ]
                 |> List.filter ((/=) "")
 
-        sizeToString name count =
+        sizeToString size count =
             if count < 1 then
                 ""
 
             else
-                String.fromInt count ++ name
+                String.fromInt count
+                    ++ Die.Size.toString size
     in
     countSizes >> sizesToString >> String.join "+"

@@ -1,6 +1,7 @@
 module Tests.Die exposing (suite)
 
-import Die exposing (Size(..))
+import Die
+import Die.Size exposing (Size(..))
 import Expect
 import Test exposing (Test, describe, fuzz, test)
 import Tests.Helpers as Helpers
@@ -21,17 +22,14 @@ suite =
             (Die.roll
                 >> (\die ->
                         Die.face die
-                            |> Helpers.between1and (Die.faces die)
+                            |> Helpers.between1and (Die.size die |> Die.Size.toInt)
                    )
             )
         , fuzz Helpers.dieFuzzer
             "starting with a rolled face"
             (\die ->
                 Die.face die
-                    |> Expect.all
-                        [ Expect.atLeast 1
-                        , Expect.atMost (Die.faces die)
-                        ]
+                    |> Helpers.between1and (Die.size die |> Die.Size.toInt)
             )
         , test "string representation"
             (\() ->

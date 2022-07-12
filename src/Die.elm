@@ -1,5 +1,6 @@
-module Die exposing (Die, Size(..), d10, d4, d6, d8, face, faces, roll, size, toString)
+module Die exposing (Die, d10, d4, d6, d8, face, roll, size, toString)
 
+import Die.Size as Size exposing (Size(..))
 import Random exposing (Seed)
 
 
@@ -7,16 +8,9 @@ type Die
     = Die Size Seed
 
 
-type Size
-    = D4
-    | D6
-    | D8
-    | D10
-
-
 init : Size -> Int -> Die
-init sides_ =
-    Random.initialSeed >> Die sides_
+init size_ =
+    Random.initialSeed >> Die size_
 
 
 d4 : Int -> Die
@@ -40,24 +34,8 @@ d10 =
 
 
 size : Die -> Size
-size (Die sides_ _) =
-    sides_
-
-
-faces : Die -> Int
-faces die =
-    case size die of
-        D4 ->
-            4
-
-        D6 ->
-            6
-
-        D8 ->
-            8
-
-        D10 ->
-            10
+size (Die size_ _) =
+    size_
 
 
 seed : Die -> Seed
@@ -67,7 +45,8 @@ seed (Die _ seed_) =
 
 next : Die -> ( Int, Seed )
 next die =
-    faces die
+    size die
+        |> Size.toInt
         |> Random.int 1
         |> Random.step
         |> (|>) (seed die)
@@ -87,4 +66,4 @@ face =
 
 toString : Die -> String
 toString =
-    faces >> String.fromInt >> String.cons 'd'
+    size >> Size.toString

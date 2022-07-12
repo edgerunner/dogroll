@@ -2,6 +2,7 @@ module Tests.Dice exposing (suite)
 
 import Dice
 import Die
+import Die.Size
 import Expect
 import Test exposing (Test, describe, fuzz, test)
 import Tests.Helpers as Helpers
@@ -29,7 +30,7 @@ suite =
                     , Dice.init seed 1 Die.d4
                     ]
                     |> Dice.sizes
-                    |> Expect.equalLists [ Die.D8, Die.D8, Die.D4 ]
+                    |> Expect.equalLists [ Die.Size.D8, Die.Size.D8, Die.Size.D4 ]
             )
         , fuzz Helpers.diceFuzzer
             "rolling all dice at once"
@@ -38,7 +39,7 @@ suite =
                 >> List.map
                     (\die ->
                         Helpers.between1and
-                            (Die.faces die)
+                            (Die.size die |> Die.Size.toInt)
                             (Die.face die)
                     )
                 >> Helpers.allPass
