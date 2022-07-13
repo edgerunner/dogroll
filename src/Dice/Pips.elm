@@ -20,6 +20,21 @@ two =
     [ (), () ]
 
 
+three : Pips
+three =
+    [ (), (), () ]
+
+
+four : Pips
+four =
+    [ (), (), (), () ]
+
+
+five : Pips
+five =
+    [ (), (), (), (), () ]
+
+
 grow : Pips -> Pips
 grow =
     (::) ()

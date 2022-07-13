@@ -2,7 +2,7 @@ module Tests.Dice exposing (suite)
 
 import Dice
 import Dice.Pips
-import Dice.Type exposing (Gun(..), Quality(..), Stat(..), Type(..))
+import Dice.Type exposing (DemonicInfluence(..), Gun(..), Quality(..), Stat(..), Type(..))
 import Die
 import Die.Size
 import Expect exposing (Expectation)
@@ -124,6 +124,23 @@ suite =
                             (always (expectDiceFromType expected subject))
                     )
                 |> describe "Belonging dice"
+            , test "Initiation dice"
+                (\_ ->
+                    Initiation
+                        |> expectDiceFromType "4d10+4d6"
+                )
+            , [ ( Injustice, "1d10" )
+              , ( DemonicAttacks, "2d10" )
+              , ( Heresy, "3d10" )
+              , ( Sorcery, "4d10" )
+              , ( HateAndMurder, "5d10" )
+              ]
+                |> List.map
+                    (\( subject, expected ) ->
+                        test (Dice.Type.name (DemonicInfluence subject))
+                            (always (expectDiceFromType expected (DemonicInfluence subject)))
+                    )
+                |> describe "Demonic influence"
             ]
         ]
 

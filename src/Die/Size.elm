@@ -1,4 +1,4 @@
-module Die.Size exposing (Size(..), Sizes, all, count, toInt, toString)
+module Die.Size exposing (Size(..), Sizes, all, count, largest, toInt, toString)
 
 
 type Size
@@ -71,3 +71,41 @@ count =
                     { sizes | d10 = sizes.d10 + 1 }
         )
         { d4 = 0, d6 = 0, d8 = 0, d10 = 0 }
+
+
+largest : List Size -> Size
+largest sizes =
+    case sizes of
+        [] ->
+            D4
+
+        [ size ] ->
+            size
+
+        s1 :: s2 :: rest ->
+            larger s1 s2 :: rest |> largest
+
+
+larger : Size -> Size -> Size
+larger s1 s2 =
+    case ( s1, s2 ) of
+        ( D10, _ ) ->
+            D10
+
+        ( _, D10 ) ->
+            D10
+
+        ( D8, _ ) ->
+            D8
+
+        ( _, D8 ) ->
+            D8
+
+        ( D6, _ ) ->
+            D6
+
+        ( _, D6 ) ->
+            D6
+
+        _ ->
+            D4
