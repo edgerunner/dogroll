@@ -137,7 +137,7 @@ suite =
               ]
                 |> List.map
                     (\( subject, expected ) ->
-                        test (Dice.Type.name (DemonicInfluence subject))
+                        test (Dice.Type.toString (DemonicInfluence subject))
                             (always (expectDiceFromType expected (DemonicInfluence subject)))
                     )
                 |> describe "Demonic influence"
