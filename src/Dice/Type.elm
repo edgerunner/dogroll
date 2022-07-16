@@ -15,6 +15,7 @@ module Dice.Type exposing
 import Dice exposing (Dice)
 import Dice.Pips as Pips exposing (Pips)
 import Die.Size exposing (Size(..))
+import Random exposing (Seed)
 
 
 type Type
@@ -89,10 +90,6 @@ type Background
     | ComplicatedCommunity
 
 
-type alias Seed =
-    Int
-
-
 toDice : Seed -> Type -> Dice
 toDice seed type_ =
     case type_ of
@@ -107,7 +104,7 @@ toDice seed type_ =
 
         Belonging _ quality gun ->
             [ toDice_quality seed quality
-            , toDice_gun (seed - 1) gun
+            , toDice_gun seed gun
             ]
                 |> Dice.combine
 

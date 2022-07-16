@@ -2,22 +2,22 @@ module Dice exposing (Dice, combine, faces, init, roll, sizes, toList, toString)
 
 import Die exposing (Die)
 import Die.Size exposing (Size(..))
-import Random
+import Random exposing (Seed)
 
 
 type Dice
     = Dice (List Die)
 
 
-init : Int -> Int -> Size -> Dice
+init : Seed -> Int -> Size -> Dice
 init seed count size =
     let
         dieListGen =
-            Random.int Random.minInt Random.maxInt
+            Random.independentSeed
                 |> Random.map (Die.init size)
                 |> Random.list count
     in
-    Random.initialSeed seed
+    seed
         |> Random.step dieListGen
         |> Tuple.first
         |> makeDice

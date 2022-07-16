@@ -8,9 +8,9 @@ type Die
     = Die Size Seed
 
 
-init : Size -> Int -> Die
+init : Size -> Seed -> Die
 init size_ =
-    Random.initialSeed >> Die size_
+    Die size_
 
 
 size : Die -> Size

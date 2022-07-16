@@ -6,13 +6,14 @@ import Dice.Type exposing (DemonicInfluence(..), Gun(..), Quality(..), Stat(..),
 import Die
 import Die.Size
 import Expect exposing (Expectation)
+import Random exposing (Seed)
 import Test exposing (Test, describe, fuzz, test)
 import Tests.Helpers as Helpers
 
 
-seed : Int
+seed : Seed
 seed =
-    42
+    Random.initialSeed 42
 
 
 suite : Test
@@ -32,7 +33,8 @@ suite =
                     , Dice.init seed 1 Die.Size.D4
                     ]
                     |> Dice.sizes
-                    |> Expect.equalLists [ Die.Size.D8, Die.Size.D8, Die.Size.D4 ]
+                    |> Die.Size.count
+                    |> Expect.equal { d4 = 1, d6 = 0, d8 = 2, d10 = 0 }
             )
         , fuzz Helpers.diceFuzzer
             "rolling all dice at once"
