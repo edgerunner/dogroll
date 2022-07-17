@@ -2,10 +2,9 @@ module Die.View exposing (Click, faded, for, generic, regular)
 
 import Die exposing (Die)
 import Die.Size exposing (Size)
-import Html exposing (Html)
-import Svg exposing (Attribute)
-import Svg.Attributes as Attr
-import Svg.Events as Event
+import Html exposing (Attribute, Html)
+import Html.Attributes as Attr
+import Html.Events as Event
 
 
 type alias Click =
@@ -14,11 +13,9 @@ type alias Click =
 
 generic : Size -> String -> Style -> Html Click
 generic size face style_ =
-    Svg.text face
+    Html.text face
         |> List.singleton
-        |> Svg.text_ []
-        |> List.singleton
-        |> Svg.svg
+        |> Html.node "data"
             [ Attr.class "die"
             , Attr.class (Die.Size.toString size)
             , style style_
