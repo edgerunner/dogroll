@@ -88,3 +88,12 @@ section.pool {
     width: fit-content;
     min-width: 192px;
 }
+
+section.pile {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+    gap: 8px;
+}

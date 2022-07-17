@@ -1,4 +1,4 @@
-module UI exposing (button, pool)
+module UI exposing (button, pile, pool)
 
 import Html exposing (Html)
 import Html.Attributes as Attr
@@ -23,3 +23,8 @@ pool =
         [ Attr.class "pool"
         , Attr.class "raised"
         ]
+
+
+pile : List (Html msg) -> Html msg
+pile =
+    Html.section [ Attr.class "pile" ]
