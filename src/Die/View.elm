@@ -1,4 +1,4 @@
-module Die.View exposing (Click, generic)
+module Die.View exposing (Click, for, generic)
 
 import Die exposing (Die)
 import Die.Size exposing (Size)
@@ -24,3 +24,10 @@ generic size =
             , Attr.class (Die.Size.toString size)
             , Event.onClick ()
             ]
+
+
+for : Die -> Html Click
+for die =
+    generic
+        (die |> Die.size)
+        (die |> Die.face |> String.fromInt)

@@ -2,11 +2,13 @@ module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
+import Die
 import Die.Size exposing (Size(..))
 import Die.View
 import Html
 import Html.Attributes as Attr
 import Lamdera exposing (Key)
+import Random
 import Types exposing (..)
 import Url
 
@@ -79,6 +81,8 @@ view model =
     { title = "Dogroll"
     , body =
         [ Die.View.generic D8 "7"
+            |> Html.map (always NoOpFrontendMsg)
+        , Die.View.for (Die.init D6 (Random.initialSeed 49))
             |> Html.map (always NoOpFrontendMsg)
         ]
     }
