@@ -15,13 +15,9 @@ default : Html Click
 default =
     Svg.svg
         [ Attr.viewBox "0 0 64 64"
-        , Attr.width "64"
-        , Attr.height "64"
-        , Attr.fill "none"
         , Attr.class "die d4"
         ]
-        [ Svg.path [ path.d4 ] []
-        , Svg.text_ []
+        [ Svg.text_ []
             [ Svg.tspan
                 [ Attr.x "50%", Attr.y "65%" ]
                 [ Svg.text "4" ]
