@@ -1,4 +1,4 @@
-module UI exposing (button, pile, pool)
+module UI exposing (button, pile, pool, poolCaption)
 
 import Html exposing (Html)
 import Html.Attributes as Attr
@@ -23,6 +23,13 @@ pool =
         [ Attr.class "pool"
         , Attr.class "raised"
         ]
+
+
+poolCaption : String -> Html msg
+poolCaption =
+    Html.text
+        >> List.singleton
+        >> Html.h3 []
 
 
 pile : List (Html msg) -> Html msg

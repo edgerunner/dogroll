@@ -89,6 +89,14 @@ section.pool {
     min-width: 192px;
 }
 
+section.pool h3 {
+    color: var(--color-copper);
+    font-size: 20px;
+    line-height: 32px;
+    font-weight: 700;
+    margin: 0;
+}
+
 section.pile {
     display: flex;
     flex-direction: row;
