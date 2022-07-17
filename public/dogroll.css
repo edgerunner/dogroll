@@ -1,0 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Lusitana:wght@400;700&display=swap');
+
+svg.die {
+    fill: none;
+}
+
+svg.die.d4 path {
+    fill: #CEA3A3;
+}
+
+svg.die text {
+    fill: #291F16;
+    white-space: pre;
+    font-family: "Lusitana", serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-anchor: middle;
+}
