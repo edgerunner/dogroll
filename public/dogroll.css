@@ -33,4 +33,18 @@ svg.die text {
     font-weight: 700;
     letter-spacing: 0;
     text-anchor: middle;
+    alignment-baseline: central;
+    transform: translate(50%, 50%);
+}
+
+svg.die.d4 text {
+    alignment-baseline: mathematical;
+}
+
+svg.die.d6 text {
+    font-size: 24px;
+}
+
+svg.die.d10 text {
+    alignment-baseline: middle;
 }

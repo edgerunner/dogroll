@@ -17,12 +17,7 @@ default =
         [ Attr.viewBox "0 0 64 64"
         , Attr.class "die d4"
         ]
-        [ Svg.text_ []
-            [ Svg.tspan
-                [ Attr.x "50%", Attr.y "65%" ]
-                [ Svg.text "4" ]
-            ]
-        ]
+        [ Svg.text_ [] [ Svg.text "4" ] ]
 
 
 path : { d4 : Attribute msg }
