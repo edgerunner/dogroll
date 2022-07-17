@@ -1,6 +1,7 @@
-module Die.View exposing (Click, default)
+module Die.View exposing (Click, generic)
 
 import Die exposing (Die)
+import Die.Size exposing (Size)
 import Html exposing (Attribute, Html)
 import Svg exposing (Svg)
 import Svg.Attributes as Attr
@@ -11,11 +12,15 @@ type alias Click =
     ()
 
 
-default : Html Click
-default =
-    Svg.svg
-        [ Attr.viewBox "0 0 64 64"
-        , Attr.class "die d4"
-        , Event.onClick ()
-        ]
-        [ Svg.text_ [] [ Svg.text "4" ] ]
+generic : Size -> String -> Html Click
+generic size =
+    Svg.text
+        >> List.singleton
+        >> Svg.text_ []
+        >> List.singleton
+        >> Svg.svg
+            [ Attr.viewBox "0 0 64 64"
+            , Attr.class "die"
+            , Attr.class (Die.Size.toString size)
+            , Event.onClick ()
+            ]

@@ -2,6 +2,7 @@ module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
+import Die.Size exposing (Size(..))
 import Die.View
 import Html
 import Html.Attributes as Attr
@@ -77,7 +78,7 @@ view : Model -> Browser.Document FrontendMsg
 view model =
     { title = "Dogroll"
     , body =
-        [ Die.View.default
+        [ Die.View.generic D8 "7"
             |> Html.map (always NoOpFrontendMsg)
         ]
     }
