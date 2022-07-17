@@ -1,6 +1,7 @@
-module UI exposing (button)
+module UI exposing (button, pool)
 
 import Html exposing (Html)
+import Html.Attributes as Attr
 import Html.Events
 
 
@@ -14,3 +15,11 @@ button =
         >> List.singleton
         >> Html.button
             [ Html.Events.onClick () ]
+
+
+pool : List (Html msg) -> Html msg
+pool =
+    Html.section
+        [ Attr.class "pool"
+        , Attr.class "raised"
+        ]

@@ -81,10 +81,12 @@ view : Model -> Browser.Document FrontendMsg
 view model =
     { title = "Dogroll"
     , body =
-        [ Die.View.generic D8 "7" Die.View.faded
-            |> Html.map (always NoOpFrontendMsg)
-        , Die.View.for (Die.init D6 (Random.initialSeed 49)) Die.View.regular
-            |> Html.map (always NoOpFrontendMsg)
+        [ UI.pool
+            [ Die.View.generic D8 "7" Die.View.faded
+                |> Html.map (always NoOpFrontendMsg)
+            , Die.View.for (Die.init D6 (Random.initialSeed 49)) Die.View.regular
+                |> Html.map (always NoOpFrontendMsg)
+            ]
         , UI.button "Click me!"
             |> Html.map (always NoOpFrontendMsg)
         ]
