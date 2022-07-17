@@ -57,3 +57,22 @@ data.die.faded {
     --faded-bg: var(--color-earth);
     --faded-fg: var(--color-mud);
 }
+
+button {
+    background-color: var(--color-mud);
+    color: var(--color-copper);
+    border: 2px solid var(--color-coal);
+    border-radius: 32px;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 32px;
+    height: 64px;
+
+
+    appearance: none;
+}

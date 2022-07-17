@@ -10,6 +10,7 @@ import Html.Attributes as Attr
 import Lamdera exposing (Key)
 import Random
 import Types exposing (..)
+import UI
 import Url
 
 
@@ -83,6 +84,8 @@ view model =
         [ Die.View.generic D8 "7" Die.View.faded
             |> Html.map (always NoOpFrontendMsg)
         , Die.View.for (Die.init D6 (Random.initialSeed 49)) Die.View.regular
+            |> Html.map (always NoOpFrontendMsg)
+        , UI.button "Click me!"
             |> Html.map (always NoOpFrontendMsg)
         ]
     }
