@@ -1,5 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Lusitana:wght@400;700&display=swap');
 
+:root {
+    --color-copper: #D97838;
+    --color-mud: #402617;
+    --color-earth: #291F16;
+    --color-coal: #040404;
+    font-family: "Lusitana", serif;
+    background-color: var(--color-earth);
+    --faded-bg: var(--color-mud);
+    --faded-fg: var(--color-earth);
+}
+
 svg.die {
     width: 64px;
     height: 64px;
@@ -27,9 +38,8 @@ svg.die.d10 {
 }
 
 svg.die text {
-    fill: #291F16;
+    fill: var(--color-earth);
     white-space: pre;
-    font-family: "Lusitana", serif;
     font-size: 20px;
     font-weight: 700;
     letter-spacing: 0;
@@ -48,4 +58,18 @@ svg.die.d6 text {
 
 svg.die.d10 text {
     alignment-baseline: middle;
+}
+
+svg.die.faded {
+    background-color: var(--faded-bg);
+}
+
+svg.die.faded text {
+    fill: var(--faded-fg);
+}
+
+.raised {
+    background-color: var(--color-mud);
+    --faded-bg: var(--color-earth);
+    --faded-fg: var(--color-mud);
 }
