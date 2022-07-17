@@ -16,5 +16,6 @@ default =
     Svg.svg
         [ Attr.viewBox "0 0 64 64"
         , Attr.class "die d4"
+        , Event.onClick ()
         ]
         [ Svg.text_ [] [ Svg.text "4" ] ]
