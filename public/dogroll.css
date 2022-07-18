@@ -91,6 +91,11 @@ section.pool {
     min-width: 192px;
 }
 
+section.pool.raised:first-child {
+    border-radius: 0;
+    width: auto;
+}
+
 section.pool h3 {
     color: var(--color-copper);
     font-size: 20px;
@@ -106,4 +111,19 @@ section.pile {
     justify-content: center;
     align-content: center;
     gap: 8px;
+}
+
+main#setup {
+    display: flex;
+    flex-direction: column-reverse;
+    align-content: stretch;
+    width: 100vw;
+    min-height: 100vh;
+    gap: 16px;
+}
+
+#setup section.pool:first-child div {
+    display: flex;
+    width: 100%;
+    justify-content: space-around;
 }

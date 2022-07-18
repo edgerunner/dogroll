@@ -9,6 +9,7 @@ import Html
 import Html.Attributes as Attr
 import Lamdera exposing (Key)
 import Random
+import Setup
 import Types exposing (..)
 import UI
 import Url
@@ -81,14 +82,10 @@ view : Model -> Browser.Document FrontendMsg
 view model =
     { title = "Dogroll"
     , body =
-        [ UI.pool
-            [ UI.pile (Die.View.for Die.View.regular >> Html.map ( always NoOpFrontendMsg))
-                [ Die.init D8 (Random.initialSeed 145)
-                , Die.init D6 (Random.initialSeed 49)
-                ]
-            , UI.poolCaption "Dice"
-            ]
-        , UI.button "Click me!"
-            |> Html.map (always NoOpFrontendMsg)
+        [ Setup.view
+            { increment = always NoOpFrontendMsg
+            , roll = NoOpFrontendMsg
+            }
+            Setup.empty
         ]
     }
