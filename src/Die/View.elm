@@ -11,8 +11,8 @@ type alias Click =
     ()
 
 
-generic : Size -> String -> Style -> Html Click
-generic size face style_ =
+generic : Style -> Size -> String -> Html Click
+generic style_ size face =
     Html.text face
         |> List.singleton
         |> Html.node "data"
@@ -23,9 +23,9 @@ generic size face style_ =
             ]
 
 
-for : Die -> Style -> Html Click
-for die =
-    generic
+for : Style -> Die -> Html Click
+for style_ die =
+    generic style_
         (die |> Die.size)
         (die |> Die.face |> String.fromInt)
 

@@ -82,11 +82,9 @@ view model =
     { title = "Dogroll"
     , body =
         [ UI.pool
-            [ UI.pile
-                [ Die.View.generic D8 "7" Die.View.faded
-                    |> Html.map (always NoOpFrontendMsg)
-                , Die.View.for (Die.init D6 (Random.initialSeed 49)) Die.View.regular
-                    |> Html.map (always NoOpFrontendMsg)
+            [ UI.pile (Die.View.for Die.View.regular >> Html.map ( always NoOpFrontendMsg))
+                [ Die.init D8 (Random.initialSeed 145)
+                , Die.init D6 (Random.initialSeed 49)
                 ]
             , UI.poolCaption "Dice"
             ]
