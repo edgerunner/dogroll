@@ -2,7 +2,7 @@ module Setup exposing (Config, Model, decrement, empty, increment, roll, view)
 
 import Dice exposing (Dice)
 import Dice.Pips exposing (Pips)
-import Die.Size exposing (Size(..))
+import Die.Size exposing (Size(..), Sizes)
 import Die.View
 import Html exposing (Html)
 import Html.Attributes as Attr
@@ -11,11 +11,7 @@ import UI
 
 
 type alias Model =
-    { d4 : Pips
-    , d6 : Pips
-    , d8 : Pips
-    , d10 : Pips
-    }
+    Sizes Pips
 
 
 type alias Config msg =

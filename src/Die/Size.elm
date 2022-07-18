@@ -111,7 +111,7 @@ larger s1 s2 =
             D4
 
 
-get : Size -> { x | d4 : a, d6 : a, d8 : a, d10 : a } -> a
+get : Size -> Sizes a -> a
 get size =
     case size of
         D4 ->
