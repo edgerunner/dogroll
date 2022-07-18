@@ -2,7 +2,9 @@ module Types exposing (..)
 
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
+import Dice.Pips
 import Die.Size
+import Random exposing (Seed)
 import Setup
 import Url exposing (Url)
 
@@ -16,6 +18,7 @@ type alias FrontendModel =
 
 type alias BackendModel =
     { message : String
+    , seed : Seed
     }
 
 
@@ -30,10 +33,12 @@ type FrontendMsg
 
 type ToBackend
     = NoOpToBackend
+    | UserWantsToRollDice (Die.Size.Sizes Dice.Pips.Pips)
 
 
 type BackendMsg
     = NoOpBackendMsg
+    | RandomGeneratedSeed Seed
 
 
 type ToFrontend

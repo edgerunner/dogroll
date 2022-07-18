@@ -3,7 +3,7 @@ module Frontend exposing (..)
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Die.Size exposing (Size(..))
-import Lamdera exposing (Key)
+import Lamdera exposing (Key, sendToBackend)
 import Setup
 import Types exposing (..)
 import Url
@@ -69,7 +69,8 @@ update msg model =
             { model | setup = Setup.decrement size model.setup } |> noCmd
 
         UserClickedRollDice ->
-            { model | setup = Setup.empty } |> noCmd
+            sendToBackend (UserWantsToRollDice model.setup)
+                |> Tuple.pair { model | setup = Setup.empty }
 
         NoOpFrontendMsg ->
             ( model, Cmd.none )
