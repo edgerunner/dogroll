@@ -35,9 +35,14 @@ five =
     [ (), (), (), (), () ]
 
 
-grow : Pips -> Pips
-grow =
+increment : Pips -> Pips
+increment =
     (::) ()
+
+
+decrement : Pips -> Pips
+decrement =
+    List.drop 1
 
 
 add : Pips -> Pips -> Pips

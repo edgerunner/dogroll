@@ -1,4 +1,4 @@
-module Setup exposing (Config, Model, empty, increment, roll, view)
+module Setup exposing (Config, Model, decrement, empty, increment, roll, view)
 
 import Dice exposing (Dice)
 import Dice.Pips exposing (Pips)
@@ -20,6 +20,7 @@ type alias Model =
 
 type alias Config msg =
     { increment : Size -> msg
+    , decrement : Size -> msg
     , roll : msg
     }
 
@@ -44,7 +45,7 @@ view config model =
         , Html.section
             [ Attr.class "dice" ]
             (takenDiceView model)
-            |> Html.map config.increment
+            |> Html.map config.decrement
         ]
 
 
@@ -79,16 +80,32 @@ increment : Size -> Model -> Model
 increment size model =
     case size of
         D4 ->
-            { model | d4 = Dice.Pips.grow model.d4 }
+            { model | d4 = Dice.Pips.increment model.d4 }
 
         D6 ->
-            { model | d6 = Dice.Pips.grow model.d6 }
+            { model | d6 = Dice.Pips.increment model.d6 }
 
         D8 ->
-            { model | d8 = Dice.Pips.grow model.d8 }
+            { model | d8 = Dice.Pips.increment model.d8 }
 
         D10 ->
-            { model | d10 = Dice.Pips.grow model.d10 }
+            { model | d10 = Dice.Pips.increment model.d10 }
+
+
+decrement : Size -> Model -> Model
+decrement size model =
+    case size of
+        D4 ->
+            { model | d4 = Dice.Pips.decrement model.d4 }
+
+        D6 ->
+            { model | d6 = Dice.Pips.decrement model.d6 }
+
+        D8 ->
+            { model | d8 = Dice.Pips.decrement model.d8 }
+
+        D10 ->
+            { model | d10 = Dice.Pips.decrement model.d10 }
 
 
 roll : Model -> Seed -> Dice

@@ -62,8 +62,11 @@ update msg model =
         UrlChanged _ ->
             ( model, Cmd.none )
 
-        UserClickedDie size ->
+        UserClickedIncrementDie size ->
             { model | setup = Setup.increment size model.setup } |> noCmd
+
+        UserClickedDecrementDie size ->
+            { model | setup = Setup.decrement size model.setup } |> noCmd
 
         NoOpFrontendMsg ->
             ( model, Cmd.none )
@@ -86,7 +89,8 @@ view model =
     { title = "Dogroll"
     , body =
         [ Setup.view
-            { increment = UserClickedDie
+            { increment = UserClickedIncrementDie
+            , decrement = UserClickedDecrementDie
             , roll = NoOpFrontendMsg
             }
             model.setup

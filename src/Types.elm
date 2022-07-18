@@ -23,7 +23,8 @@ type FrontendMsg
     = UrlClicked UrlRequest
     | UrlChanged Url
     | NoOpFrontendMsg
-    | UserClickedDie Die.Size.Size
+    | UserClickedIncrementDie Die.Size.Size
+    | UserClickedDecrementDie Die.Size.Size
 
 
 type ToBackend
