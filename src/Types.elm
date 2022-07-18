@@ -2,12 +2,15 @@ module Types exposing (..)
 
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
+import Die.Size
+import Setup
 import Url exposing (Url)
 
 
 type alias FrontendModel =
     { key : Key
     , message : String
+    , setup : Setup.Model
     }
 
 
@@ -20,6 +23,7 @@ type FrontendMsg
     = UrlClicked UrlRequest
     | UrlChanged Url
     | NoOpFrontendMsg
+    | UserClickedDie Die.Size.Size
 
 
 type ToBackend

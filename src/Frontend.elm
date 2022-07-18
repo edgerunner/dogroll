@@ -2,17 +2,10 @@ module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
-import Dice.Pips
-import Die
 import Die.Size exposing (Size(..))
-import Die.View
-import Html
-import Html.Attributes as Attr
 import Lamdera exposing (Key)
-import Random
 import Setup
 import Types exposing (..)
-import UI
 import Url
 
 
@@ -42,9 +35,10 @@ app =
 
 
 init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
-init url key =
+init _ key =
     ( { key = key
       , message = "Welcome to Lamdera! You're looking at the auto-generated base implementation. Check out src/Frontend.elm to start coding!"
+      , setup = Setup.empty
       }
     , Cmd.none
     )
@@ -65,11 +59,19 @@ update msg model =
                     , Nav.load url
                     )
 
-        UrlChanged url ->
+        UrlChanged _ ->
             ( model, Cmd.none )
+
+        UserClickedDie size ->
+            { model | setup = Setup.increment size model.setup } |> noCmd
 
         NoOpFrontendMsg ->
             ( model, Cmd.none )
+
+
+noCmd : Model -> ( Model, Cmd msg )
+noCmd model =
+    ( model, Cmd.none )
 
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
@@ -84,22 +86,9 @@ view model =
     { title = "Dogroll"
     , body =
         [ Setup.view
-            { increment = log
+            { increment = UserClickedDie
             , roll = NoOpFrontendMsg
             }
-            { d10 = Dice.Pips.one
-            , d8 = Dice.Pips.two
-            , d6 = Dice.Pips.three
-            , d4 = Dice.Pips.four
-            }
+            model.setup
         ]
     }
-
-
-log : a -> FrontendMsg
-log a =
-    let
-        _ =
-            Debug.log "Frontend" a
-    in
-    NoOpFrontendMsg
