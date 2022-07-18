@@ -2,6 +2,7 @@ module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
+import Dice.Pips
 import Die
 import Die.Size exposing (Size(..))
 import Die.View
@@ -83,9 +84,22 @@ view model =
     { title = "Dogroll"
     , body =
         [ Setup.view
-            { increment = always NoOpFrontendMsg
+            { increment = log
             , roll = NoOpFrontendMsg
             }
-            Setup.empty
+            { d10 = Dice.Pips.one
+            , d8 = Dice.Pips.two
+            , d6 = Dice.Pips.three
+            , d4 = Dice.Pips.four
+            }
         ]
     }
+
+
+log : a -> FrontendMsg
+log a =
+    let
+        _ =
+            Debug.log "Frontend" a
+    in
+    NoOpFrontendMsg

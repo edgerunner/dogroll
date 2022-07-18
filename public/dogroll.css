@@ -127,3 +127,18 @@ main#setup {
     width: 100%;
     justify-content: space-around;
 }
+
+#setup section.dice {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: flex-end;
+    padding: 0 16px;
+}
+
+#setup section.dice>div {
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-start;
+    width: 64px;
+}

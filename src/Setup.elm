@@ -34,22 +34,43 @@ empty =
 
 
 view : Config msg -> Model -> Html msg
-view config _ =
+view config model =
     Html.main_ [ Attr.id "setup" ]
         [ UI.pool
             [ UI.poolCaption "Take some dice"
-            , freshDiceView config.increment
+            , freshDiceView
+                |> Html.map config.increment
             ]
+        , Html.section
+            [ Attr.class "dice" ]
+            (takenDiceView model)
+            |> Html.map config.increment
         ]
 
 
-freshDiceView : (Size -> msg) -> Html msg
-freshDiceView incrementMsg =
+takenDiceView : Model -> List (Html Size)
+takenDiceView model =
+    Die.Size.all
+        |> List.map (\size -> takenDiceStack size (Die.Size.get size model))
+
+
+takenDiceStack : Size -> Pips -> Html Size
+takenDiceStack size =
+    (Die.View.generic Die.View.regular size " "
+        |> always
+        |> List.map
+    )
+        >> Html.div []
+        >> Html.map (always size)
+
+
+freshDiceView : Html Size
+freshDiceView =
     Die.Size.all
         |> List.map
             (\size ->
                 Die.View.generic Die.View.regular size "+"
-                    |> Html.map (always (incrementMsg size))
+                    |> Html.map (always size)
             )
         |> Html.div []
 
