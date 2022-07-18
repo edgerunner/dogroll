@@ -37,7 +37,6 @@ app =
 init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init _ key =
     ( { key = key
-      , message = "Welcome to Lamdera! You're looking at the auto-generated base implementation. Check out src/Frontend.elm to start coding!"
       , setup = Setup.empty
       }
     , Cmd.none
@@ -71,9 +70,6 @@ update msg model =
         UserClickedRollDice ->
             sendToBackend (UserWantsToRollDice model.setup)
                 |> Tuple.pair { model | setup = Setup.empty }
-
-        NoOpFrontendMsg ->
-            ( model, Cmd.none )
 
 
 noCmd : Model -> ( Model, Cmd msg )

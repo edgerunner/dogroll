@@ -28,9 +28,7 @@ app =
 
 init : ( Model, Cmd BackendMsg )
 init =
-    ( { message = "Hello!"
-      , seed = Random.initialSeed 0
-      }
+    ( { seed = Random.initialSeed 0 }
     , Random.generate RandomGeneratedSeed Random.independentSeed
     )
 
@@ -38,9 +36,6 @@ init =
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
 update msg model =
     case msg of
-        NoOpBackendMsg ->
-            ( model, Cmd.none )
-
         RandomGeneratedSeed seed ->
             ( { model | seed = seed }, Cmd.none )
 
@@ -48,9 +43,6 @@ update msg model =
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontend _ _ msg model =
     case msg of
-        NoOpToBackend ->
-            ( model, Cmd.none )
-
         UserWantsToRollDice sizes ->
             let
                 _ =
