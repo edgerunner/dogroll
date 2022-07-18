@@ -28,9 +28,12 @@ app =
 
 init : ( Model, Cmd BackendMsg )
 init =
-    ( { seed = Random.initialSeed 0 }
-    , Random.generate RandomGeneratedSeed Random.independentSeed
-    )
+    ( { seed = Random.initialSeed 0 }, newSeed )
+
+
+newSeed : Cmd BackendMsg
+newSeed =
+    Random.generate RandomGeneratedSeed Random.independentSeed
 
 
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
@@ -50,4 +53,4 @@ updateFromFrontend _ _ msg model =
                         |> Dice.faces
                         |> Debug.log "Rolled"
             in
-            ( model, Cmd.none )
+            ( model, newSeed )
