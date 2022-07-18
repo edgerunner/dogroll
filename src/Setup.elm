@@ -42,6 +42,8 @@ view config model =
             [ Attr.class "dice" ]
             (takenDiceView model)
             |> Html.map config.decrement
+        , UI.button "Roll the dice"
+            |> Html.map (always config.roll)
         ]
 
 

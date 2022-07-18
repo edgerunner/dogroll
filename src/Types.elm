@@ -25,6 +25,7 @@ type FrontendMsg
     | NoOpFrontendMsg
     | UserClickedIncrementDie Die.Size.Size
     | UserClickedDecrementDie Die.Size.Size
+    | UserClickedRollDice
 
 
 type ToBackend

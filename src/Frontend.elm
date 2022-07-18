@@ -68,6 +68,9 @@ update msg model =
         UserClickedDecrementDie size ->
             { model | setup = Setup.decrement size model.setup } |> noCmd
 
+        UserClickedRollDice ->
+            { model | setup = Setup.empty } |> noCmd
+
         NoOpFrontendMsg ->
             ( model, Cmd.none )
 
@@ -91,7 +94,7 @@ view model =
         [ Setup.view
             { increment = UserClickedIncrementDie
             , decrement = UserClickedDecrementDie
-            , roll = NoOpFrontendMsg
+            , roll = UserClickedRollDice
             }
             model.setup
         ]
