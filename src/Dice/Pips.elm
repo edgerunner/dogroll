@@ -1,4 +1,4 @@
-module Dice.Pips exposing (Pips, add, decrement, five, four, increment, one, three, toInt, toList, two, zero)
+module Dice.Pips exposing (Pips, add, decrement, five, four, fromInt, increment, one, three, toInt, toList, two, zero)
 
 
 type Pips
@@ -58,3 +58,8 @@ toInt (Pips pips) =
 toList : Pips -> List ()
 toList (Pips pips) =
     pips
+
+
+fromInt : Int -> Pips
+fromInt =
+    List.repeat >> (|>) () >> Pips

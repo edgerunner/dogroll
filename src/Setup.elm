@@ -115,7 +115,6 @@ roll model seed =
                 size
                     |> Die.Size.get
                     |> (|>) model
-                    |> Dice.Pips.toInt
                     |> Dice.init seed
                     |> (|>) size
             )

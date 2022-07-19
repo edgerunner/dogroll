@@ -1,7 +1,7 @@
 module Tests.Dice exposing (suite)
 
 import Dice
-import Dice.Pips
+import Dice.Pips as Pips
 import Dice.Type exposing (DemonicInfluence(..), Gun(..), Quality(..), Stat(..), Type(..))
 import Die
 import Die.Size
@@ -21,7 +21,7 @@ suite =
     describe "Dice"
         [ test "initializing multiple dice"
             (\_ ->
-                Dice.init seed 4 Die.Size.D6
+                Dice.init seed Pips.four Die.Size.D6
                     |> Dice.faces
                     |> List.map (Helpers.between1and 6)
                     |> Helpers.allPass
@@ -29,8 +29,8 @@ suite =
         , test "combining dice"
             (\_ ->
                 Dice.combine
-                    [ Dice.init seed 2 Die.Size.D8
-                    , Dice.init seed 1 Die.Size.D4
+                    [ Dice.init seed Pips.two Die.Size.D8
+                    , Dice.init seed Pips.one Die.Size.D4
                     ]
                     |> Dice.sizes
                     |> Die.Size.count
@@ -73,21 +73,21 @@ suite =
             "string representation"
             [ test "single type"
                 (\_ ->
-                    Dice.init seed 2 Die.Size.D4
+                    Dice.init seed Pips.two Die.Size.D4
                         |> Dice.toString
                         |> Expect.equal "2d4"
                 )
             , test "one of single type"
                 (\_ ->
-                    Dice.init seed 1 Die.Size.D10
+                    Dice.init seed Pips.one Die.Size.D10
                         |> Dice.toString
                         |> Expect.equal "1d10"
                 )
             , test "multiple types"
                 (\_ ->
                     Dice.combine
-                        [ Dice.init seed 1 Die.Size.D4
-                        , Dice.init seed 2 Die.Size.D8
+                        [ Dice.init seed Pips.one Die.Size.D4
+                        , Dice.init seed Pips.two Die.Size.D8
                         ]
                         |> Dice.toString
                         |> Expect.equal "2d8+1d4"
@@ -96,17 +96,17 @@ suite =
         , describe "Type"
             [ test "Stat dice"
                 (\_ ->
-                    Stat Acuity Dice.Pips.two
+                    Stat Acuity Pips.two
                         |> expectDiceFromType "4d6"
                 )
             , test "Trait dice"
                 (\_ ->
-                    Trait "I'm a good shot" Die.Size.D8 Dice.Pips.two
+                    Trait "I'm a good shot" Die.Size.D8 Pips.two
                         |> expectDiceFromType "3d8"
                 )
             , test "Relationship dice"
                 (\_ ->
-                    Relationship "My riding instructor" Die.Size.D4 Dice.Pips.zero
+                    Relationship "My riding instructor" Die.Size.D4 Pips.zero
                         |> expectDiceFromType "1d4"
                 )
             , [ ( "Normal thing", Belonging "A horse" Normal NotGun, "1d6" )
