@@ -55,10 +55,11 @@ takenDiceView model =
 
 takenDiceStack : Size -> Pips -> Html Size
 takenDiceStack size =
-    (Die.View.generic Die.View.regular size " "
-        |> always
-        |> List.map
-    )
+    Dice.Pips.toList
+        >> (Die.View.generic Die.View.regular size " "
+                |> always
+                |> List.map
+           )
         >> Html.div []
         >> Html.map (always size)
 
