@@ -15,7 +15,6 @@ module Dice.Type exposing
 import Dice exposing (Dice)
 import Dice.Pips as Pips exposing (Pips)
 import Die.Size exposing (Size(..))
-import Random exposing (Seed)
 
 
 type Type
@@ -90,129 +89,129 @@ type Background
     | ComplicatedCommunity
 
 
-toDice : Seed -> Type -> Dice
-toDice seed type_ =
+toDice : Type -> Dice
+toDice type_ =
     case type_ of
         Stat _ pips ->
-            toDice_stat seed pips
+            toDice_stat pips
 
         Trait _ size pips ->
-            toDice_trait seed size pips
+            toDice_trait size pips
 
         Relationship _ size pips ->
-            toDice_relationship seed size pips
+            toDice_relationship size pips
 
         Belonging _ quality gun ->
-            [ toDice_quality seed quality
-            , toDice_gun seed gun
+            [ toDice_quality quality
+            , toDice_gun gun
             ]
                 |> Dice.combine
 
         Initiation ->
-            toDice_initiation seed
+            toDice_initiation
 
         DemonicInfluence demonicInfluence ->
-            toDice_demonicInfluence seed demonicInfluence
+            toDice_demonicInfluence demonicInfluence
 
         Fallout fallout pips ->
-            toDice_fallout seed fallout pips
+            toDice_fallout fallout pips
 
         Background background pool ->
-            toDice_background seed background pool
+            toDice_background background pool
 
 
-toDice_stat : Seed -> Pips -> Dice
-toDice_stat seed pips =
-    Dice.init seed (Pips.add Pips.two pips) D6
+toDice_stat : Pips -> Dice
+toDice_stat =
+    Pips.add Pips.two >> Dice.init D6
 
 
-toDice_trait : Seed -> Size -> Pips -> Dice
-toDice_trait seed size pips =
-    Dice.init seed (Pips.add Pips.one pips) size
+toDice_trait : Size -> Pips -> Dice
+toDice_trait size =
+    Pips.add Pips.one >> Dice.init size
 
 
-toDice_relationship : Seed -> Size -> Pips -> Dice
-toDice_relationship seed size pips =
-    Dice.init seed (Pips.add Pips.one pips) size
+toDice_relationship : Size -> Pips -> Dice
+toDice_relationship size =
+    Pips.add Pips.one >> Dice.init size
 
 
-toDice_quality : Seed -> Quality -> Dice
-toDice_quality seed quality =
+toDice_quality : Quality -> Dice
+toDice_quality quality =
     case quality of
         Normal ->
-            Dice.init seed Pips.one D6
+            Dice.init D6 Pips.one
 
         Excellent ->
-            Dice.init seed Pips.two D6
+            Dice.init D6 Pips.two
 
         Big ->
-            Dice.init seed Pips.one D8
+            Dice.init D8 Pips.one
 
         ExcellentPlusBig ->
-            Dice.init seed Pips.two D8
+            Dice.init D8 Pips.two
 
         Crap ->
-            Dice.init seed Pips.one D4
+            Dice.init D4 Pips.one
 
 
-toDice_gun : Seed -> Gun -> Dice
-toDice_gun seed gun =
+toDice_gun : Gun -> Dice
+toDice_gun gun =
     case gun of
         Gun ->
-            Dice.init seed Pips.one D4
+            Dice.init D4 Pips.one
 
         NotGun ->
-            Dice.init seed Pips.zero D4
+            Dice.init D4 Pips.zero
 
 
-toDice_initiation : Seed -> Dice
-toDice_initiation seed =
+toDice_initiation : Dice
+toDice_initiation =
     Dice.combine
-        [ Dice.init seed Pips.four D10
-        , Dice.init seed Pips.four D6
+        [ Dice.init D10 Pips.four
+        , Dice.init D6 Pips.four
         ]
 
 
-toDice_demonicInfluence : Seed -> DemonicInfluence -> Dice
-toDice_demonicInfluence seed demonicInfluence =
+toDice_demonicInfluence : DemonicInfluence -> Dice
+toDice_demonicInfluence demonicInfluence =
     case demonicInfluence of
         Injustice ->
-            Dice.init seed Pips.one D10
+            Dice.init D10 Pips.one
 
         DemonicAttacks ->
-            Dice.init seed Pips.two D10
+            Dice.init D10 Pips.two
 
         Heresy ->
-            Dice.init seed Pips.three D10
+            Dice.init D10 Pips.three
 
         Sorcery ->
-            Dice.init seed Pips.four D10
+            Dice.init D10 Pips.four
 
         HateAndMurder ->
-            Dice.init seed Pips.five D10
+            Dice.init D10 Pips.five
 
 
-toDice_fallout : Seed -> Fallout -> Pips -> Dice
-toDice_fallout seed fallout pips =
+toDice_fallout : Fallout -> Pips -> Dice
+toDice_fallout fallout =
     case fallout of
         JustTalking ->
-            Dice.init seed pips D4
+            Dice.init D4
 
         Physical ->
-            Dice.init seed pips D6
+            Dice.init D6
 
         Fighting ->
-            Dice.init seed pips D8
+            Dice.init D8
 
         Gunfighting ->
-            Dice.init seed pips D10
+            Dice.init D10
 
         Ceremony ceremony ceremonies ->
-            toDice_ceremony seed (ceremony :: ceremonies) pips
+            toDice_ceremony (ceremony :: ceremonies)
 
 
-toDice_ceremony : Seed -> List Ceremony -> Pips -> Dice
-toDice_ceremony seed ceremonies pips =
+toDice_ceremony : List Ceremony -> Pips -> Dice
+toDice_ceremony ceremonies =
     ceremonies
         |> List.map
             (\ceremony ->
@@ -242,84 +241,84 @@ toDice_ceremony seed ceremonies pips =
                         D8
             )
         |> Die.Size.largest
-        |> Dice.init seed pips
+        |> Dice.init
 
 
-toDice_background : Seed -> Background -> Pool -> Dice
-toDice_background seed background pool =
+toDice_background : Background -> Pool -> Dice
+toDice_background background pool =
     Dice.combine
         (case ( background, pool ) of
             ( WellRounded, StatPool ) ->
-                [ Dice.init seed (Pips.fromInt 17) D6 ]
+                [ Dice.init D6 (Pips.fromInt 17) ]
 
             ( WellRounded, TraitPool ) ->
-                [ Dice.init seed Pips.one D4
-                , Dice.init seed Pips.two D6
-                , Dice.init seed Pips.four D8
+                [ Dice.init D4 Pips.one
+                , Dice.init D6 Pips.two
+                , Dice.init D8 Pips.four
                 ]
 
             ( WellRounded, RelationshipPool ) ->
-                [ Dice.init seed Pips.four D6
-                , Dice.init seed Pips.two D8
+                [ Dice.init D6 Pips.four
+                , Dice.init D8 Pips.two
                 ]
 
             ( StrongHistory, StatPool ) ->
-                [ Dice.init seed (Pips.fromInt 13) D6 ]
+                [ Dice.init D6 (Pips.fromInt 13) ]
 
             ( StrongHistory, TraitPool ) ->
-                [ Dice.init seed Pips.three D6
-                , Dice.init seed Pips.four D8
-                , Dice.init seed Pips.three D10
+                [ Dice.init D6 Pips.three
+                , Dice.init D8 Pips.four
+                , Dice.init D10 Pips.three
                 ]
 
             ( StrongHistory, RelationshipPool ) ->
-                [ Dice.init seed Pips.one D4
-                , Dice.init seed Pips.four D6
-                , Dice.init seed Pips.two D8
+                [ Dice.init D4 Pips.one
+                , Dice.init D6 Pips.four
+                , Dice.init D8 Pips.two
                 ]
 
             ( ComplicatedHistory, StatPool ) ->
-                [ Dice.init seed (Pips.fromInt 15) D6 ]
+                [ Dice.init D6 (Pips.fromInt 15) ]
 
             ( ComplicatedHistory, TraitPool ) ->
-                [ Dice.init seed Pips.four D4
-                , Dice.init seed Pips.two D6
-                , Dice.init seed Pips.two D10
+                [ Dice.init D4 Pips.four
+                , Dice.init D6 Pips.two
+                , Dice.init D10 Pips.two
                 ]
 
             ( ComplicatedHistory, RelationshipPool ) ->
-                [ Dice.init seed Pips.five D6
-                , Dice.init seed Pips.two D8
+                [ Dice.init D6 Pips.five
+                , Dice.init D8 Pips.two
                 ]
 
             ( StrongCommunity, StatPool ) ->
-                [ Dice.init seed (Pips.fromInt 13) D6 ]
+                [ Dice.init D6 (Pips.fromInt 13) ]
 
             ( StrongCommunity, TraitPool ) ->
-                [ Dice.init seed Pips.one D4
-                , Dice.init seed Pips.three D6
-                , Dice.init seed Pips.two D8
+                [ Dice.init D4 Pips.one
+                , Dice.init D6 Pips.three
+                , Dice.init D8 Pips.two
                 ]
 
             ( StrongCommunity, RelationshipPool ) ->
-                [ Dice.init seed Pips.four D6
-                , Dice.init seed Pips.four D8
-                , Dice.init seed Pips.three D10
+                [ Dice.init D6 Pips.four
+                , Dice.init D8 Pips.four
+                , Dice.init D10 Pips.three
                 ]
 
             ( ComplicatedCommunity, StatPool ) ->
-                [ Dice.init seed (Pips.fromInt 15) D6 ]
+                [ Dice.init D6 (Pips.fromInt 15) ]
 
             ( ComplicatedCommunity, TraitPool ) ->
-                [ Dice.init seed (Pips.fromInt 6) D6
-                , Dice.init seed Pips.two D8
+                [ Dice.init D6 (Pips.fromInt 6)
+                , Dice.init D8 Pips.two
                 ]
 
             ( ComplicatedCommunity, RelationshipPool ) ->
-                [ Dice.init seed Pips.four D4
-                , Dice.init seed Pips.two D6
-                , Dice.init seed Pips.two D8
-                , Dice.init seed Pips.two D10
+                [ Dice.init D4 Pips.four
+                , Dice.init D6 Pips.two
+                , Dice.init D8 Pips.two
+                , Dice.init D10 Pips.two
                 ]
         )
 

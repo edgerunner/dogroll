@@ -1,4 +1,4 @@
-module Setup exposing (Config, Model, decrement, empty, increment, roll, view)
+module Setup exposing (Config, Model, decrement, empty, increment, toDice, view)
 
 import Dice exposing (Dice)
 import Dice.Pips exposing (Pips)
@@ -6,7 +6,6 @@ import Die.Size exposing (Size(..), Sizes)
 import Die.View
 import Html exposing (Html)
 import Html.Attributes as Attr
-import Random exposing (Seed)
 import UI
 
 
@@ -107,16 +106,12 @@ decrement size model =
             { model | d10 = Dice.Pips.decrement model.d10 }
 
 
-roll : Model -> Seed -> Dice
-roll model seed =
+toDice : Model -> Dice
+toDice model =
     Die.Size.all
         |> List.map
             (\size ->
-                size
-                    |> Die.Size.get
-                    |> (|>) model
-                    |> Dice.init seed
-                    |> (|>) size
+                Die.Size.get size model
+                    |> Dice.init size
             )
         |> Dice.combine
-        |> Dice.roll

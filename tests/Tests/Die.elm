@@ -19,27 +19,28 @@ suite =
         [ test "reporting die size"
             (\() ->
                 Die.Size.all
-                    |> List.map (\size -> Die.init size seed |> Die.size)
+                    |> List.map (\size -> Die.init size |> Die.size)
                     |> Expect.equal [ D10, D8, D6, D4 ]
             )
         , fuzz Helpers.dieFuzzer
             "rolling"
-            (Die.roll
+            (Die.generator
+                >> Random.step
+                >> (|>) seed
+                >> Tuple.first
                 >> (\die ->
                         Die.face die
+                            |> Maybe.withDefault 0
                             |> Helpers.between1and (Die.size die |> Die.Size.toInt)
                    )
             )
         , fuzz Helpers.dieFuzzer
-            "starting with a rolled face"
-            (\die ->
-                Die.face die
-                    |> Helpers.between1and (Die.size die |> Die.Size.toInt)
-            )
+            "starting without a rolled face"
+            (Die.face >> Expect.equal Nothing)
         , test "string representation"
             (\() ->
                 Die.Size.all
-                    |> List.map (\size -> Die.init size seed |> Die.toString)
+                    |> List.map (\size -> Die.init size |> Die.toString)
                     |> Expect.equal [ "d10", "d8", "d6", "d4" ]
             )
         ]

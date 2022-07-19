@@ -49,7 +49,11 @@ updateFromFrontend _ _ msg model =
         UserWantsToRollDice sizes ->
             let
                 _ =
-                    Setup.roll sizes model.seed
+                    Setup.toDice sizes
+                        |> Dice.generator
+                        |> Random.step
+                        |> (|>) model.seed
+                        |> Tuple.first
                         |> Dice.faces
                         |> Debug.log "Rolled"
             in

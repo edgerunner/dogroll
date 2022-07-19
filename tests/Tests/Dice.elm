@@ -21,7 +21,7 @@ suite =
     describe "Dice"
         [ test "initializing multiple dice"
             (\_ ->
-                Dice.init seed Pips.four Die.Size.D6
+                Dice.init Die.Size.D6 Pips.four
                     |> Dice.faces
                     |> List.map (Helpers.between1and 6)
                     |> Helpers.allPass
@@ -29,8 +29,8 @@ suite =
         , test "combining dice"
             (\_ ->
                 Dice.combine
-                    [ Dice.init seed Pips.two Die.Size.D8
-                    , Dice.init seed Pips.one Die.Size.D4
+                    [ Dice.init Die.Size.D8 Pips.two
+                    , Dice.init Die.Size.D4 Pips.one
                     ]
                     |> Dice.sizes
                     |> Die.Size.count
@@ -38,13 +38,16 @@ suite =
             )
         , fuzz Helpers.diceFuzzer
             "rolling all dice at once"
-            (Dice.roll
+            (Dice.generator
+                >> Random.step
+                >> (|>) seed
+                >> Tuple.first
                 >> Dice.toList
                 >> List.map
                     (\die ->
                         Helpers.between1and
                             (Die.size die |> Die.Size.toInt)
-                            (Die.face die)
+                            (Die.face die |> Maybe.withDefault 0)
                     )
                 >> Helpers.allPass
             )
@@ -61,7 +64,7 @@ suite =
                     dieByDie =
                         pool
                             |> Dice.toList
-                            |> List.map Die.face
+                            |> List.filterMap Die.face
                 in
                 faces
                     |> Expect.all
@@ -73,21 +76,21 @@ suite =
             "string representation"
             [ test "single type"
                 (\_ ->
-                    Dice.init seed Pips.two Die.Size.D4
+                    Dice.init Die.Size.D4 Pips.two
                         |> Dice.toString
                         |> Expect.equal "2d4"
                 )
             , test "one of single type"
                 (\_ ->
-                    Dice.init seed Pips.one Die.Size.D10
+                    Dice.init Die.Size.D10 Pips.one
                         |> Dice.toString
                         |> Expect.equal "1d10"
                 )
             , test "multiple types"
                 (\_ ->
                     Dice.combine
-                        [ Dice.init seed Pips.one Die.Size.D4
-                        , Dice.init seed Pips.two Die.Size.D8
+                        [ Dice.init Die.Size.D4 Pips.one
+                        , Dice.init Die.Size.D8 Pips.two
                         ]
                         |> Dice.toString
                         |> Expect.equal "2d8+1d4"
@@ -149,6 +152,6 @@ suite =
 
 expectDiceFromType : String -> Type -> Expectation
 expectDiceFromType name =
-    Dice.Type.toDice seed
+    Dice.Type.toDice
         >> Dice.toString
         >> Expect.equal name

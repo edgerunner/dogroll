@@ -6,7 +6,6 @@ import Die exposing (Die)
 import Die.Size exposing (Size(..))
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
-import Random exposing (Seed)
 
 
 passOrFail : Expectation -> Expectation -> Expectation
@@ -40,17 +39,11 @@ allPass =
     List.foldl passOrFail Expect.pass
 
 
-seedFuzzer : Fuzzer Seed
-seedFuzzer =
-    Fuzz.map Random.initialSeed Fuzz.int
-
-
 dieFuzzer : Fuzzer Die
 dieFuzzer =
-    Fuzz.map2
+    Fuzz.map
         Die.init
         (Fuzz.oneOf (List.map Fuzz.constant Die.Size.all))
-        seedFuzzer
 
 
 pipsFuzzer : Int -> Fuzzer Pips
@@ -60,11 +53,15 @@ pipsFuzzer =
 
 diceFuzzer : Fuzzer Dice
 diceFuzzer =
-    Fuzz.map3
+    Fuzz.map2
         Dice.init
-        seedFuzzer
+        sizeFuzzer
         (pipsFuzzer 8)
-        (Fuzz.oneOf (List.map Fuzz.constant Die.Size.all))
+
+
+sizeFuzzer : Fuzzer Size
+sizeFuzzer =
+    Fuzz.oneOf (List.map Fuzz.constant Die.Size.all)
 
 
 combinedDiceFuzzer : Fuzzer Dice
