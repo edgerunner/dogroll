@@ -1,4 +1,4 @@
-module Die.Size exposing (Size(..), Sizes, all, count, largest, toInt, toString)
+module Die.Size exposing (Size(..), Sizes, all, count, get, largest, toInt, toString)
 
 
 type Size
@@ -109,3 +109,19 @@ larger s1 s2 =
 
         _ ->
             D4
+
+
+get : Size -> Sizes a -> a
+get size =
+    case size of
+        D4 ->
+            .d4
+
+        D6 ->
+            .d6
+
+        D8 ->
+            .d8
+
+        D10 ->
+            .d10

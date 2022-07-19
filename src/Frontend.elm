@@ -2,15 +2,10 @@ module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
-import Die
 import Die.Size exposing (Size(..))
-import Die.View
-import Html
-import Html.Attributes as Attr
-import Lamdera exposing (Key)
-import Random
+import Lamdera exposing (Key, sendToBackend)
+import Setup
 import Types exposing (..)
-import UI
 import Url
 
 
@@ -40,9 +35,9 @@ app =
 
 
 init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
-init url key =
+init _ key =
     ( { key = key
-      , message = "Welcome to Lamdera! You're looking at the auto-generated base implementation. Check out src/Frontend.elm to start coding!"
+      , setup = Setup.empty
       }
     , Cmd.none
     )
@@ -63,11 +58,23 @@ update msg model =
                     , Nav.load url
                     )
 
-        UrlChanged url ->
+        UrlChanged _ ->
             ( model, Cmd.none )
 
-        NoOpFrontendMsg ->
-            ( model, Cmd.none )
+        UserClickedIncrementDie size ->
+            { model | setup = Setup.increment size model.setup } |> noCmd
+
+        UserClickedDecrementDie size ->
+            { model | setup = Setup.decrement size model.setup } |> noCmd
+
+        UserClickedRollDice ->
+            sendToBackend (UserWantsToRollDice model.setup)
+                |> Tuple.pair { model | setup = Setup.empty }
+
+
+noCmd : Model -> ( Model, Cmd msg )
+noCmd model =
+    ( model, Cmd.none )
 
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
@@ -81,14 +88,11 @@ view : Model -> Browser.Document FrontendMsg
 view model =
     { title = "Dogroll"
     , body =
-        [ UI.pool
-            [ UI.pile (Die.View.for Die.View.regular >> Html.map ( always NoOpFrontendMsg))
-                [ Die.init D8 (Random.initialSeed 145)
-                , Die.init D6 (Random.initialSeed 49)
-                ]
-            , UI.poolCaption "Dice"
-            ]
-        , UI.button "Click me!"
-            |> Html.map (always NoOpFrontendMsg)
+        [ Setup.view
+            { increment = UserClickedIncrementDie
+            , decrement = UserClickedDecrementDie
+            , roll = UserClickedRollDice
+            }
+            model.setup
         ]
     }

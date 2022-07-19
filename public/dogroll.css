@@ -72,9 +72,11 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
+    align-self: center;
+
     padding: 16px 32px;
     height: 64px;
-
+    width: fit-content;
 
     appearance: none;
 }
@@ -89,6 +91,11 @@ section.pool {
     gap: 16px;
     width: fit-content;
     min-width: 192px;
+}
+
+section.pool.raised:first-child {
+    border-radius: 0;
+    width: auto;
 }
 
 section.pool h3 {
@@ -106,4 +113,34 @@ section.pile {
     justify-content: center;
     align-content: center;
     gap: 8px;
+}
+
+main#setup {
+    display: flex;
+    flex-direction: column-reverse;
+    align-content: stretch;
+    width: 100vw;
+    min-height: 100vh;
+    gap: 16px;
+}
+
+#setup section.pool:first-child div {
+    display: flex;
+    width: 100%;
+    justify-content: space-around;
+}
+
+#setup section.dice {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: flex-end;
+    padding: 0 16px;
+}
+
+#setup section.dice>div {
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-start;
+    width: 64px;
 }
