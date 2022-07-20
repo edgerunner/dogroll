@@ -1,19 +1,19 @@
 module Tests.Dice exposing (suite)
 
-import Dice
+import Dice exposing (Dice)
 import Dice.Pips as Pips
 import Dice.Type exposing (DemonicInfluence(..), Gun(..), Quality(..), Stat(..), Type(..))
 import Die
 import Die.Size
 import Expect exposing (Expectation)
 import Random exposing (Seed)
-import Test exposing (Test, describe, fuzz, fuzz2, test)
+import Test exposing (Test, describe, test)
 import Tests.Helpers as Helpers
 
 
-seed : Seed
-seed =
-    Random.initialSeed 42
+fuzzRolls : String -> (Seed -> Dice -> Expectation) -> Test
+fuzzRolls =
+    Test.fuzz2 Helpers.seedFuzzer Helpers.diceFuzzer
 
 
 suite : Test
@@ -36,25 +36,25 @@ suite =
                     |> Die.Size.count
                     |> Expect.equal { d4 = 1, d6 = 0, d8 = 2, d10 = 0 }
             )
-        , fuzz Helpers.diceFuzzer
+        , fuzzRolls
             "rolling all dice at once"
-            (Dice.roll seed
-                >> Dice.toList
-                >> List.map
-                    (\die ->
-                        Helpers.between1and
-                            (Die.size die |> Die.Size.toInt)
-                            (Die.face die |> Maybe.withDefault 0)
-                    )
-                >> Helpers.allPass
+            (\seed ->
+                Dice.roll seed
+                    >> Dice.toList
+                    >> List.map
+                        (\die ->
+                            Helpers.between1and
+                                (Die.size die |> Die.Size.toInt)
+                                (Die.face die |> Maybe.withDefault 0)
+                        )
+                    >> Helpers.allPass
             )
-        , fuzz2 Helpers.seedFuzzer
-            Helpers.combinedDiceFuzzer
+        , fuzzRolls
             "are always sorted"
-            (\seed_ pool ->
+            (\seed pool ->
                 let
                     larger =
-                        pool |> Dice.roll seed_ |> Dice.toList
+                        pool |> Dice.roll seed |> Dice.toList
 
                     smaller =
                         larger |> List.drop 1
