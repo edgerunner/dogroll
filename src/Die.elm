@@ -26,11 +26,15 @@ size die =
 
 generator : Die -> Generator Die
 generator die =
-    die
-        |> size
-        |> Size.toInt
-        |> Random.int 1
-        |> Random.map (die |> size |> Rolled)
+    case die of
+        Held size_ ->
+            size_
+                |> Size.toInt
+                |> Random.int 1
+                |> Random.map (die |> size |> Rolled)
+
+        Rolled _ _ ->
+            Random.constant die
 
 
 roll : Seed -> Die -> Die

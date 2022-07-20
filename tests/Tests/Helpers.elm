@@ -1,4 +1,4 @@
-module Tests.Helpers exposing (allPass, between1and, combinedDiceFuzzer, diceFuzzer, dieFuzzer, passOrFail)
+module Tests.Helpers exposing (allPass, between1and, combinedDiceFuzzer, diceFuzzer, dieFuzzer, passOrFail, seedFuzzer)
 
 import Dice exposing (Dice)
 import Dice.Pips exposing (Pips)
@@ -6,6 +6,8 @@ import Die exposing (Die)
 import Die.Size exposing (Size(..))
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
+import Random exposing (Seed)
+import Shrink
 
 
 passOrFail : Expectation -> Expectation -> Expectation
@@ -68,3 +70,8 @@ combinedDiceFuzzer : Fuzzer Dice
 combinedDiceFuzzer =
     Fuzz.list diceFuzzer
         |> Fuzz.map (List.take 4 >> Dice.combine)
+
+
+seedFuzzer : Fuzzer Seed
+seedFuzzer =
+    Fuzz.custom Random.independentSeed Shrink.noShrink
