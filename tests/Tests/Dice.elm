@@ -71,6 +71,20 @@ suite =
                 in
                 Helpers.allPass expectations
             )
+        , fuzzRolls "held dice are sorted after rolled dice"
+            (\seed pool ->
+                let
+                    rolled =
+                        Dice.roll seed pool
+
+                    combined =
+                        Dice.combine [ pool, rolled ] |> Dice.toList
+
+                    expected =
+                        (rolled |> Dice.toList) ++ (pool |> Dice.toList)
+                in
+                Expect.equal expected combined
+            )
         , describe
             "string representation"
             [ test "single type"
