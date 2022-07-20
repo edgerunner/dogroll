@@ -7,7 +7,7 @@ import Die
 import Die.Size
 import Expect exposing (Expectation)
 import Random exposing (Seed)
-import Test exposing (Test, describe, fuzz, test)
+import Test exposing (Test, describe, fuzz, fuzz2, test)
 import Tests.Helpers as Helpers
 
 
@@ -38,10 +38,7 @@ suite =
             )
         , fuzz Helpers.diceFuzzer
             "rolling all dice at once"
-            (Dice.generator
-                >> Random.step
-                >> (|>) seed
-                >> Tuple.first
+            (Dice.roll seed
                 >> Dice.toList
                 >> List.map
                     (\die ->
@@ -51,26 +48,26 @@ suite =
                     )
                 >> Helpers.allPass
             )
-        , fuzz Helpers.combinedDiceFuzzer
+        , fuzz2 Helpers.seedFuzzer
+            Helpers.combinedDiceFuzzer
             "are always sorted"
-            (\pool ->
+            (\seed_ pool ->
                 let
-                    faces =
-                        Dice.faces pool
+                    larger =
+                        pool |> Dice.roll seed_ |> Dice.toList
 
-                    sorted =
-                        faces |> List.sort |> List.reverse
+                    smaller =
+                        larger |> List.drop 1
 
-                    dieByDie =
-                        pool
-                            |> Dice.toList
-                            |> List.filterMap Die.face
+                    atMost lg sm =
+                        Expect.atMost
+                            (lg |> Die.face |> Maybe.withDefault 0)
+                            (sm |> Die.face |> Maybe.withDefault 11)
+
+                    expectations =
+                        List.map2 atMost larger smaller
                 in
-                faces
-                    |> Expect.all
-                        [ Expect.equalLists sorted
-                        , Expect.equalLists dieByDie
-                        ]
+                Helpers.allPass expectations
             )
         , describe
             "string representation"
