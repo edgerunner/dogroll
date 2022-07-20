@@ -50,10 +50,7 @@ updateFromFrontend _ _ msg model =
             let
                 _ =
                     Setup.toDice sizes
-                        |> Dice.generator
-                        |> Random.step
-                        |> (|>) model.seed
-                        |> Tuple.first
+                        |> Dice.roll model.seed
                         |> Dice.faces
                         |> Debug.log "Rolled"
             in

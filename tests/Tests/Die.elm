@@ -24,10 +24,7 @@ suite =
             )
         , fuzz Helpers.dieFuzzer
             "rolling"
-            (Die.generator
-                >> Random.step
-                >> (|>) seed
-                >> Tuple.first
+            (Die.roll seed
                 >> (\die ->
                         Die.face die
                             |> Maybe.withDefault 0

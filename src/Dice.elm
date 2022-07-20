@@ -1,9 +1,9 @@
-module Dice exposing (Dice, combine, faces, generator, init, sizes, toList, toString)
+module Dice exposing (Dice, combine, faces, generator, init, roll, sizes, toList, toString)
 
 import Dice.Pips as Pips exposing (Pips)
 import Die exposing (Die)
 import Die.Size exposing (Size(..))
-import Random exposing (Generator)
+import Random exposing (Generator, Seed)
 
 
 type Dice
@@ -42,6 +42,14 @@ generator =
         >> List.map Die.generator
         >> List.foldl (Random.map2 (::)) (Random.constant [])
         >> Random.map makeDice
+
+
+roll : Seed -> Dice -> Dice
+roll seed =
+    generator
+        >> Random.step
+        >> (|>) seed
+        >> Tuple.first
 
 
 makeDice : List Die -> Dice

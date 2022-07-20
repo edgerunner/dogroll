@@ -1,7 +1,7 @@
-module Die exposing (Die, face, generator, init, size, toString)
+module Die exposing (Die, face, generator, init, roll, size, toString)
 
 import Die.Size as Size exposing (Size(..))
-import Random exposing (Generator)
+import Random exposing (Generator, Seed)
 
 
 type Die
@@ -31,6 +31,14 @@ generator die =
         |> Size.toInt
         |> Random.int 1
         |> Random.map (die |> size |> Rolled)
+
+
+roll : Seed -> Die -> Die
+roll seed =
+    generator
+        >> Random.step
+        >> (|>) seed
+        >> Tuple.first
 
 
 face : Die -> Maybe Int
