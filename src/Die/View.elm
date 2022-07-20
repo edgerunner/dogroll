@@ -27,7 +27,7 @@ for : Style -> Die -> Html Click
 for style_ die =
     generic style_
         (die |> Die.size)
-        (die |> Die.face |> String.fromInt)
+        (die |> Die.face |> Maybe.map String.fromInt |> Maybe.withDefault " ")
 
 
 type Style

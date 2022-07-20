@@ -4,7 +4,7 @@ import Die
 import Die.Size exposing (Size(..))
 import Expect
 import Random exposing (Seed)
-import Test exposing (Test, describe, fuzz, test)
+import Test exposing (Test, describe, fuzz, fuzz2, test)
 import Tests.Helpers as Helpers
 
 
@@ -19,27 +19,41 @@ suite =
         [ test "reporting die size"
             (\() ->
                 Die.Size.all
-                    |> List.map (\size -> Die.init size seed |> Die.size)
+                    |> List.map (\size -> Die.init size |> Die.size)
                     |> Expect.equal [ D10, D8, D6, D4 ]
             )
         , fuzz Helpers.dieFuzzer
             "rolling"
-            (Die.roll
+            (Die.roll seed
                 >> (\die ->
                         Die.face die
+                            |> Maybe.withDefault 0
                             |> Helpers.between1and (Die.size die |> Die.Size.toInt)
                    )
             )
-        , fuzz Helpers.dieFuzzer
-            "starting with a rolled face"
-            (\die ->
-                Die.face die
-                    |> Helpers.between1and (Die.size die |> Die.Size.toInt)
+        , fuzz2 Helpers.seedFuzzer
+            Helpers.dieFuzzer
+            "not rolling twice"
+            (\seed_ die ->
+                let
+                    rolledOnce =
+                        Die.roll seed_ die
+
+                    anotherSeed =
+                        Random.step Random.independentSeed seed_ |> Tuple.first
+
+                    rolledTwice =
+                        Die.roll anotherSeed rolledOnce
+                in
+                Expect.equal (Die.face rolledOnce) (Die.face rolledTwice)
             )
+        , fuzz Helpers.dieFuzzer
+            "starting without a rolled face"
+            (Die.face >> Expect.equal Nothing)
         , test "string representation"
             (\() ->
                 Die.Size.all
-                    |> List.map (\size -> Die.init size seed |> Die.toString)
+                    |> List.map (\size -> Die.init size |> Die.toString)
                     |> Expect.equal [ "d10", "d8", "d6", "d4" ]
             )
         ]

@@ -1,47 +1,58 @@
-module Die exposing (Die, face, init, roll, size, toString)
+module Die exposing (Die, face, generator, init, roll, size, toString)
 
 import Die.Size as Size exposing (Size(..))
-import Random exposing (Seed)
+import Random exposing (Generator, Seed)
 
 
 type Die
-    = Die Size Seed
+    = Held Size
+    | Rolled Size Int
 
 
-init : Size -> Seed -> Die
-init size_ =
-    Die size_
+init : Size -> Die
+init =
+    Held
 
 
 size : Die -> Size
-size (Die size_ _) =
-    size_
+size die =
+    case die of
+        Held size_ ->
+            size_
+
+        Rolled size_ _ ->
+            size_
 
 
-seed : Die -> Seed
-seed (Die _ seed_) =
-    seed_
+generator : Die -> Generator Die
+generator die =
+    case die of
+        Held size_ ->
+            size_
+                |> Size.toInt
+                |> Random.int 1
+                |> Random.map (die |> size |> Rolled)
+
+        Rolled _ _ ->
+            Random.constant die
 
 
-next : Die -> ( Int, Seed )
-next die =
-    size die
-        |> Size.toInt
-        |> Random.int 1
-        |> Random.step
-        |> (|>) (seed die)
+roll : Seed -> Die -> Die
+roll seed =
+    generator
+        >> Random.step
+        >> (|>) seed
+        >> Tuple.first
 
 
-roll : Die -> Die
-roll die =
-    next die
-        |> Tuple.second
-        |> Die (size die)
+face : Die -> Maybe Int
+face die =
+    case die of
+        Held _ ->
+            Nothing
 
-
-face : Die -> Int
-face =
-    next >> Tuple.first
+        Rolled _ face_ ->
+            Just face_
 
 
 toString : Die -> String

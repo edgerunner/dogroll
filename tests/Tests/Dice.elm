@@ -1,19 +1,19 @@
 module Tests.Dice exposing (suite)
 
-import Dice
-import Dice.Pips
+import Dice exposing (Dice)
+import Dice.Pips as Pips
 import Dice.Type exposing (DemonicInfluence(..), Gun(..), Quality(..), Stat(..), Type(..))
 import Die
 import Die.Size
 import Expect exposing (Expectation)
 import Random exposing (Seed)
-import Test exposing (Test, describe, fuzz, test)
+import Test exposing (Test, describe, test)
 import Tests.Helpers as Helpers
 
 
-seed : Seed
-seed =
-    Random.initialSeed 42
+fuzzRolls : String -> (Seed -> Dice -> Expectation) -> Test
+fuzzRolls =
+    Test.fuzz2 Helpers.seedFuzzer Helpers.combinedDiceFuzzer
 
 
 suite : Test
@@ -21,73 +21,141 @@ suite =
     describe "Dice"
         [ test "initializing multiple dice"
             (\_ ->
-                Dice.init seed 4 Die.Size.D6
-                    |> Dice.faces
-                    |> List.map (Helpers.between1and 6)
-                    |> Helpers.allPass
+                Dice.init Die.Size.D6 Pips.four
+                    |> Dice.toList
+                    |> Expect.equalLists (List.repeat 4 (Die.init Die.Size.D6))
             )
         , test "combining dice"
             (\_ ->
                 Dice.combine
-                    [ Dice.init seed 2 Die.Size.D8
-                    , Dice.init seed 1 Die.Size.D4
+                    [ Dice.init Die.Size.D8 Pips.two
+                    , Dice.init Die.Size.D4 Pips.one
                     ]
-                    |> Dice.sizes
-                    |> Die.Size.count
-                    |> Expect.equal { d4 = 1, d6 = 0, d8 = 2, d10 = 0 }
-            )
-        , fuzz Helpers.diceFuzzer
-            "rolling all dice at once"
-            (Dice.roll
-                >> Dice.toList
-                >> List.map
-                    (\die ->
-                        Helpers.between1and
-                            (Die.size die |> Die.Size.toInt)
-                            (Die.face die)
-                    )
-                >> Helpers.allPass
-            )
-        , fuzz Helpers.combinedDiceFuzzer
-            "are always sorted"
-            (\pool ->
-                let
-                    faces =
-                        Dice.faces pool
-
-                    sorted =
-                        faces |> List.sort |> List.reverse
-
-                    dieByDie =
-                        pool
-                            |> Dice.toList
-                            |> List.map Die.face
-                in
-                faces
-                    |> Expect.all
-                        [ Expect.equalLists sorted
-                        , Expect.equalLists dieByDie
+                    |> Dice.toList
+                    |> Expect.equalLists
+                        [ Die.init Die.Size.D8
+                        , Die.init Die.Size.D8
+                        , Die.init Die.Size.D4
                         ]
+            )
+        , fuzzRolls
+            "rolling all dice at once"
+            (\seed ->
+                Dice.roll seed
+                    >> Dice.toList
+                    >> List.map
+                        (\die ->
+                            Helpers.between1and
+                                (Die.size die |> Die.Size.toInt)
+                                (Die.face die |> Maybe.withDefault 0)
+                        )
+                    >> Helpers.allPass
+            )
+        , fuzzRolls
+            "are always sorted"
+            (\seed pool ->
+                let
+                    larger =
+                        pool |> Dice.roll seed |> Dice.toList
+
+                    smaller =
+                        larger |> List.drop 1
+
+                    atMost lg sm =
+                        Expect.atMost
+                            (lg |> Die.face |> Maybe.withDefault 0)
+                            (sm |> Die.face |> Maybe.withDefault 11)
+
+                    expectations =
+                        List.map2 atMost larger smaller
+                in
+                Helpers.allPass expectations
+            )
+        , fuzzRolls "held dice are sorted after rolled dice"
+            (\seed pool ->
+                let
+                    rolled =
+                        Dice.roll seed pool
+
+                    combined =
+                        Dice.combine [ pool, rolled ] |> Dice.toList
+
+                    expected =
+                        (rolled |> Dice.toList) ++ (pool |> Dice.toList)
+                in
+                Expect.equal expected combined
+            )
+        , fuzzRolls "held dice are sorted by decreasing size"
+            (\_ pool ->
+                let
+                    larger =
+                        pool |> Dice.toList
+
+                    smaller =
+                        larger |> List.drop 1
+
+                    atMost lg sm =
+                        Expect.atMost
+                            (lg |> Die.size |> Die.Size.toInt)
+                            (sm |> Die.size |> Die.Size.toInt)
+
+                    expectations =
+                        List.map2 atMost larger smaller
+                in
+                Helpers.allPass expectations
+            )
+        , fuzzRolls "equal-face rolled dice are sorted by decreasing size"
+            (\seed pool ->
+                let
+                    larger =
+                        pool
+                            |> Dice.roll seed
+                            |> Dice.toList
+                            |> List.map
+                                (\die ->
+                                    ( Die.face die |> Maybe.withDefault 0
+                                    , Die.size die |> Die.Size.toInt
+                                    )
+                                )
+
+                    smaller =
+                        larger |> List.drop 1
+
+                    atMost ( largerFace, largerSize ) ( smallerFace, smallerSize ) =
+                        if largerFace == smallerFace then
+                            Expect.atMost
+                                largerSize
+                                smallerSize
+
+                        else
+                            Expect.atMost
+                                largerFace
+                                smallerFace
+
+                    expectations =
+                        List.map2 atMost larger smaller
+                in
+                Helpers.allPass expectations
             )
         , describe
             "string representation"
             [ test "single type"
                 (\_ ->
-                    Dice.init seed 2 Die.Size.D4
+                    Dice.init Die.Size.D4 Pips.two
                         |> Dice.toString
                         |> Expect.equal "2d4"
                 )
             , test "one of single type"
                 (\_ ->
-                    Dice.init seed 1 Die.Size.D10
+                    Dice.init Die.Size.D10 Pips.one
                         |> Dice.toString
                         |> Expect.equal "1d10"
                 )
             , test "multiple types"
                 (\_ ->
                     Dice.combine
-                        [ Dice.init seed 1 Die.Size.D4
-                        , Dice.init seed 2 Die.Size.D8
+                        [ Dice.init Die.Size.D4 Pips.one
+                        , Dice.init Die.Size.D8 Pips.two
                         ]
                         |> Dice.toString
                         |> Expect.equal "2d8+1d4"
@@ -96,17 +164,17 @@ suite =
         , describe "Type"
             [ test "Stat dice"
                 (\_ ->
-                    Stat Acuity Dice.Pips.two
+                    Stat Acuity Pips.two
                         |> expectDiceFromType "4d6"
                 )
             , test "Trait dice"
                 (\_ ->
-                    Trait "I'm a good shot" Die.Size.D8 Dice.Pips.two
+                    Trait "I'm a good shot" Die.Size.D8 Pips.two
                         |> expectDiceFromType "3d8"
                 )
             , test "Relationship dice"
                 (\_ ->
-                    Relationship "My riding instructor" Die.Size.D4 Dice.Pips.zero
+                    Relationship "My riding instructor" Die.Size.D4 Pips.zero
                         |> expectDiceFromType "1d4"
                 )
             , [ ( "Normal thing", Belonging "A horse" Normal NotGun, "1d6" )
@@ -149,6 +217,6 @@ suite =
 
 expectDiceFromType : String -> Type -> Expectation
 expectDiceFromType name =
-    Dice.Type.toDice seed
+    Dice.Type.toDice
         >> Dice.toString
         >> Expect.equal name

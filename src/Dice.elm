@@ -1,26 +1,18 @@
-module Dice exposing (Dice, combine, faces, init, roll, sizes, toList, toString)
+module Dice exposing (Dice, combine, faces, generator, init, roll, sizes, toList, toString)
 
+import Dice.Pips as Pips exposing (Pips)
 import Die exposing (Die)
 import Die.Size exposing (Size(..))
-import Random exposing (Seed)
+import Random exposing (Generator, Seed)
 
 
 type Dice
     = Dice (List Die)
 
 
-init : Seed -> Int -> Size -> Dice
-init seed count size =
-    let
-        dieListGen =
-            Random.independentSeed
-                |> Random.map (Die.init size)
-                |> Random.list count
-    in
-    seed
-        |> Random.step dieListGen
-        |> Tuple.first
-        |> makeDice
+init : Size -> Pips -> Dice
+init size =
+    Pips.repeat (Die.init size) >> Dice
 
 
 toList : Dice -> List Die
@@ -31,7 +23,7 @@ toList (Dice list) =
 faces : Dice -> List Int
 faces =
     toList
-        >> List.map Die.face
+        >> List.filterMap Die.face
 
 
 combine : List Dice -> Dice
@@ -44,14 +36,35 @@ sizes =
     toList >> List.map Die.size
 
 
-roll : Dice -> Dice
-roll =
-    toList >> List.map Die.roll >> makeDice
+generator : Dice -> Generator Dice
+generator =
+    toList
+        >> List.map Die.generator
+        >> List.foldl (Random.map2 (::)) (Random.constant [])
+        >> Random.map makeDice
+
+
+roll : Seed -> Dice -> Dice
+roll seed =
+    generator
+        >> Random.step
+        >> (|>) seed
+        >> Tuple.first
 
 
 makeDice : List Die -> Dice
 makeDice =
-    List.sortBy (Die.face >> negate) >> Dice
+    List.sortBy
+        (\die ->
+            ( Die.face die
+                |> Maybe.withDefault 0
+                |> negate
+            , Die.size die
+                |> Die.Size.toInt
+                |> negate
+            )
+        )
+        >> Dice
 
 
 toString : Dice -> String

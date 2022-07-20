@@ -1,55 +1,70 @@
-module Dice.Pips exposing (..)
+module Dice.Pips exposing (Pips, add, decrement, five, four, fromInt, increment, one, repeat, three, toInt, toList, two, zero)
 
 
-type alias Pips =
-    List ()
+type Pips
+    = Pips (List ())
 
 
 zero : Pips
 zero =
-    []
+    Pips []
 
 
 one : Pips
 one =
-    [ () ]
+    Pips [ () ]
 
 
 two : Pips
 two =
-    [ (), () ]
+    Pips [ (), () ]
 
 
 three : Pips
 three =
-    [ (), (), () ]
+    Pips [ (), (), () ]
 
 
 four : Pips
 four =
-    [ (), (), (), () ]
+    Pips [ (), (), (), () ]
 
 
 five : Pips
 five =
-    [ (), (), (), (), () ]
+    Pips [ (), (), (), (), () ]
 
 
 increment : Pips -> Pips
-increment =
-    (::) ()
+increment (Pips pips) =
+    () :: pips |> Pips
 
 
 decrement : Pips -> Pips
-decrement =
-    List.drop 1
+decrement (Pips pips) =
+    List.drop 1 pips |> Pips
 
 
 add : Pips -> Pips -> Pips
-add =
-    (++)
+add (Pips p1) (Pips p2) =
+    (p1 ++ p2) |> Pips
 
 
 toInt : Pips -> Int
-toInt =
-    List.length
+toInt (Pips pips) =
+    List.length pips
+
+
+toList : Pips -> List ()
+toList (Pips pips) =
+    pips
+
+
+fromInt : Int -> Pips
+fromInt =
+    List.repeat >> (|>) () >> Pips
+
+
+repeat : a -> Pips -> List a
+repeat a =
+    toList >> List.map (always a)

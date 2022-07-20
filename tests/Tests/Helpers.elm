@@ -1,11 +1,13 @@
-module Tests.Helpers exposing (allPass, between1and, combinedDiceFuzzer, diceFuzzer, dieFuzzer, passOrFail)
+module Tests.Helpers exposing (allPass, between1and, combinedDiceFuzzer, diceFuzzer, dieFuzzer, passOrFail, seedFuzzer)
 
 import Dice exposing (Dice)
+import Dice.Pips exposing (Pips)
 import Die exposing (Die)
 import Die.Size exposing (Size(..))
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
 import Random exposing (Seed)
+import Shrink
 
 
 passOrFail : Expectation -> Expectation -> Expectation
@@ -39,29 +41,37 @@ allPass =
     List.foldl passOrFail Expect.pass
 
 
-seedFuzzer : Fuzzer Seed
-seedFuzzer =
-    Fuzz.map Random.initialSeed Fuzz.int
-
-
 dieFuzzer : Fuzzer Die
 dieFuzzer =
-    Fuzz.map2
+    Fuzz.map
         Die.init
         (Fuzz.oneOf (List.map Fuzz.constant Die.Size.all))
-        seedFuzzer
+
+
+pipsFuzzer : Int -> Fuzzer Pips
+pipsFuzzer =
+    Fuzz.intRange 1 >> Fuzz.map Dice.Pips.fromInt
 
 
 diceFuzzer : Fuzzer Dice
 diceFuzzer =
-    Fuzz.map3
+    Fuzz.map2
         Dice.init
-        seedFuzzer
-        (Fuzz.intRange 1 8)
-        (Fuzz.oneOf (List.map Fuzz.constant Die.Size.all))
+        sizeFuzzer
+        (pipsFuzzer 8)
+
+
+sizeFuzzer : Fuzzer Size
+sizeFuzzer =
+    Fuzz.oneOf (List.map Fuzz.constant Die.Size.all)
 
 
 combinedDiceFuzzer : Fuzzer Dice
 combinedDiceFuzzer =
     Fuzz.list diceFuzzer
         |> Fuzz.map (List.take 4 >> Dice.combine)
+
+
+seedFuzzer : Fuzzer Seed
+seedFuzzer =
+    Fuzz.custom Random.independentSeed Shrink.noShrink
