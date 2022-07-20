@@ -13,7 +13,7 @@ import Tests.Helpers as Helpers
 
 fuzzRolls : String -> (Seed -> Dice -> Expectation) -> Test
 fuzzRolls =
-    Test.fuzz2 Helpers.seedFuzzer Helpers.diceFuzzer
+    Test.fuzz2 Helpers.seedFuzzer Helpers.combinedDiceFuzzer
 
 
 suite : Test
@@ -84,6 +84,25 @@ suite =
                         (rolled |> Dice.toList) ++ (pool |> Dice.toList)
                 in
                 Expect.equal expected combined
+            )
+        , fuzzRolls "held dice are sorted by decreasing size"
+            (\_ pool ->
+                let
+                    larger =
+                        pool |> Dice.toList
+
+                    smaller =
+                        larger |> List.drop 1
+
+                    atMost lg sm =
+                        Expect.atMost
+                            (lg |> Die.size |> Die.Size.toInt)
+                            (sm |> Die.size |> Die.Size.toInt)
+
+                    expectations =
+                        List.map2 atMost larger smaller
+                in
+                Helpers.allPass expectations
             )
         , describe
             "string representation"

@@ -54,7 +54,13 @@ roll seed =
 
 makeDice : List Die -> Dice
 makeDice =
-    List.sortBy (Die.face >> Maybe.withDefault 0 >> negate) >> Dice
+    List.sortBy
+        (\die ->
+            Die.face die
+                |> Maybe.withDefault (Die.size die |> Die.Size.toInt |> (+) -100)
+                |> negate
+        )
+        >> Dice
 
 
 toString : Dice -> String
