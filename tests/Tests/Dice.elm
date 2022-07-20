@@ -22,9 +22,8 @@ suite =
         [ test "initializing multiple dice"
             (\_ ->
                 Dice.init Die.Size.D6 Pips.four
-                    |> Dice.faces
-                    |> List.map (Helpers.between1and 6)
-                    |> Helpers.allPass
+                    |> Dice.toList
+                    |> Expect.equalLists (List.repeat 4 (Die.init Die.Size.D6))
             )
         , test "combining dice"
             (\_ ->
@@ -32,9 +31,12 @@ suite =
                     [ Dice.init Die.Size.D8 Pips.two
                     , Dice.init Die.Size.D4 Pips.one
                     ]
-                    |> Dice.sizes
-                    |> Die.Size.count
-                    |> Expect.equal { d4 = 1, d6 = 0, d8 = 2, d10 = 0 }
+                    |> Dice.toList
+                    |> Expect.equalLists
+                        [ Die.init Die.Size.D8
+                        , Die.init Die.Size.D8
+                        , Die.init Die.Size.D4
+                        ]
             )
         , fuzzRolls
             "rolling all dice at once"
