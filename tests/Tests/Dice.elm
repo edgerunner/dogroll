@@ -104,6 +104,39 @@ suite =
                 in
                 Helpers.allPass expectations
             )
+        , fuzzRolls "equal-face rolled dice are sorted by decreasing size"
+            (\seed pool ->
+                let
+                    larger =
+                        pool
+                            |> Dice.roll seed
+                            |> Dice.toList
+                            |> List.map
+                                (\die ->
+                                    ( Die.face die |> Maybe.withDefault 0
+                                    , Die.size die |> Die.Size.toInt
+                                    )
+                                )
+
+                    smaller =
+                        larger |> List.drop 1
+
+                    atMost ( largerFace, largerSize ) ( smallerFace, smallerSize ) =
+                        if largerFace == smallerFace then
+                            Expect.atMost
+                                largerSize
+                                smallerSize
+
+                        else
+                            Expect.atMost
+                                largerFace
+                                smallerFace
+
+                    expectations =
+                        List.map2 atMost larger smaller
+                in
+                Helpers.allPass expectations
+            )
         , describe
             "string representation"
             [ test "single type"

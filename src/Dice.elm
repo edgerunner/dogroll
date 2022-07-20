@@ -56,9 +56,13 @@ makeDice : List Die -> Dice
 makeDice =
     List.sortBy
         (\die ->
-            Die.face die
-                |> Maybe.withDefault (Die.size die |> Die.Size.toInt |> (+) -100)
+            ( Die.face die
+                |> Maybe.withDefault 0
                 |> negate
+            , Die.size die
+                |> Die.Size.toInt
+                |> negate
+            )
         )
         >> Dice
 
