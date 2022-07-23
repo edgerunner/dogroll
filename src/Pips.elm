@@ -1,4 +1,4 @@
-module Dice.Pips exposing (Pips, add, decrement, five, four, fromInt, increment, one, repeat, three, toInt, toList, two, zero)
+module Pips exposing (Pips, add, decrement, five, four, fromInt, increment, one, repeat, three, toInt, toList, two, zero)
 
 
 type Pips

@@ -2,8 +2,8 @@ module Types exposing (..)
 
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
-import Dice.Pips
 import Die.Size
+import Pips
 import Random exposing (Seed)
 import Setup
 import Url exposing (Url)
@@ -29,7 +29,7 @@ type FrontendMsg
 
 
 type ToBackend
-    = UserWantsToRollDice (Die.Size.Sizes Dice.Pips.Pips)
+    = UserWantsToRollDice (Die.Size.Sizes Pips.Pips)
 
 
 type BackendMsg

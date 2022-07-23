@@ -1,11 +1,11 @@
 module Tests.Dice exposing (suite)
 
 import Dice exposing (Dice)
-import Dice.Pips as Pips
 import Dice.Type exposing (DemonicInfluence(..), Gun(..), Quality(..), Stat(..), Type(..))
 import Die
 import Die.Size
 import Expect exposing (Expectation)
+import Pips
 import Random exposing (Seed)
 import Test exposing (Test, describe, test)
 import Tests.Helpers as Helpers

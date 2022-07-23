@@ -1,11 +1,11 @@
 module Setup exposing (Config, Model, decrement, empty, increment, toDice, view)
 
 import Dice exposing (Dice)
-import Dice.Pips exposing (Pips)
 import Die.Size exposing (Size(..), Sizes)
 import Die.View
 import Html exposing (Html)
 import Html.Attributes as Attr
+import Pips exposing (Pips)
 import UI
 
 
@@ -22,10 +22,10 @@ type alias Config msg =
 
 empty : Model
 empty =
-    { d4 = Dice.Pips.zero
-    , d6 = Dice.Pips.zero
-    , d8 = Dice.Pips.zero
-    , d10 = Dice.Pips.zero
+    { d4 = Pips.zero
+    , d6 = Pips.zero
+    , d8 = Pips.zero
+    , d10 = Pips.zero
     }
 
 
@@ -54,7 +54,7 @@ takenDiceView model =
 
 takenDiceStack : Size -> Pips -> Html Size
 takenDiceStack size =
-    Dice.Pips.toList
+    Pips.toList
         >> (Die.View.generic Die.View.regular size " "
                 |> always
                 |> List.map
@@ -78,32 +78,32 @@ increment : Size -> Model -> Model
 increment size model =
     case size of
         D4 ->
-            { model | d4 = Dice.Pips.increment model.d4 }
+            { model | d4 = Pips.increment model.d4 }
 
         D6 ->
-            { model | d6 = Dice.Pips.increment model.d6 }
+            { model | d6 = Pips.increment model.d6 }
 
         D8 ->
-            { model | d8 = Dice.Pips.increment model.d8 }
+            { model | d8 = Pips.increment model.d8 }
 
         D10 ->
-            { model | d10 = Dice.Pips.increment model.d10 }
+            { model | d10 = Pips.increment model.d10 }
 
 
 decrement : Size -> Model -> Model
 decrement size model =
     case size of
         D4 ->
-            { model | d4 = Dice.Pips.decrement model.d4 }
+            { model | d4 = Pips.decrement model.d4 }
 
         D6 ->
-            { model | d6 = Dice.Pips.decrement model.d6 }
+            { model | d6 = Pips.decrement model.d6 }
 
         D8 ->
-            { model | d8 = Dice.Pips.decrement model.d8 }
+            { model | d8 = Pips.decrement model.d8 }
 
         D10 ->
-            { model | d10 = Dice.Pips.decrement model.d10 }
+            { model | d10 = Pips.decrement model.d10 }
 
 
 toDice : Model -> Dice

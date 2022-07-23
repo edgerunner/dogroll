@@ -13,8 +13,8 @@ module Dice.Type exposing
     )
 
 import Dice exposing (Dice)
-import Dice.Pips as Pips exposing (Pips)
 import Die.Size exposing (Size(..))
+import Pips exposing (Pips)
 
 
 type Type

@@ -1,11 +1,11 @@
 module Tests.Helpers exposing (allPass, between1and, combinedDiceFuzzer, diceFuzzer, dieFuzzer, passOrFail, seedFuzzer)
 
 import Dice exposing (Dice)
-import Dice.Pips exposing (Pips)
 import Die exposing (Die)
 import Die.Size exposing (Size(..))
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
+import Pips exposing (Pips)
 import Random exposing (Seed)
 import Shrink
 
@@ -50,7 +50,7 @@ dieFuzzer =
 
 pipsFuzzer : Int -> Fuzzer Pips
 pipsFuzzer =
-    Fuzz.intRange 1 >> Fuzz.map Dice.Pips.fromInt
+    Fuzz.intRange 1 >> Fuzz.map Pips.fromInt
 
 
 diceFuzzer : Fuzzer Dice

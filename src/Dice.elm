@@ -1,8 +1,8 @@
 module Dice exposing (Dice, combine, faces, generator, init, roll, sizes, toList, toString)
 
-import Dice.Pips as Pips exposing (Pips)
 import Die exposing (Die)
 import Die.Size exposing (Size(..))
+import Pips exposing (Pips)
 import Random exposing (Generator, Seed)
 
 
