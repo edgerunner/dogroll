@@ -1,4 +1,4 @@
-module Dice exposing (Dice, add, combine, drop, empty, faces, generator, has, init, roll, sizes, toList, toString)
+module Dice exposing (Dice, add, allRolled, combine, drop, empty, faces, generator, has, init, roll, sizes, toList, toString)
 
 import Die exposing (Die)
 import Die.Size exposing (Size(..))
@@ -123,3 +123,15 @@ has die =
 empty : Dice
 empty =
     Dice []
+
+
+allRolled : Dice -> Bool
+allRolled =
+    toList
+        >> List.foldl
+            (Die.face
+                >> Maybe.map (always True)
+                >> Maybe.withDefault False
+                >> (&&)
+            )
+            True

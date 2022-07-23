@@ -22,7 +22,11 @@ start =
 
 takeDice : Side -> Dice -> Conflict -> Result Error Conflict
 takeDice side dice =
-    push side (TookDice dice)
+    if Dice.allRolled dice then
+        push side (TookDice dice)
+
+    else
+        Err DiceNotRolled |> always
 
 
 

@@ -13,7 +13,19 @@ suite : Test
 suite =
     describe "Conflict"
         [ test "only rolled dice are accepted" onlyRolledDice
+        , test "unrolled dice returns an error" unrolledError
         ]
+
+
+unrolledError : () -> Expectation
+unrolledError () =
+    let
+        dice =
+            Dice.init D6 Pips.four
+    in
+    Conflict.start
+        |> Result.andThen (Conflict.takeDice Conflict.proponent dice)
+        |> Expect.err
 
 
 onlyRolledDice : () -> Expectation
