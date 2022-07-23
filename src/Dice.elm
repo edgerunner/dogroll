@@ -1,4 +1,4 @@
-module Dice exposing (Dice, combine, faces, generator, init, roll, sizes, toList, toString)
+module Dice exposing (Dice, add, combine, drop, empty, faces, generator, has, init, roll, sizes, toList, toString)
 
 import Die exposing (Die)
 import Die.Size exposing (Size(..))
@@ -90,3 +90,36 @@ toString =
                     ++ Die.Size.toString size
     in
     countSizes >> sizesToString >> String.join "+"
+
+
+drop : Die -> Dice -> Dice
+drop die =
+    let
+        drop_die list =
+            case list of
+                [] ->
+                    []
+
+                d :: rest ->
+                    if d == die then
+                        rest
+
+                    else
+                        d :: drop_die rest
+    in
+    toList >> drop_die >> makeDice
+
+
+add : Die -> Dice -> Dice
+add die =
+    toList >> (::) die >> makeDice
+
+
+has : Die -> Dice -> Bool
+has die =
+    toList >> List.member die
+
+
+empty : Dice
+empty =
+    Dice []
