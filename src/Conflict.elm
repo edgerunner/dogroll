@@ -1,6 +1,7 @@
-module Conflict exposing (Conflict, Error, Side, opponent, proponent, start, takeDice)
+module Conflict exposing (Conflict, Error, Side, opponent, play, proponent, start, takeDice)
 
 import Dice exposing (Dice)
+import Die exposing (Die)
 
 
 type Conflict
@@ -9,6 +10,7 @@ type Conflict
 
 type Event
     = TookDice Dice
+    | Played Die
 
 
 
@@ -27,6 +29,11 @@ takeDice side dice =
 
     else
         Err DiceNotRolled |> always
+
+
+play : Side -> Die -> Conflict -> Result Error Conflict
+play side die =
+    push side (Played die)
 
 
 

@@ -1,4 +1,4 @@
-module Die exposing (Die, face, generator, init, roll, size, toString)
+module Die exposing (Die, cheat, face, generator, init, roll, size, toString)
 
 import Die.Size as Size exposing (Size(..))
 import Random exposing (Generator, Seed)
@@ -12,6 +12,11 @@ type Die
 init : Size -> Die
 init =
     Held
+
+
+cheat : Size -> Int -> Die
+cheat =
+    Rolled
 
 
 size : Die -> Size
