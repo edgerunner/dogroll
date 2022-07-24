@@ -1,4 +1,4 @@
-module Conflict exposing (Conflict, Error, Side, opponent, play, proponent, start, takeDice)
+module Conflict exposing (Conflict, Error, Side, State, opponent, play, proponent, start, state, takeDice)
 
 import Dice exposing (Dice)
 import Die exposing (Die)
@@ -33,7 +33,24 @@ takeDice side dice =
 
 play : Side -> Die -> Conflict -> Result Error Conflict
 play side die =
-    push side (Played die)
+    check
+        (\current ->
+            case side of
+                Proponent ->
+                    if Dice.has die current.proponent.pool then
+                        Ok ()
+
+                    else
+                        Err DieNotInPool
+
+                Opponent ->
+                    if Dice.has die current.opponent.pool then
+                        Ok ()
+
+                    else
+                        Err DieNotInPool
+        )
+        >> Result.andThen (push side (Played die))
 
 
 
@@ -46,6 +63,11 @@ push side event (Conflict events) =
         :: events
         |> Conflict
         |> Ok
+
+
+check : (State -> Result Error any) -> Conflict -> Result Error Conflict
+check predicate conflict =
+    conflict |> state |> predicate |> Result.map (always conflict)
 
 
 
@@ -73,3 +95,46 @@ opponent =
 
 type Error
     = DiceNotRolled
+    | DieNotInPool
+
+
+
+-- STATE
+
+
+type alias State =
+    { proponent : Player
+    , opponent : Player
+    }
+
+
+type alias Player =
+    { pool : Dice }
+
+
+state : Conflict -> State
+state (Conflict events) =
+    List.foldr handleEvent initialState events
+
+
+handleEvent : ( Side, Event ) -> State -> State
+handleEvent sideEvent current =
+    case sideEvent of
+        ( Proponent, TookDice dice ) ->
+            { current | proponent = { pool = dice } }
+
+        ( Opponent, TookDice dice ) ->
+            { current | opponent = { pool = dice } }
+
+        ( Proponent, Played die ) ->
+            { current | proponent = { pool = Dice.drop die current.proponent.pool } }
+
+        ( Opponent, Played die ) ->
+            { current | opponent = { pool = Dice.drop die current.opponent.pool } }
+
+
+initialState : State
+initialState =
+    { proponent = { pool = Dice.empty }
+    , opponent = { pool = Dice.empty }
+    }

@@ -19,8 +19,17 @@ suite =
             ]
         , describe "playing dice"
             [ test "dice from the correct side are accepted" playCorrectSide
+            , test "dice from the wrong side are rejected" playWrongSide
             ]
         ]
+
+
+playWrongSide : () -> Expectation
+playWrongSide () =
+    readiedConflict
+        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 3))
+        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D8 7))
+        |> Expect.err
 
 
 playCorrectSide : () -> Expectation
