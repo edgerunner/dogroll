@@ -27,8 +27,16 @@ suite =
             , test "player can't raise after playing one die" raiseAfterOneDie
             , test "player can't raise without playing dice" raiseAfterNoDice
             , test "other player can't raise at all" otherPlayerCantRaise
+            , test "other player can't even play dice" otherPlayerCantPlayDice
             ]
         ]
+
+
+otherPlayerCantPlayDice : () -> Expectation
+otherPlayerCantPlayDice () =
+    readiedConflict
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
+        |> Expect.err
 
 
 otherPlayerCantRaise : () -> Expectation

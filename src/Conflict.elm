@@ -40,6 +40,8 @@ play side die =
             >> Dice.has die
             >> toError DieNotInPool
         )
+        >> Result.andThen
+            (check (.go >> (==) side >> toError NotYourTurn))
         >> Result.andThen (push side (Played die))
 
 
