@@ -48,14 +48,11 @@ raise side =
     check
         (\current ->
             case current.raise of
-                PendingTwoDice ->
-                    Err RaiseWithTwoDice
-
-                PendingOneDie _ ->
-                    Err RaiseWithTwoDice
-
                 ReadyToRaise _ _ ->
                     Ok ()
+
+                _ ->
+                    Err RaiseWithTwoDice
         )
         >> Result.andThen (push side Raised)
 

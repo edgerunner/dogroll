@@ -25,8 +25,16 @@ suite =
         , describe "raising"
             [ test "player can raise after playing two dice" raiseAfterTwoDice
             , test "player can't raise after playing one die" raiseAfterOneDie
+            , test "player can't raise without playing dice" raiseAfterNoDice
             ]
         ]
+
+
+raiseAfterNoDice : () -> Expectation
+raiseAfterNoDice () =
+    readiedConflict
+        |> Result.andThen (Conflict.raise Conflict.proponent)
+        |> Expect.err
 
 
 raiseAfterOneDie : () -> Expectation
