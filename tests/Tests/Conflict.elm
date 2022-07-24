@@ -20,8 +20,17 @@ suite =
         , describe "playing dice"
             [ test "dice from the correct side are accepted" playCorrectSide
             , test "dice from the wrong side are rejected" playWrongSide
+            , test "totally unrelated dice are rejected" playUnrelatedDice
             ]
         ]
+
+
+playUnrelatedDice : () -> Expectation
+playUnrelatedDice () =
+    readiedConflict
+        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 3))
+        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D10 2))
+        |> Expect.err
 
 
 playWrongSide : () -> Expectation
