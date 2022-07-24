@@ -54,6 +54,8 @@ raise side =
                 _ ->
                     Err RaiseWithTwoDice
         )
+        >> Result.andThen
+            (check (.go >> (==) side >> toError NotYourTurn))
         >> Result.andThen (push side Raised)
 
 
@@ -110,6 +112,7 @@ type Error
     = DiceNotRolled
     | DieNotInPool
     | RaiseWithTwoDice
+    | NotYourTurn
 
 
 
@@ -120,6 +123,7 @@ type alias State =
     { proponent : Player
     , opponent : Player
     , raise : Raise
+    , go : Side
     }
 
 
@@ -178,6 +182,7 @@ initialState =
     { proponent = { pool = Dice.empty }
     , opponent = { pool = Dice.empty }
     , raise = PendingTwoDice
+    , go = proponent
     }
 
 
