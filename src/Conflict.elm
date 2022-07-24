@@ -35,20 +35,11 @@ play : Side -> Die -> Conflict -> Result Error Conflict
 play side die =
     check
         (\current ->
-            case side of
-                Proponent ->
-                    if Dice.has die current.proponent.pool then
-                        Ok ()
+            if Dice.has die (player side current |> .pool) then
+                Ok ()
 
-                    else
-                        Err DieNotInPool
-
-                Opponent ->
-                    if Dice.has die current.opponent.pool then
-                        Ok ()
-
-                    else
-                        Err DieNotInPool
+            else
+                Err DieNotInPool
         )
         >> Result.andThen (push side (Played die))
 
@@ -138,3 +129,13 @@ initialState =
     { proponent = { pool = Dice.empty }
     , opponent = { pool = Dice.empty }
     }
+
+
+player : Side -> State -> Player
+player side_ =
+    case side_ of
+        Proponent ->
+            .proponent
+
+        Opponent ->
+            .opponent
