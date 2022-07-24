@@ -23,8 +23,18 @@ suite =
             , test "totally unrelated dice are rejected" playUnrelatedDice
             ]
         , describe "raising"
-            [ test "player can raise after playing two dice" raiseAfterTwoDice ]
+            [ test "player can raise after playing two dice" raiseAfterTwoDice
+            , test "player can't raise after playing one die" raiseAfterOneDie
+            ]
         ]
+
+
+raiseAfterOneDie : () -> Expectation
+raiseAfterOneDie () =
+    readiedConflict
+        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 3))
+        |> Result.andThen (Conflict.raise Conflict.proponent)
+        |> Expect.err
 
 
 raiseAfterTwoDice : () -> Expectation

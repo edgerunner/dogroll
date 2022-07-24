@@ -45,7 +45,19 @@ play side die =
 
 raise : Side -> Conflict -> Result Error Conflict
 raise side =
-    push side Raised
+    check
+        (\current ->
+            case current.raise of
+                PendingTwoDice ->
+                    Err RaiseWithTwoDice
+
+                PendingOneDie _ ->
+                    Err RaiseWithTwoDice
+
+                ReadyToRaise _ _ ->
+                    Ok ()
+        )
+        >> Result.andThen (push side Raised)
 
 
 
@@ -100,6 +112,7 @@ opponent =
 type Error
     = DiceNotRolled
     | DieNotInPool
+    | RaiseWithTwoDice
 
 
 
@@ -109,11 +122,18 @@ type Error
 type alias State =
     { proponent : Player
     , opponent : Player
+    , raise : Raise
     }
 
 
 type alias Player =
     { pool : Dice }
+
+
+type Raise
+    = PendingTwoDice
+    | PendingOneDie Die
+    | ReadyToRaise Die Die
 
 
 state : Conflict -> State
@@ -131,7 +151,10 @@ handleEvent sideEvent current =
             { current | opponent = { pool = dice } }
 
         ( Proponent, Played die ) ->
-            { current | proponent = { pool = Dice.drop die current.proponent.pool } }
+            { current
+                | proponent = { pool = Dice.drop die current.proponent.pool }
+                , raise = raiseWith die current.raise
+            }
 
         ( Opponent, Played die ) ->
             { current | opponent = { pool = Dice.drop die current.opponent.pool } }
@@ -140,10 +163,24 @@ handleEvent sideEvent current =
             current
 
 
+raiseWith : Die -> Raise -> Raise
+raiseWith die raise_ =
+    case raise_ of
+        PendingTwoDice ->
+            PendingOneDie die
+
+        PendingOneDie firstDie ->
+            ReadyToRaise firstDie die
+
+        ReadyToRaise _ _ ->
+            raise_
+
+
 initialState : State
 initialState =
     { proponent = { pool = Dice.empty }
     , opponent = { pool = Dice.empty }
+    , raise = PendingTwoDice
     }
 
 
