@@ -34,12 +34,10 @@ takeDice side dice =
 play : Side -> Die -> Conflict -> Result Error Conflict
 play side die =
     check
-        (\current ->
-            if Dice.has die (player side current |> .pool) then
-                Ok ()
-
-            else
-                Err DieNotInPool
+        (player side
+            >> .pool
+            >> Dice.has die
+            >> toError DieNotInPool
         )
         >> Result.andThen (push side (Played die))
 
@@ -59,6 +57,15 @@ push side event (Conflict events) =
 check : (State -> Result Error any) -> Conflict -> Result Error Conflict
 check predicate conflict =
     conflict |> state |> predicate |> Result.map (always conflict)
+
+
+toError : Error -> Bool -> Result Error ()
+toError error bool =
+    if bool then
+        Ok ()
+
+    else
+        Err error
 
 
 
