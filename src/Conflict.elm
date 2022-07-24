@@ -1,4 +1,4 @@
-module Conflict exposing (Conflict, Error, Side, State, opponent, play, proponent, start, state, takeDice)
+module Conflict exposing (Conflict, Error, Side, State, opponent, play, proponent, raise, start, state, takeDice)
 
 import Dice exposing (Dice)
 import Die exposing (Die)
@@ -11,6 +11,7 @@ type Conflict
 type Event
     = TookDice Dice
     | Played Die
+    | Raised
 
 
 
@@ -40,6 +41,11 @@ play side die =
             >> toError DieNotInPool
         )
         >> Result.andThen (push side (Played die))
+
+
+raise : Side -> Conflict -> Result Error Conflict
+raise side =
+    push side Raised
 
 
 
@@ -129,6 +135,9 @@ handleEvent sideEvent current =
 
         ( Opponent, Played die ) ->
             { current | opponent = { pool = Dice.drop die current.opponent.pool } }
+
+        _ ->
+            current
 
 
 initialState : State

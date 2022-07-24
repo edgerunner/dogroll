@@ -22,7 +22,18 @@ suite =
             , test "dice from the wrong side are rejected" playWrongSide
             , test "totally unrelated dice are rejected" playUnrelatedDice
             ]
+        , describe "raising"
+            [ test "player can raise after playing two dice" raiseAfterTwoDice ]
         ]
+
+
+raiseAfterTwoDice : () -> Expectation
+raiseAfterTwoDice () =
+    readiedConflict
+        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 3))
+        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 5))
+        |> Result.andThen (Conflict.raise Conflict.proponent)
+        |> Expect.ok
 
 
 playUnrelatedDice : () -> Expectation
