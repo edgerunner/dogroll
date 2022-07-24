@@ -40,8 +40,7 @@ play side die =
             >> Dice.has die
             >> toError DieNotInPool
         )
-        >> Result.andThen
-            (check (.go >> (==) side >> toError NotYourTurn))
+        >> Result.andThen (checkPlayerTurn side)
         >> Result.andThen (push side (Played die))
 
 
@@ -56,8 +55,7 @@ raise side =
                 _ ->
                     Err RaiseWithTwoDice
         )
-        >> Result.andThen
-            (check (.go >> (==) side >> toError NotYourTurn))
+        >> Result.andThen (checkPlayerTurn side)
         >> Result.andThen (push side Raised)
 
 
@@ -85,6 +83,15 @@ toError error bool =
 
     else
         Err error
+
+
+
+-- CHECKS
+
+
+checkPlayerTurn : Side -> Conflict -> Result Error Conflict
+checkPlayerTurn side =
+    check (.go >> (==) side >> toError NotYourTurn)
 
 
 
