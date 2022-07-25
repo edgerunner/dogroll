@@ -52,7 +52,115 @@ suite =
             , test "giving player retains their best dice from the conflict if gives in their raise" giveRetainsBestDice
             , test "giving player does not retain dice if they cannot see" noSeeNoDiceOnGive
             ]
+        , test "full playthrough on page 55" fullPlaythrough
         ]
+
+
+fullPlaythrough : () -> Expectation
+fullPlaythrough () =
+    let
+        you =
+            Conflict.proponent
+
+        me =
+            Conflict.opponent
+    in
+    -- All told, you take up 6d6 plus 1d8, and I take up 8d6.
+    Conflict.start
+        -- You roll: 1 2 2 3 4 4 7.
+        |> Result.andThen
+            (Conflict.takeDice you
+                ([ 1, 2, 2, 3, 4, 4 ]
+                    |> List.foldl (Die.cheat D6 >> Dice.add) Dice.empty
+                    |> Dice.add (Die.cheat D8 7)
+                )
+            )
+        -- I roll: 1 1 1 3 4 5 6 6.
+        |> Result.andThen
+            (Conflict.takeDice me
+                ([ 1, 1, 1, 3, 4, 5, 6, 6 ]
+                    |> List.foldl (Die.cheat D6 >> Dice.add) Dice.empty
+                )
+            )
+        -- You’re opening the conflict, so you start: “Hey, Zeke, you don’t just go shoot people,”
+        -- you have your character say. “Let’s talk about this.” You Raise with a 4 and a 3, for 7.
+        |> Result.andThen (Conflict.play you (Die.cheat D6 4))
+        |> Result.andThen (Conflict.play you (Die.cheat D6 3))
+        |> Result.andThen (Conflict.raise you)
+        -- I put forward my own 4 and 3 to See. “Get out of my way, boy,” I have my character say.
+        |> Result.andThen (Conflict.play me (Die.cheat D6 4))
+        |> Result.andThen (Conflict.play me (Die.cheat D6 3))
+        |> Result.andThen (Conflict.see me)
+        -- “In fact, if you had any conscience of your own, you’d be with me.”
+        -- That’s my Raise, so I put forward a 5 and a 6, for 11.
+        |> Result.andThen (Conflict.play me (Die.cheat D6 5))
+        |> Result.andThen (Conflict.play me (Die.cheat D6 6))
+        |> Result.andThen (Conflict.raise me)
+        -- You have my 11 to See, so you slide forward your 7 and your second 4.
+        -- “Don’t try to tell me about my conscience,” you have your character say;
+        -- that’s your See…
+        |> Result.andThen (Conflict.play you (Die.cheat D8 7))
+        |> Result.andThen (Conflict.play you (Die.cheat D6 4))
+        |> Result.andThen (Conflict.see you)
+        -- Here’s your Raise: “you go home and see to your son.”
+        -- Raising with your best dice left: two 2s
+        |> Result.andThen (Conflict.play you (Die.cheat D6 2))
+        |> Result.andThen (Conflict.play you (Die.cheat D6 2))
+        |> Result.andThen (Conflict.raise you)
+        -- I see with my last 6, Reversing The Blow.
+        -- “Ha! I remember how he used to look up to you!
+        -- Maybe if you’d been in his life he wouldn’t have gone this way.”
+        |> Result.andThen (Conflict.play me (Die.cheat D6 6))
+        |> Result.andThen (Conflict.see me)
+        -- Because I Reversed The Blow, I get to keep the 6 for my Raise. I add one of my 1s to it.
+        |> Result.andThen (Conflict.play me (Die.cheat D6 1))
+        |> Result.andThen (Conflict.raise me)
+        -- “Forget this,” you say. “I punch you.”
+        -- Let’s say that your character’s Body plus Will is 7d6.
+        -- You roll: 1 3 4 5 5 5 6.
+        |> Result.andThen
+            (Conflict.takeDice you
+                ([ 1, 3, 4, 5, 5, 5, 6 ]
+                    |> List.foldl (Die.cheat D6 >> Dice.add) Dice.empty
+                    -- Also, let’s say that your character has “Fist fighting 1d8” as a Trait,
+                    -- so you roll that d8 as soon as you say “I punch you.”
+                    -- You roll a 4 on the d8 and you still have that 1 left from before too.
+                    |> Dice.add (Die.cheat D8 4)
+                )
+            )
+        -- So you See my outstanding 7 with your 4 and your 3,
+        |> Result.andThen (Conflict.play you (Die.cheat D6 4))
+        |> Result.andThen (Conflict.play you (Die.cheat D6 3))
+        |> Result.andThen (Conflict.see you)
+        -- and put forward two of your 5s to Raise.
+        |> Result.andThen (Conflict.play you (Die.cheat D6 5))
+        |> Result.andThen (Conflict.play you (Die.cheat D6 5))
+        |> Result.andThen (Conflict.raise you)
+        -- Let’s say that my character’s Body plus Will is 6d6.
+        -- I roll crap: 1 1 2 2 2 5. I have no immediately relevant Trait
+        -- and my two leftover 1s aren’t much comfort.
+        |> Result.andThen
+            (Conflict.takeDice me
+                ([ 1, 1, 2, 2, 2, 5 ]
+                    |> List.foldl (Die.cheat D6 >> Dice.add) Dice.empty
+                )
+            )
+        -- I have to See your 10. I See with my 5, two 2s and a 1.
+        |> Result.andThen (Conflict.play me (Die.cheat D6 5))
+        |> Result.andThen (Conflict.play me (Die.cheat D6 2))
+        |> Result.andThen (Conflict.play me (Die.cheat D6 2))
+        |> Result.andThen (Conflict.play me (Die.cheat D6 1))
+        -- Because I’m Seeing with more than two dice, I’m Taking The Blow:
+        -- “I’m surprised and you catch me right in the jaw,” I say.
+        |> Result.andThen (Conflict.see me)
+        -- I take four Fallout Dice, the number of dice I used to See,
+        -- and since I took a punch they’re d6s. I set 4d6 aside for after the conflict.
+        |> Result.andThen (Conflict.takeFallout me D6)
+        -- Now all I have left to Raise with is a 2 and some 1s,
+        -- and you have a 6, a 5, a 4 and some stuff. If I stay in the fight,
+        -- you’ll beat the crap out of me. Instead I Give.
+        |> Result.andThen (Conflict.give me)
+        |> Expect.ok
 
 
 noSeeNoDiceOnGive : () -> Expectation
