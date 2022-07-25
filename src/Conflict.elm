@@ -58,8 +58,9 @@ raise side =
 
 see : Side -> Conflict -> Result Error Conflict
 see side =
-    checkPlayerTurn side
-        >> Result.andThen (always <| Err NotEnoughToSee)
+    check (.raise >> canSee >> toError NotEnoughToSee)
+        >> Result.andThen (checkPlayerTurn side)
+        >> Result.andThen (push side Seen)
 
 
 
@@ -102,6 +103,37 @@ readyToRaise raise_ =
     case raise_ of
         ReadyToRaise _ _ ->
             True
+
+        _ ->
+            False
+
+
+canSee : Raise -> Bool
+canSee raise_ =
+    case raise_ of
+        RaisedWith raise1 raise2 see_ ->
+            let
+                raiseTotal =
+                    Dice.empty
+                        |> Dice.add raise1
+                        |> Dice.add raise2
+                        |> Dice.faces
+                        |> List.sum
+
+                seeTotal =
+                    List.foldl Dice.add Dice.empty
+                        >> Dice.faces
+                        >> List.sum
+            in
+            case see_ of
+                LoseTheStakes ->
+                    False
+
+                ReverseTheBlow see1 ->
+                    raiseTotal <= seeTotal [ see1 ]
+
+                BlockOrDodge see1 see2 ->
+                    raiseTotal <= seeTotal [ see1, see2 ]
 
         _ ->
             False
@@ -162,7 +194,9 @@ type Raise
 
 
 type See
-    = LoseTheStakes Dice
+    = LoseTheStakes
+    | ReverseTheBlow Die
+    | BlockOrDodge Die Die
 
 
 state : Conflict -> State
@@ -186,7 +220,10 @@ handleEvent sideEvent current =
             }
 
         ( Opponent, Played die ) ->
-            { current | opponent = { pool = Dice.drop die current.opponent.pool } }
+            { current
+                | opponent = { pool = Dice.drop die current.opponent.pool }
+                , raise = raiseWith die current.raise
+            }
 
         ( side, Raised ) ->
             { current | raise = finalizeRaise current.raise, go = otherSide side }
@@ -209,7 +246,7 @@ finalizeRaise : Raise -> Raise
 finalizeRaise raise_ =
     case raise_ of
         ReadyToRaise die1 die2 ->
-            RaisedWith die1 die2 (LoseTheStakes Dice.empty)
+            RaisedWith die1 die2 LoseTheStakes
 
         _ ->
             raise_
@@ -235,8 +272,14 @@ raiseWith die raise_ =
 seeWith : Die -> See -> See
 seeWith die see_ =
     case see_ of
-        LoseTheStakes dice ->
-            LoseTheStakes (Dice.add die dice)
+        LoseTheStakes ->
+            ReverseTheBlow die
+
+        ReverseTheBlow firstDie ->
+            BlockOrDodge firstDie die
+
+        _ ->
+            see_
 
 
 initialState : State
