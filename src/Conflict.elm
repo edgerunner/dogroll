@@ -50,15 +50,7 @@ play side die =
 
 raise : Side -> Conflict -> Result Error Conflict
 raise side =
-    check
-        (\current ->
-            case current.raise of
-                ReadyToRaise _ _ ->
-                    Ok ()
-
-                _ ->
-                    Err RaiseWithTwoDice
-        )
+    check (.raise >> readyToRaise >> toError RaiseWithTwoDice)
         >> Result.andThen (checkPlayerTurn side)
         >> Result.andThen (push side Raised)
 
