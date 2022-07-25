@@ -46,7 +46,17 @@ suite =
                     ]
                 ]
             ]
+        , describe "giving"
+            [ test "giving player can give on their own turn" giveOnOwnTurn
+            ]
         ]
+
+
+giveOnOwnTurn : () -> Expectation
+giveOnOwnTurn () =
+    readiedConflictAfterRaise
+        |> Result.andThen (Conflict.give Conflict.opponent)
+        |> Expect.ok
 
 
 cantTakeBlowWithoutFalloutDice : () -> Expectation

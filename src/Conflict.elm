@@ -1,4 +1,4 @@
-module Conflict exposing (Conflict, Error, Side, State, opponent, play, proponent, raise, see, start, state, takeDice, takeFallout)
+module Conflict exposing (Conflict, Error, Side, State, give, opponent, play, proponent, raise, see, start, state, takeDice, takeFallout)
 
 import Dice exposing (Dice)
 import Die exposing (Die)
@@ -16,6 +16,7 @@ type Event
     | Raised
     | Seen
     | TookFallout Size
+    | Gave
 
 
 
@@ -73,6 +74,11 @@ takeFallout side size =
         (mustTakeFallout >> toError NoPendingFallout)
         >> Result.andThen (checkPlayerTurn side)
         >> Result.andThen (push side (TookFallout size))
+
+
+give : Side -> Conflict -> Result Error Conflict
+give side =
+    push side Gave
 
 
 
@@ -216,6 +222,7 @@ type Raise
     | ReadyToRaise Die Die
     | RaisedWith Die Die See
     | PendingFallout Pips
+    | GivenUp
 
 
 type See
@@ -268,6 +275,9 @@ handleEvent sideEvent current =
                 )
                 side
                 current
+
+        ( _, Gave ) ->
+            { current | raise = GivenUp }
 
 
 otherSide : Side -> Side
