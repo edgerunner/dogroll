@@ -150,6 +150,7 @@ type Raise
     = PendingTwoDice
     | PendingOneDie Die
     | ReadyToRaise Die Die
+    | RaisedWith Die Die
 
 
 state : Conflict -> State
@@ -175,8 +176,18 @@ handleEvent sideEvent current =
         ( Opponent, Played die ) ->
             { current | opponent = { pool = Dice.drop die current.opponent.pool } }
 
+        ( _, Raised ) ->
+            { current | raise = finalizeRaise current.raise }
+
+
+finalizeRaise : Raise -> Raise
+finalizeRaise raise_ =
+    case raise_ of
+        ReadyToRaise die1 die2 ->
+            RaisedWith die1 die2
+
         _ ->
-            current
+            raise_
 
 
 raiseWith : Die -> Raise -> Raise
@@ -188,7 +199,7 @@ raiseWith die raise_ =
         PendingOneDie firstDie ->
             ReadyToRaise firstDie die
 
-        ReadyToRaise _ _ ->
+        _ ->
             raise_
 
 
