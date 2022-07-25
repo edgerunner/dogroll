@@ -1,4 +1,4 @@
-module Conflict exposing (Conflict, Error, Side, State, give, opponent, play, proponent, raise, see, start, state, takeDice, takeFallout)
+module Conflict exposing (Conflict, Error, Side, State, give, keptDie, opponent, play, proponent, raise, see, start, state, takeDice, takeFallout)
 
 import Dice exposing (Dice)
 import Die exposing (Die)
@@ -214,6 +214,7 @@ type alias State =
 type alias Player =
     { pool : Dice
     , fallout : Dice
+    , bestDie : Die
     }
 
 
@@ -223,7 +224,7 @@ type Raise
     | ReadyToRaise Die Die
     | RaisedWith Die Die See
     | PendingFallout Pips
-    | GivenUp
+    | GivenUp (Maybe Die)
 
 
 type See
@@ -244,7 +245,14 @@ handleEvent sideEvent current =
         ( side, TookDice dice ) ->
             updatePlayer
                 (\currentPlayer ->
-                    { currentPlayer | pool = Dice.combine [ dice, currentPlayer.pool ] }
+                    { currentPlayer
+                        | pool = Dice.combine [ dice, currentPlayer.pool ]
+                        , bestDie =
+                            Dice.add currentPlayer.bestDie dice
+                                |> Dice.toList
+                                |> List.head
+                                |> Maybe.withDefault Die.null
+                    }
                 )
                 side
                 current
@@ -277,8 +285,8 @@ handleEvent sideEvent current =
                 side
                 current
 
-        ( _, Gave ) ->
-            { current | raise = GivenUp }
+        ( side, Gave ) ->
+            { current | raise = finalizeGive (player side current |> .bestDie) current.raise }
 
 
 otherSide : Side -> Side
@@ -322,6 +330,16 @@ finalizeSee raise_ =
             PendingTwoDice
 
 
+finalizeGive : Die -> Raise -> Raise
+finalizeGive bestDie_ raise_ =
+    case raise_ of
+        RaisedWith _ _ _ ->
+            GivenUp Nothing
+
+        _ ->
+            GivenUp (Just bestDie_)
+
+
 raiseWith : Die -> Raise -> Raise
 raiseWith die raise_ =
     case raise_ of
@@ -357,8 +375,8 @@ seeWith die see_ =
 
 initialState : State
 initialState =
-    { proponent = { pool = Dice.empty, fallout = Dice.empty }
-    , opponent = { pool = Dice.empty, fallout = Dice.empty }
+    { proponent = { pool = Dice.empty, fallout = Dice.empty, bestDie = Die.null }
+    , opponent = { pool = Dice.empty, fallout = Dice.empty, bestDie = Die.null }
     , raise = PendingTwoDice
     , go = proponent
     }
@@ -392,3 +410,16 @@ updatePlayer update side current =
 
         Opponent ->
             { current | opponent = update current.opponent }
+
+
+keptDie : Conflict -> Maybe Die
+keptDie =
+    state
+        >> (\current ->
+                case current.raise of
+                    GivenUp keptDie_ ->
+                        keptDie_
+
+                    _ ->
+                        Nothing
+           )

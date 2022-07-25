@@ -49,8 +49,20 @@ suite =
         , describe "giving"
             [ test "giving player can give on their own turn" giveOnOwnTurn
             , test "giving player can't give on other player's turn" cantGiveOnOtherPlayerTurn
+            , test "giving player retains their best dice from the conflict if gives in their raise" giveRetainsBestDice
             ]
         ]
+
+
+giveRetainsBestDice : () -> Expectation
+giveRetainsBestDice () =
+    readiedConflictAfterRaise
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 3))
+        |> Result.andThen (Conflict.see Conflict.opponent)
+        |> Result.andThen (Conflict.give Conflict.opponent)
+        |> Result.map (Conflict.keptDie >> Expect.equal (Die.cheat D8 7 |> Just))
+        |> Result.withDefault (Expect.fail "no dice to keep")
 
 
 cantGiveOnOtherPlayerTurn : () -> Expectation
