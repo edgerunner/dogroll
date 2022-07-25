@@ -39,9 +39,23 @@ suite =
             , test "raising player can't see their own raise" cantSeeOwnRaise
             , describe "seeing outcomes"
                 [ test "reversing the blow: single die is kept for next raise" seeWithSingleDieIsReversingBlow
+                , test "block or dodge: seeing player proceeds to raise normally" seeWithBlockOrDodge
                 ]
             ]
         ]
+
+
+seeWithBlockOrDodge : () -> Expectation
+seeWithBlockOrDodge () =
+    readiedConflictAfterRaise
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 3))
+        |> Result.andThen (Conflict.see Conflict.opponent)
+        |> Result.andThen (Conflict.takeDice Conflict.opponent (Dice.empty |> Dice.add (Die.cheat D10 9)))
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D10 9))
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D4 4))
+        |> Result.andThen (Conflict.raise Conflict.opponent)
+        |> Expect.ok
 
 
 seeWithSingleDieIsReversingBlow : () -> Expectation
