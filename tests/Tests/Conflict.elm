@@ -41,10 +41,24 @@ suite =
                 [ test "reversing the blow: single die is kept for next raise" seeWithSingleDieIsReversingBlow
                 , test "block or dodge: seeing player proceeds to raise normally" seeWithBlockOrDodge
                 , describe "taking the blow"
-                    [ test "seeing player must choose fallout die size" takeBlowAndFalloutDice ]
+                    [ test "seeing player must choose fallout die size" takeBlowAndFalloutDice
+                    , test "seeing player can't continue to raise before choosing fallout die size" cantTakeBlowWithoutFalloutDice
+                    ]
                 ]
             ]
         ]
+
+
+cantTakeBlowWithoutFalloutDice : () -> Expectation
+cantTakeBlowWithoutFalloutDice () =
+    readiedConflictAfterRaise
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 3))
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D4 4))
+        |> Result.andThen (Conflict.see Conflict.opponent)
+        |> Result.andThen (Conflict.takeDice Conflict.opponent (Dice.empty |> Dice.add (Die.cheat D10 7)))
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D10 7))
+        |> Expect.err
 
 
 takeBlowAndFalloutDice : () -> Expectation

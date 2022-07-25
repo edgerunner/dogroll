@@ -45,6 +45,7 @@ play side die =
             >> toError DieNotInPool
         )
         >> Result.andThen (checkPlayerTurn side)
+        >> Result.andThen (check (mustTakeFallout >> not >> toError MustTakeFallout))
         >> Result.andThen
             (check
                 (.raise >> readyToRaise >> not >> toError RaiseWithTwoDice)
@@ -69,7 +70,7 @@ see side =
 takeFallout : Side -> Size -> Conflict -> Result Error Conflict
 takeFallout side size =
     check
-        (mustTakeFallout >> toError MustTakeFallout)
+        (mustTakeFallout >> toError NoPendingFallout)
         >> Result.andThen (checkPlayerTurn side)
         >> Result.andThen (push side (TookFallout size))
 
@@ -188,6 +189,7 @@ type Error
     | NotYourTurn
     | NotEnoughToSee
     | MustTakeFallout
+    | NoPendingFallout
 
 
 
