@@ -114,26 +114,21 @@ canSee raise_ =
         RaisedWith raise1 raise2 see_ ->
             let
                 raiseTotal =
-                    Dice.empty
-                        |> Dice.add raise1
-                        |> Dice.add raise2
-                        |> Dice.faces
-                        |> List.sum
+                    total [ raise1, raise2 ]
 
-                seeTotal =
+                total =
                     List.foldl Dice.add Dice.empty
-                        >> Dice.faces
-                        >> List.sum
+                        >> Dice.total
             in
             case see_ of
                 LoseTheStakes ->
                     False
 
                 ReverseTheBlow see1 ->
-                    raiseTotal <= seeTotal [ see1 ]
+                    raiseTotal <= total [ see1 ]
 
                 BlockOrDodge see1 see2 ->
-                    raiseTotal <= seeTotal [ see1, see2 ]
+                    raiseTotal <= total [ see1, see2 ]
 
         _ ->
             False

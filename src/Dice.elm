@@ -1,4 +1,4 @@
-module Dice exposing (Dice, add, allRolled, combine, drop, empty, faces, generator, has, init, roll, sizes, toList, toString)
+module Dice exposing (Dice, add, allRolled, combine, drop, empty, faces, generator, has, init, roll, sizes, toList, toString, total)
 
 import Die exposing (Die)
 import Die.Size exposing (Size(..))
@@ -24,6 +24,11 @@ faces : Dice -> List Int
 faces =
     toList
         >> List.filterMap Die.face
+
+
+total : Dice -> Int
+total =
+    faces >> List.sum
 
 
 combine : List Dice -> Dice
