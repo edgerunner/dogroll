@@ -23,9 +23,9 @@ type Event
 -- ACTIONS
 
 
-start : Result error Conflict
+start : Conflict
 start =
-    Ok <| Conflict []
+    Conflict []
 
 
 takeDice : Side -> Dice -> Conflict -> Result Error Conflict
