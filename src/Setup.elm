@@ -1,16 +1,16 @@
 module Setup exposing (Config, Model, decrement, empty, increment, toDice, view)
 
 import Dice exposing (Dice)
-import Die.Size exposing (Size(..), Sizes)
+import Die
+import Die.Size exposing (Size)
 import Die.View
 import Html exposing (Html)
 import Html.Attributes as Attr
-import Pips exposing (Pips)
 import UI
 
 
 type alias Model =
-    Sizes Pips
+    Dice
 
 
 type alias Config msg =
@@ -22,11 +22,7 @@ type alias Config msg =
 
 empty : Model
 empty =
-    { d4 = Pips.zero
-    , d6 = Pips.zero
-    , d8 = Pips.zero
-    , d10 = Pips.zero
-    }
+    Dice.empty
 
 
 view : Config msg -> Model -> Html msg
@@ -49,12 +45,13 @@ view config model =
 takenDiceView : Model -> List (Html Size)
 takenDiceView model =
     Die.Size.all
-        |> List.map (\size -> takenDiceStack size (Die.Size.get size model))
+        |> List.map (\size -> takenDiceStack size model)
 
 
-takenDiceStack : Size -> Pips -> Html Size
+takenDiceStack : Size -> Model -> Html Size
 takenDiceStack size =
-    Pips.toList
+    Dice.toList
+        >> List.filter (Die.size >> (==) size)
         >> (Die.View.generic Die.View.regular size " "
                 |> always
                 |> List.map
@@ -75,43 +72,15 @@ freshDiceView =
 
 
 increment : Size -> Model -> Model
-increment size model =
-    case size of
-        D4 ->
-            { model | d4 = Pips.increment model.d4 }
-
-        D6 ->
-            { model | d6 = Pips.increment model.d6 }
-
-        D8 ->
-            { model | d8 = Pips.increment model.d8 }
-
-        D10 ->
-            { model | d10 = Pips.increment model.d10 }
+increment size =
+    Die.init size |> Dice.add
 
 
 decrement : Size -> Model -> Model
-decrement size model =
-    case size of
-        D4 ->
-            { model | d4 = Pips.decrement model.d4 }
-
-        D6 ->
-            { model | d6 = Pips.decrement model.d6 }
-
-        D8 ->
-            { model | d8 = Pips.decrement model.d8 }
-
-        D10 ->
-            { model | d10 = Pips.decrement model.d10 }
+decrement size =
+    Die.init size |> Dice.drop
 
 
 toDice : Model -> Dice
-toDice model =
-    Die.Size.all
-        |> List.map
-            (\size ->
-                Die.Size.get size model
-                    |> Dice.init size
-            )
-        |> Dice.combine
+toDice =
+    identity
