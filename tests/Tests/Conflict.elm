@@ -23,19 +23,19 @@ suite =
             , test "totally unrelated dice are rejected" playUnrelatedDice
             ]
         , describe "raising"
-            [ test "player can raise after playing two dice" raiseAfterTwoDice
-            , test "player can't raise after playing one die" raiseAfterOneDie
-            , test "player can't raise without playing dice" raiseAfterNoDice
+            [ test "raising player can raise after playing two dice" raiseAfterTwoDice
+            , test "raising player can't raise after playing one die" raiseAfterOneDie
+            , test "raising player can't raise without playing dice" raiseAfterNoDice
             , test "other player can't raise at all" otherPlayerCantRaise
             , test "other player can't even play dice" otherPlayerCantPlayDice
             , test "player can't raise with more than two dice" raiseWithMoreThanTwoDice
             , test "player can't raise twice" raiseTwice
             ]
         , describe "seeing"
-            [ test "other player should be able to play dice after the raise" otherPlayerCanPlayDiceToSee
-            , test "other player can play any number of dice" otherPlayerCanPlayAnyNumberOfDice
+            [ test "seeing player should be able to play dice after the raise" seeingPlayerCanPlayDiceToSee
+            , test "seeing player can play any number of dice" seeingPlayerCanPlayAnyNumberOfDice
             , test "see total needs to be at least the raise total" cantSeeWithLowTotal
-            , test "other player can see if the total meets the raise total" otherPlayerCanSeeIfTotalMeetsRaiseTotal
+            , test "seeing player can see if the total meets the raise total" seeingPlayerCanSeeIfTotalMeetsRaiseTotal
             , test "raising player can't see their own raise" cantSeeOwnRaise
             ]
         ]
@@ -50,8 +50,8 @@ cantSeeOwnRaise () =
         |> Expect.err
 
 
-otherPlayerCanSeeIfTotalMeetsRaiseTotal : () -> Expectation
-otherPlayerCanSeeIfTotalMeetsRaiseTotal () =
+seeingPlayerCanSeeIfTotalMeetsRaiseTotal : () -> Expectation
+seeingPlayerCanSeeIfTotalMeetsRaiseTotal () =
     readiedConflictAfterRaise
         |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
         |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D4 4))
@@ -68,8 +68,8 @@ cantSeeWithLowTotal () =
         |> Expect.err
 
 
-otherPlayerCanPlayAnyNumberOfDice : () -> Expectation
-otherPlayerCanPlayAnyNumberOfDice () =
+seeingPlayerCanPlayAnyNumberOfDice : () -> Expectation
+seeingPlayerCanPlayAnyNumberOfDice () =
     readiedConflictAfterRaise
         |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
         |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 3))
@@ -79,8 +79,8 @@ otherPlayerCanPlayAnyNumberOfDice () =
         |> Expect.ok
 
 
-otherPlayerCanPlayDiceToSee : () -> Expectation
-otherPlayerCanPlayDiceToSee () =
+seeingPlayerCanPlayDiceToSee : () -> Expectation
+seeingPlayerCanPlayDiceToSee () =
     readiedConflictAfterRaise
         |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
         |> Expect.ok
