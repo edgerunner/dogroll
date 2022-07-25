@@ -34,8 +34,18 @@ suite =
         , describe "seeing"
             [ test "other player should be able to play dice after the raise" otherPlayerCanPlayDiceToSee
             , test "other player can play any number of dice" otherPlayerCanPlayAnyNumberOfDice
+            , test "see total needs to be at least the raise total" cantSeeWithLowTotal
             ]
         ]
+
+
+cantSeeWithLowTotal : () -> Expectation
+cantSeeWithLowTotal () =
+    readiedConflictAfterRaise
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 3))
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D4 4))
+        |> Result.andThen (Conflict.see Conflict.opponent)
+        |> Expect.err
 
 
 otherPlayerCanPlayAnyNumberOfDice : () -> Expectation

@@ -1,4 +1,4 @@
-module Conflict exposing (Conflict, Error, Side, State, opponent, play, proponent, raise, start, state, takeDice)
+module Conflict exposing (Conflict, Error, Side, State, opponent, play, proponent, raise, see, start, state, takeDice)
 
 import Dice exposing (Dice)
 import Die exposing (Die)
@@ -12,6 +12,7 @@ type Event
     = TookDice Dice
     | Played Die
     | Raised
+    | Seen
 
 
 
@@ -53,6 +54,12 @@ raise side =
     check (.raise >> readyToRaise >> toError RaiseWithTwoDice)
         >> Result.andThen (checkPlayerTurn side)
         >> Result.andThen (push side Raised)
+
+
+see : Side -> Conflict -> Result Error Conflict
+see side =
+    checkPlayerTurn side
+        >> Result.andThen (always <| Err NotEnoughToSee)
 
 
 
@@ -128,6 +135,7 @@ type Error
     | DieNotInPool
     | RaiseWithTwoDice
     | NotYourTurn
+    | NotEnoughToSee
 
 
 
@@ -150,7 +158,11 @@ type Raise
     = PendingTwoDice
     | PendingOneDie Die
     | ReadyToRaise Die Die
-    | RaisedWith Die Die
+    | RaisedWith Die Die See
+
+
+type See
+    = LoseTheStakes Dice
 
 
 state : Conflict -> State
@@ -179,6 +191,9 @@ handleEvent sideEvent current =
         ( side, Raised ) ->
             { current | raise = finalizeRaise current.raise, go = otherSide side }
 
+        ( _, Seen ) ->
+            current
+
 
 otherSide : Side -> Side
 otherSide side =
@@ -194,7 +209,7 @@ finalizeRaise : Raise -> Raise
 finalizeRaise raise_ =
     case raise_ of
         ReadyToRaise die1 die2 ->
-            RaisedWith die1 die2
+            RaisedWith die1 die2 (LoseTheStakes Dice.empty)
 
         _ ->
             raise_
@@ -209,8 +224,19 @@ raiseWith die raise_ =
         PendingOneDie firstDie ->
             ReadyToRaise firstDie die
 
+        RaisedWith firstDie secondDie see_ ->
+            seeWith die see_
+                |> RaisedWith firstDie secondDie
+
         _ ->
             raise_
+
+
+seeWith : Die -> See -> See
+seeWith die see_ =
+    case see_ of
+        LoseTheStakes dice ->
+            LoseTheStakes (Dice.add die dice)
 
 
 initialState : State
