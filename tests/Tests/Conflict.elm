@@ -1,6 +1,6 @@
 module Tests.Conflict exposing (suite)
 
-import Conflict exposing (Conflict, Error, opponent)
+import Conflict exposing (Conflict, Error)
 import Dice
 import Die
 import Die.Size exposing (Size(..))
@@ -48,8 +48,16 @@ suite =
             ]
         , describe "giving"
             [ test "giving player can give on their own turn" giveOnOwnTurn
+            , test "giving player can't give on other player's turn" cantGiveOnOtherPlayerTurn
             ]
         ]
+
+
+cantGiveOnOtherPlayerTurn : () -> Expectation
+cantGiveOnOtherPlayerTurn () =
+    readiedConflict
+        |> Result.andThen (Conflict.give Conflict.opponent)
+        |> Expect.err
 
 
 giveOnOwnTurn : () -> Expectation

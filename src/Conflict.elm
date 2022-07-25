@@ -78,7 +78,8 @@ takeFallout side size =
 
 give : Side -> Conflict -> Result Error Conflict
 give side =
-    push side Gave
+    checkPlayerTurn side
+        >> Result.andThen (push side Gave)
 
 
 
