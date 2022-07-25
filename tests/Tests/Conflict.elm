@@ -31,7 +31,17 @@ suite =
             , test "player can't raise with more than two dice" raiseWithMoreThanTwoDice
             , test "player can't raise twice" raiseTwice
             ]
+        , describe "seeing"
+            [ test "other player should be able to play dice after the raise" otherPlayerCanPlayDiceToSee
+            ]
         ]
+
+
+otherPlayerCanPlayDiceToSee : () -> Expectation
+otherPlayerCanPlayDiceToSee () =
+    readiedConflictAfterRaise
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
+        |> Expect.ok
 
 
 raiseTwice : () -> Expectation
@@ -165,3 +175,11 @@ readiedConflict =
     Conflict.start
         |> Result.andThen (Conflict.takeDice Conflict.proponent proponentDice)
         |> Result.andThen (Conflict.takeDice Conflict.opponent opponentDice)
+
+
+readiedConflictAfterRaise : Result Error Conflict
+readiedConflictAfterRaise =
+    readiedConflict
+        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 3))
+        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 5))
+        |> Result.andThen (Conflict.raise Conflict.proponent)

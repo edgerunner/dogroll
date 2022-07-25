@@ -176,8 +176,18 @@ handleEvent sideEvent current =
         ( Opponent, Played die ) ->
             { current | opponent = { pool = Dice.drop die current.opponent.pool } }
 
-        ( _, Raised ) ->
-            { current | raise = finalizeRaise current.raise }
+        ( side, Raised ) ->
+            { current | raise = finalizeRaise current.raise, go = otherSide side }
+
+
+otherSide : Side -> Side
+otherSide side =
+    case side of
+        Proponent ->
+            Opponent
+
+        Opponent ->
+            Proponent
 
 
 finalizeRaise : Raise -> Raise
