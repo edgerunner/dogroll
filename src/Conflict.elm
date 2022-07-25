@@ -233,39 +233,21 @@ state (Conflict events) =
 handleEvent : ( Side, Event ) -> State -> State
 handleEvent sideEvent current =
     case sideEvent of
-        ( Proponent, TookDice dice ) ->
-            { current
-                | proponent =
-                    { pool = Dice.combine [ dice, current.proponent.pool ]
-                    , fallout = current.proponent.fallout
-                    }
-            }
+        ( side, TookDice dice ) ->
+            updatePlayer
+                (\currentPlayer ->
+                    { currentPlayer | pool = Dice.combine [ dice, currentPlayer.pool ] }
+                )
+                side
+                current
 
-        ( Opponent, TookDice dice ) ->
-            { current
-                | opponent =
-                    { pool = Dice.combine [ dice, current.opponent.pool ]
-                    , fallout = current.opponent.fallout
-                    }
-            }
-
-        ( Proponent, Played die ) ->
-            { current
-                | proponent =
-                    { pool = Dice.drop die current.proponent.pool
-                    , fallout = current.proponent.fallout
-                    }
-                , raise = raiseWith die current.raise
-            }
-
-        ( Opponent, Played die ) ->
-            { current
-                | opponent =
-                    { pool = Dice.drop die current.opponent.pool
-                    , fallout = current.opponent.fallout
-                    }
-                , raise = raiseWith die current.raise
-            }
+        ( side, Played die ) ->
+            { current | raise = raiseWith die current.raise }
+                |> updatePlayer
+                    (\currentPlayer ->
+                        { currentPlayer | pool = Dice.drop die currentPlayer.pool }
+                    )
+                    side
 
         ( side, Raised ) ->
             { current | raise = finalizeRaise current.raise, go = otherSide side }
@@ -273,29 +255,19 @@ handleEvent sideEvent current =
         ( _, Seen ) ->
             { current | raise = finalizeSee current.raise }
 
-        ( Proponent, TookFallout size ) ->
-            { current
-                | proponent =
-                    { pool = current.proponent.pool
-                    , fallout =
-                        Dice.combine
-                            [ Dice.init size <| pendingFallout current
-                            , current.proponent.fallout
-                            ]
+        ( side, TookFallout size ) ->
+            updatePlayer
+                (\currentPlayer ->
+                    { currentPlayer
+                        | fallout =
+                            Dice.combine
+                                [ Dice.init size <| pendingFallout current
+                                , currentPlayer.fallout
+                                ]
                     }
-            }
-
-        ( Opponent, TookFallout size ) ->
-            { current
-                | opponent =
-                    { pool = current.opponent.pool
-                    , fallout =
-                        Dice.combine
-                            [ Dice.init size <| pendingFallout current
-                            , current.proponent.fallout
-                            ]
-                    }
-            }
+                )
+                side
+                current
 
 
 otherSide : Side -> Side
@@ -399,3 +371,13 @@ pendingFallout current =
 
         _ ->
             Pips.zero
+
+
+updatePlayer : (Player -> Player) -> Side -> State -> State
+updatePlayer update side current =
+    case side of
+        Proponent ->
+            { current | proponent = update current.proponent }
+
+        Opponent ->
+            { current | opponent = update current.opponent }
