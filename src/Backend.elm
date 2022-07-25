@@ -1,5 +1,6 @@
 module Backend exposing (..)
 
+import Conflict
 import Dice
 import Lamdera exposing (ClientId, SessionId)
 import Random
@@ -28,7 +29,11 @@ app =
 
 init : ( Model, Cmd BackendMsg )
 init =
-    ( { seed = Random.initialSeed 0 }, newSeed )
+    ( { seed = Random.initialSeed 0
+      , conflict = Conflict.start
+      }
+    , newSeed
+    )
 
 
 newSeed : Cmd BackendMsg

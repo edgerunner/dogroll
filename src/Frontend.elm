@@ -2,6 +2,7 @@ module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
+import Conflict
 import Die.Size exposing (Size(..))
 import Lamdera exposing (Key, sendToBackend)
 import Setup
@@ -38,6 +39,7 @@ init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init _ key =
     ( { key = key
       , setup = Setup.empty
+      , conflict = Conflict.initialState
       }
     , Cmd.none
     )
@@ -80,8 +82,8 @@ noCmd model =
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
-        NoOpToFrontend ->
-            ( model, Cmd.none )
+        ConflictStateUpdated newConflictState ->
+            ( { model | conflict = newConflictState }, Cmd.none )
 
 
 view : Model -> Browser.Document FrontendMsg
