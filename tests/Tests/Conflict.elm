@@ -28,8 +28,18 @@ suite =
             , test "player can't raise without playing dice" raiseAfterNoDice
             , test "other player can't raise at all" otherPlayerCantRaise
             , test "other player can't even play dice" otherPlayerCantPlayDice
+            , test "player can't raise with more than two dice" raiseWithMoreThanTwoDice
             ]
         ]
+
+
+raiseWithMoreThanTwoDice : () -> Expectation
+raiseWithMoreThanTwoDice () =
+    readiedConflict
+        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 3))
+        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 5))
+        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 2))
+        |> Expect.err
 
 
 otherPlayerCantPlayDice : () -> Expectation

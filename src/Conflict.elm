@@ -41,6 +41,10 @@ play side die =
             >> toError DieNotInPool
         )
         >> Result.andThen (checkPlayerTurn side)
+        >> Result.andThen
+            (check
+                (.raise >> readyToRaise >> not >> toError RaiseWithTwoDice)
+            )
         >> Result.andThen (push side (Played die))
 
 
@@ -92,6 +96,16 @@ toError error bool =
 checkPlayerTurn : Side -> Conflict -> Result Error Conflict
 checkPlayerTurn side =
     check (.go >> (==) side >> toError NotYourTurn)
+
+
+readyToRaise : Raise -> Bool
+readyToRaise raise_ =
+    case raise_ of
+        ReadyToRaise _ _ ->
+            True
+
+        _ ->
+            False
 
 
 
