@@ -36,8 +36,18 @@ suite =
             , test "other player can play any number of dice" otherPlayerCanPlayAnyNumberOfDice
             , test "see total needs to be at least the raise total" cantSeeWithLowTotal
             , test "other player can see if the total meets the raise total" otherPlayerCanSeeIfTotalMeetsRaiseTotal
+            , test "raising player can't see their own raise" cantSeeOwnRaise
             ]
         ]
+
+
+cantSeeOwnRaise : () -> Expectation
+cantSeeOwnRaise () =
+    readiedConflictAfterRaise
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D4 4))
+        |> Result.andThen (Conflict.see Conflict.proponent)
+        |> Expect.err
 
 
 otherPlayerCanSeeIfTotalMeetsRaiseTotal : () -> Expectation
