@@ -1,6 +1,6 @@
 module Tests.Conflict exposing (suite)
 
-import Conflict exposing (Conflict, Error)
+import Conflict exposing (Conflict, Error, opponent)
 import Dice
 import Die
 import Die.Size exposing (Size(..))
@@ -40,9 +40,24 @@ suite =
             , describe "seeing outcomes"
                 [ test "reversing the blow: single die is kept for next raise" seeWithSingleDieIsReversingBlow
                 , test "block or dodge: seeing player proceeds to raise normally" seeWithBlockOrDodge
+                , describe "taking the blow"
+                    [ test "seeing player must choose fallout die size" takeBlowAndFalloutDice ]
                 ]
             ]
         ]
+
+
+takeBlowAndFalloutDice : () -> Expectation
+takeBlowAndFalloutDice () =
+    readiedConflictAfterRaise
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 3))
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D4 4))
+        |> Result.andThen (Conflict.see Conflict.opponent)
+        |> Result.andThen (Conflict.takeFallout Conflict.opponent D6)
+        |> Result.map (Conflict.state >> .opponent >> .fallout)
+        |> Result.map (Expect.equal (Dice.init D6 Pips.three))
+        |> Result.withDefault (Expect.fail "didn't take blow")
 
 
 seeWithBlockOrDodge : () -> Expectation

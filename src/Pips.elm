@@ -1,4 +1,4 @@
-module Pips exposing (Pips, add, decrement, five, four, fromInt, increment, one, repeat, three, toInt, toList, two, zero)
+module Pips exposing (Pips, add, decrement, five, four, fromInt, fromList, increment, one, repeat, three, toInt, toList, two, zero)
 
 
 type Pips
@@ -68,3 +68,8 @@ fromInt =
 repeat : a -> Pips -> List a
 repeat a =
     toList >> List.map (always a)
+
+
+fromList : List a -> Pips
+fromList =
+    List.map (always ()) >> Pips

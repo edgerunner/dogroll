@@ -1,7 +1,9 @@
-module Conflict exposing (Conflict, Error, Side, State, opponent, play, proponent, raise, see, start, state, takeDice)
+module Conflict exposing (Conflict, Error, Side, State, opponent, play, proponent, raise, see, start, state, takeDice, takeFallout)
 
 import Dice exposing (Dice)
 import Die exposing (Die)
+import Die.Size exposing (Size)
+import Pips exposing (Pips)
 
 
 type Conflict
@@ -13,6 +15,7 @@ type Event
     | Played Die
     | Raised
     | Seen
+    | TookFallout Size
 
 
 
@@ -61,6 +64,14 @@ see side =
     check (.raise >> canSee >> toError NotEnoughToSee)
         >> Result.andThen (checkPlayerTurn side)
         >> Result.andThen (push side Seen)
+
+
+takeFallout : Side -> Size -> Conflict -> Result Error Conflict
+takeFallout side size =
+    check
+        (mustTakeFallout >> toError MustTakeFallout)
+        >> Result.andThen (checkPlayerTurn side)
+        >> Result.andThen (push side (TookFallout size))
 
 
 
@@ -130,6 +141,19 @@ canSee raise_ =
                 BlockOrDodge see1 see2 ->
                     raiseTotal <= total [ see1, see2 ]
 
+                TakeTheBlow see1 see2 see3 seeMore ->
+                    raiseTotal <= total (see1 :: see2 :: see3 :: seeMore)
+
+        _ ->
+            False
+
+
+mustTakeFallout : State -> Bool
+mustTakeFallout current =
+    case current.raise of
+        PendingFallout _ ->
+            True
+
         _ ->
             False
 
@@ -163,6 +187,7 @@ type Error
     | RaiseWithTwoDice
     | NotYourTurn
     | NotEnoughToSee
+    | MustTakeFallout
 
 
 
@@ -178,7 +203,9 @@ type alias State =
 
 
 type alias Player =
-    { pool : Dice }
+    { pool : Dice
+    , fallout : Dice
+    }
 
 
 type Raise
@@ -186,12 +213,14 @@ type Raise
     | PendingOneDie Die
     | ReadyToRaise Die Die
     | RaisedWith Die Die See
+    | PendingFallout Pips
 
 
 type See
     = LoseTheStakes
     | ReverseTheBlow Die
     | BlockOrDodge Die Die
+    | TakeTheBlow Die Die Die (List Die)
 
 
 state : Conflict -> State
@@ -203,20 +232,36 @@ handleEvent : ( Side, Event ) -> State -> State
 handleEvent sideEvent current =
     case sideEvent of
         ( Proponent, TookDice dice ) ->
-            { current | proponent = { pool = Dice.combine [ dice, current.proponent.pool ] } }
+            { current
+                | proponent =
+                    { pool = Dice.combine [ dice, current.proponent.pool ]
+                    , fallout = current.proponent.fallout
+                    }
+            }
 
         ( Opponent, TookDice dice ) ->
-            { current | opponent = { pool = Dice.combine [ dice, current.opponent.pool ] } }
+            { current
+                | opponent =
+                    { pool = Dice.combine [ dice, current.opponent.pool ]
+                    , fallout = current.opponent.fallout
+                    }
+            }
 
         ( Proponent, Played die ) ->
             { current
-                | proponent = { pool = Dice.drop die current.proponent.pool }
+                | proponent =
+                    { pool = Dice.drop die current.proponent.pool
+                    , fallout = current.proponent.fallout
+                    }
                 , raise = raiseWith die current.raise
             }
 
         ( Opponent, Played die ) ->
             { current
-                | opponent = { pool = Dice.drop die current.opponent.pool }
+                | opponent =
+                    { pool = Dice.drop die current.opponent.pool
+                    , fallout = current.opponent.fallout
+                    }
                 , raise = raiseWith die current.raise
             }
 
@@ -225,6 +270,30 @@ handleEvent sideEvent current =
 
         ( _, Seen ) ->
             { current | raise = finalizeSee current.raise }
+
+        ( Proponent, TookFallout size ) ->
+            { current
+                | proponent =
+                    { pool = current.proponent.pool
+                    , fallout =
+                        Dice.combine
+                            [ Dice.init size <| pendingFallout current
+                            , current.proponent.fallout
+                            ]
+                    }
+            }
+
+        ( Opponent, TookFallout size ) ->
+            { current
+                | opponent =
+                    { pool = current.opponent.pool
+                    , fallout =
+                        Dice.combine
+                            [ Dice.init size <| pendingFallout current
+                            , current.proponent.fallout
+                            ]
+                    }
+            }
 
 
 otherSide : Side -> Side
@@ -257,6 +326,9 @@ finalizeSee raise_ =
 
                 BlockOrDodge _ _ ->
                     PendingTwoDice
+
+                TakeTheBlow _ _ _ extraDice ->
+                    PendingFallout (extraDice |> Pips.fromList |> Pips.add Pips.three)
 
                 LoseTheStakes ->
                     raise_
@@ -291,14 +363,17 @@ seeWith die see_ =
         ReverseTheBlow firstDie ->
             BlockOrDodge firstDie die
 
-        _ ->
-            see_
+        BlockOrDodge firstDie secondDie ->
+            TakeTheBlow firstDie secondDie die []
+
+        TakeTheBlow firstDie secondDie thirdDie extraDice ->
+            TakeTheBlow firstDie secondDie thirdDie (die :: extraDice)
 
 
 initialState : State
 initialState =
-    { proponent = { pool = Dice.empty }
-    , opponent = { pool = Dice.empty }
+    { proponent = { pool = Dice.empty, fallout = Dice.empty }
+    , opponent = { pool = Dice.empty, fallout = Dice.empty }
     , raise = PendingTwoDice
     , go = proponent
     }
@@ -312,3 +387,13 @@ player side_ =
 
         Opponent ->
             .opponent
+
+
+pendingFallout : State -> Pips
+pendingFallout current =
+    case current.raise of
+        PendingFallout size ->
+            size
+
+        _ ->
+            Pips.zero
