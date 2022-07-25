@@ -33,8 +33,20 @@ suite =
             ]
         , describe "seeing"
             [ test "other player should be able to play dice after the raise" otherPlayerCanPlayDiceToSee
+            , test "other player can play any number of dice" otherPlayerCanPlayAnyNumberOfDice
             ]
         ]
+
+
+otherPlayerCanPlayAnyNumberOfDice : () -> Expectation
+otherPlayerCanPlayAnyNumberOfDice () =
+    readiedConflictAfterRaise
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 3))
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D4 4))
+        |> Result.andThen (Conflict.takeDice Conflict.opponent (Dice.add (Die.cheat D6 1) Dice.empty))
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D6 1))
+        |> Expect.ok
 
 
 otherPlayerCanPlayDiceToSee : () -> Expectation
