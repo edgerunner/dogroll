@@ -37,8 +37,23 @@ suite =
             , test "see total needs to be at least the raise total" cantSeeWithLowTotal
             , test "seeing player can see if the total meets the raise total" seeingPlayerCanSeeIfTotalMeetsRaiseTotal
             , test "raising player can't see their own raise" cantSeeOwnRaise
+            , describe "seeing outcomes"
+                [ test "reversing the blow: single die is kept for next raise" seeWithSingleDieIsReversingBlow
+                ]
             ]
         ]
+
+
+seeWithSingleDieIsReversingBlow : () -> Expectation
+seeWithSingleDieIsReversingBlow () =
+    readiedConflictAfterRaise
+        |> Result.andThen (Conflict.takeDice Conflict.opponent (Dice.empty |> Dice.add (Die.cheat D10 9)))
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D10 9))
+        |> Result.andThen (Conflict.see Conflict.opponent)
+        -- can see with just one more die, the single see die is transferred
+        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D4 4))
+        |> Result.andThen (Conflict.raise Conflict.opponent)
+        |> Expect.ok
 
 
 cantSeeOwnRaise : () -> Expectation

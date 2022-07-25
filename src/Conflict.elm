@@ -203,10 +203,10 @@ handleEvent : ( Side, Event ) -> State -> State
 handleEvent sideEvent current =
     case sideEvent of
         ( Proponent, TookDice dice ) ->
-            { current | proponent = { pool = dice } }
+            { current | proponent = { pool = Dice.combine [ dice, current.proponent.pool ] } }
 
         ( Opponent, TookDice dice ) ->
-            { current | opponent = { pool = dice } }
+            { current | opponent = { pool = Dice.combine [ dice, current.opponent.pool ] } }
 
         ( Proponent, Played die ) ->
             { current
@@ -224,7 +224,7 @@ handleEvent sideEvent current =
             { current | raise = finalizeRaise current.raise, go = otherSide side }
 
         ( _, Seen ) ->
-            current
+            { current | raise = finalizeSee current.raise }
 
 
 otherSide : Side -> Side
@@ -245,6 +245,24 @@ finalizeRaise raise_ =
 
         _ ->
             raise_
+
+
+finalizeSee : Raise -> Raise
+finalizeSee raise_ =
+    case raise_ of
+        RaisedWith _ _ see_ ->
+            case see_ of
+                ReverseTheBlow see1 ->
+                    PendingOneDie see1
+
+                BlockOrDodge _ _ ->
+                    PendingTwoDice
+
+                LoseTheStakes ->
+                    raise_
+
+        _ ->
+            PendingTwoDice
 
 
 raiseWith : Die -> Raise -> Raise
