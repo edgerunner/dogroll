@@ -41,7 +41,7 @@ init _ key =
       , setup = Setup.empty
       , conflict = Conflict.initialState
       }
-    , Cmd.none
+    , sendToBackend UserWantsToParticipate
     )
 
 
@@ -83,7 +83,7 @@ updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
         ConflictStateUpdated newConflictState ->
-            ( { model | conflict = newConflictState }, Cmd.none )
+            ( { model | conflict = newConflictState |> Debug.log "ConflictStateUpdated" }, Cmd.none )
 
 
 view : Model -> Browser.Document FrontendMsg

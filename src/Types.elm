@@ -5,6 +5,7 @@ import Browser.Navigation exposing (Key)
 import Conflict exposing (Conflict)
 import Dice exposing (Dice)
 import Die.Size
+import Lamdera exposing (SessionId)
 import Random exposing (Seed)
 import Setup
 import Url exposing (Url)
@@ -20,6 +21,7 @@ type alias FrontendModel =
 type alias BackendModel =
     { seed : Seed
     , conflict : Conflict
+    , participants : ( SessionId, SessionId )
     }
 
 
@@ -33,6 +35,7 @@ type FrontendMsg
 
 type ToBackend
     = UserWantsToRollDice Dice
+    | UserWantsToParticipate
 
 
 type BackendMsg
