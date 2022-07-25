@@ -272,18 +272,18 @@ handleEvent sideEvent current =
             { current | raise = finalizeSee current.raise }
 
         ( side, TookFallout size ) ->
-            updatePlayer
-                (\currentPlayer ->
-                    { currentPlayer
-                        | fallout =
-                            Dice.combine
-                                [ Dice.init size <| pendingFallout current
-                                , currentPlayer.fallout
-                                ]
-                    }
-                )
-                side
-                current
+            { current | raise = PendingTwoDice }
+                |> updatePlayer
+                    (\currentPlayer ->
+                        { currentPlayer
+                            | fallout =
+                                Dice.combine
+                                    [ Dice.init size <| pendingFallout current
+                                    , currentPlayer.fallout
+                                    ]
+                        }
+                    )
+                    side
 
         ( side, Gave ) ->
             { current | raise = finalizeGive (player side current |> .bestDie) current.raise }
