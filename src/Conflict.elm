@@ -1,4 +1,4 @@
-module Conflict exposing (Conflict, Error, Player, Raise, See, Side, State, give, initialState, keptDie, opponent, play, proponent, raise, see, start, state, takeDice, takeFallout)
+module Conflict exposing (Conflict, Error, Player, Raise(..), See(..), Side(..), State, give, initialState, keptDie, opponent, play, proponent, raise, see, start, state, takeDice, takeFallout)
 
 import Dice exposing (Dice)
 import Die exposing (Die)

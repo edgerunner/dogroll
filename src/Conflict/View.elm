@@ -1,6 +1,6 @@
 module Conflict.View exposing (Config, view)
 
-import Conflict exposing (Raise, State)
+import Conflict exposing (Raise(..), State)
 import Dice exposing (Dice)
 import Die exposing (Die)
 import Die.View
@@ -18,28 +18,47 @@ type alias Config msg =
 
 view : Config msg -> State -> Html msg
 view config state =
-    [ takeMoreDiceButton config.takeMoreDice
-    , diceSet config.playDie state.proponent.pool
+    [ takeMoreDiceButton
+        |> Html.map (always config.takeMoreDice)
+    , diceSet "my-dice" state.proponent.pool
+        |> Html.map config.playDie
     , playArea state.raise
-    , diceSet (always config.noop) state.opponent.pool
+        |> Html.map (always config.noop)
+    , diceSet "their-dice" state.opponent.pool
+        |> Html.map (always config.noop)
     ]
         |> Html.main_ [ Attr.id "conflict" ]
 
 
-takeMoreDiceButton : msg -> Html msg
-takeMoreDiceButton onClick =
+takeMoreDiceButton : Html ()
+takeMoreDiceButton =
     UI.button "Take More Dice"
-        |> Html.map (always onClick)
 
 
-diceSet : (Die -> msg) -> Dice -> Html msg
-diceSet onClick =
+diceSet : String -> Dice -> Html Die
+diceSet id =
     Dice.toList
         >> List.map (Die.View.for Die.View.regular)
-        >> Html.section [ Attr.id "my-dice" ]
-        >> Html.map onClick
+        >> Html.section [ Attr.id id ]
 
 
-playArea : Raise -> Html msg
-playArea _ =
-    UI.pool [ UI.poolCaption "Choose dice for your raise" ]
+playArea : Raise -> Html Die
+playArea raise =
+    UI.pool <|
+        case raise of
+            PendingTwoDice ->
+                [ UI.poolCaption "Play two dice to raise" ]
+
+            PendingOneDie die1 ->
+                [ UI.poolCaption "Play one die to raise"
+                , Die.View.for Die.View.regular die1
+                ]
+
+            ReadyToRaise die1 die2 ->
+                [ UI.poolCaption "Ready to raise"
+                , Die.View.for Die.View.regular die1
+                , Die.View.for Die.View.regular die2
+                ]
+
+            _ ->
+                []
