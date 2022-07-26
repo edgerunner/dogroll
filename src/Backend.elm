@@ -1,6 +1,6 @@
 module Backend exposing (..)
 
-import Conflict exposing (Side)
+import Conflict exposing (Conflict, Side)
 import Dice
 import Lamdera exposing (ClientId, SessionId)
 import Random
@@ -68,13 +68,10 @@ updateFromFrontend sessionId _ msg model =
                 updatedModel =
                     { model | conflict = updatedConflict }
 
-                updatedState =
-                    Conflict.state updatedConflict
-
                 cmds =
                     Cmd.batch
                         [ newSeed
-                        , Lamdera.broadcast (ConflictStateUpdated updatedState)
+                        , publishChanges updatedConflict
                         ]
             in
             ( updatedModel, cmds )
@@ -100,10 +97,7 @@ updateFromFrontend sessionId _ msg model =
                     case Conflict.play side die model.conflict of
                         Ok conflict ->
                             ( { model | conflict = conflict }
-                            , conflict
-                                |> Conflict.state
-                                |> ConflictStateUpdated
-                                |> Lamdera.broadcast
+                            , conflict |> publishChanges
                             )
 
                         Err _ ->
@@ -117,10 +111,7 @@ updateFromFrontend sessionId _ msg model =
                     case Conflict.raise side model.conflict of
                         Ok conflict ->
                             ( { model | conflict = conflict }
-                            , conflict
-                                |> Conflict.state
-                                |> ConflictStateUpdated
-                                |> Lamdera.broadcast
+                            , conflict |> publishChanges
                             )
 
                         Err _ ->
@@ -146,3 +137,11 @@ identifyParticipant sessionId ( proponentSessionId, opponentSessionId ) =
 
     else
         Nothing
+
+
+publishChanges : Conflict -> Cmd BackendMsg
+publishChanges conflict =
+    conflict
+        |> Conflict.state
+        |> ConflictStateUpdated
+        |> Lamdera.broadcast
