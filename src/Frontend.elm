@@ -41,6 +41,7 @@ init _ key =
     ( { key = key
       , setup = Setup.empty
       , conflict = Conflict.initialState
+      , mySide = Nothing
       , page = Setup
       }
     , sendToBackend UserWantsToParticipate
@@ -98,6 +99,9 @@ updateFromBackend msg model =
     case msg of
         ConflictStateUpdated newConflictState ->
             ( { model | conflict = newConflictState |> Debug.log "ConflictStateUpdated" }, Cmd.none )
+
+        RegisteredAs maybeSide ->
+            ( { model | mySide = maybeSide }, Cmd.none )
 
 
 view : Model -> Browser.Document FrontendMsg

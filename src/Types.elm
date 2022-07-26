@@ -2,7 +2,7 @@ module Types exposing (..)
 
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
-import Conflict exposing (Conflict)
+import Conflict exposing (Conflict, Side)
 import Dice exposing (Dice)
 import Die exposing (Die)
 import Die.Size
@@ -16,6 +16,7 @@ type alias FrontendModel =
     { key : Key
     , setup : Setup.Model
     , conflict : Conflict.State
+    , mySide : Maybe Side
     , page : Page
     }
 
@@ -57,3 +58,4 @@ type BackendMsg
 
 type ToFrontend
     = ConflictStateUpdated Conflict.State
+    | RegisteredAs (Maybe Side)

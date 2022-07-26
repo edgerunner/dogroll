@@ -49,7 +49,7 @@ update msg model =
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
-updateFromFrontend sessionId _ msg model =
+updateFromFrontend sessionId clientId msg model =
     case msg of
         UserWantsToRollDice dice ->
             let
@@ -79,17 +79,21 @@ updateFromFrontend sessionId _ msg model =
         UserWantsToParticipate ->
             case model.participants of
                 ( "", "" ) ->
-                    ( { model | participants = ( sessionId, "" ) }, Cmd.none )
+                    ( { model | participants = ( sessionId, "" ) }
+                    , Lamdera.sendToFrontend clientId (RegisteredAs (Just Conflict.proponent))
+                    )
 
                 ( proponentId, "" ) ->
                     if sessionId /= proponentId then
-                        ( { model | participants = ( proponentId, sessionId ) }, Cmd.none )
+                        ( { model | participants = ( proponentId, sessionId ) }
+                        , Lamdera.sendToFrontend clientId (RegisteredAs (Just Conflict.opponent))
+                        )
 
                     else
                         ( model, Cmd.none )
 
                 _ ->
-                    ( model, Cmd.none )
+                    ( model, Lamdera.sendToFrontend clientId (RegisteredAs Nothing) )
 
         UserWantsToPlayDie die ->
             withParticipant sessionId
