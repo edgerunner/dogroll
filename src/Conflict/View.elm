@@ -24,10 +24,22 @@ view config state =
         |> Html.map config.playDie
     , playArea state.raise
         |> Html.map (always config.noop)
+    , actionButton config state.raise
     , diceSet "their-dice" state.opponent.pool
         |> Html.map (always config.noop)
     ]
         |> Html.main_ [ Attr.id "conflict" ]
+
+
+actionButton : Config msg -> Raise -> Html msg
+actionButton config raise =
+    case raise of
+        ReadyToRaise _ _ ->
+            UI.button "Raise"
+                |> Html.map (always config.noop)
+
+        _ ->
+            Html.text ""
 
 
 takeMoreDiceButton : Html ()
