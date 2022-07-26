@@ -3,6 +3,7 @@ module Frontend exposing (..)
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Conflict
+import Conflict.View
 import Die.Size exposing (Size(..))
 import Lamdera exposing (Key, sendToBackend)
 import Setup
@@ -40,6 +41,7 @@ init _ key =
     ( { key = key
       , setup = Setup.empty
       , conflict = Conflict.initialState
+      , page = Setup
       }
     , sendToBackend UserWantsToParticipate
     )
@@ -71,7 +73,16 @@ update msg model =
 
         UserClickedRollDice ->
             sendToBackend (UserWantsToRollDice model.setup)
-                |> Tuple.pair { model | setup = Setup.empty }
+                |> Tuple.pair { model | setup = Setup.empty, page = Conflict }
+
+        UserClickedTakeMoreDice ->
+            { model | page = Setup } |> noCmd
+
+        UserClickedPlayDie die ->
+            ( model, sendToBackend (UserWantsToPlayDie die) )
+
+        UserClickedSomethingUnneeded ->
+            ( model, Cmd.none )
 
 
 noCmd : Model -> ( Model, Cmd msg )
@@ -90,11 +101,21 @@ view : Model -> Browser.Document FrontendMsg
 view model =
     { title = "Dogroll"
     , body =
-        [ Setup.view
-            { increment = UserClickedIncrementDie
-            , decrement = UserClickedDecrementDie
-            , roll = UserClickedRollDice
-            }
-            model.setup
+        [ case model.page of
+            Setup ->
+                Setup.view
+                    { increment = UserClickedIncrementDie
+                    , decrement = UserClickedDecrementDie
+                    , roll = UserClickedRollDice
+                    }
+                    model.setup
+
+            Conflict ->
+                model.conflict
+                    |> Conflict.View.view
+                        { takeMoreDice = UserClickedTakeMoreDice
+                        , playDie = UserClickedPlayDie
+                        , noop = UserClickedSomethingUnneeded
+                        }
         ]
     }

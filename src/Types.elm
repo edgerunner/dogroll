@@ -4,6 +4,7 @@ import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Conflict exposing (Conflict)
 import Dice exposing (Dice)
+import Die exposing (Die)
 import Die.Size
 import Lamdera exposing (SessionId)
 import Random exposing (Seed)
@@ -15,7 +16,13 @@ type alias FrontendModel =
     { key : Key
     , setup : Setup.Model
     , conflict : Conflict.State
+    , page : Page
     }
+
+
+type Page
+    = Setup
+    | Conflict
 
 
 type alias BackendModel =
@@ -31,11 +38,15 @@ type FrontendMsg
     | UserClickedIncrementDie Die.Size.Size
     | UserClickedDecrementDie Die.Size.Size
     | UserClickedRollDice
+    | UserClickedTakeMoreDice
+    | UserClickedPlayDie Die
+    | UserClickedSomethingUnneeded
 
 
 type ToBackend
     = UserWantsToRollDice Dice
     | UserWantsToParticipate
+    | UserWantsToPlayDie Die
 
 
 type BackendMsg

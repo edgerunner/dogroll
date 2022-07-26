@@ -23,11 +23,12 @@ generic style_ size face =
             ]
 
 
-for : Style -> Die -> Html Click
+for : Style -> Die -> Html Die
 for style_ die =
     generic style_
         (die |> Die.size)
         (die |> Die.face |> Maybe.map String.fromInt |> Maybe.withDefault " ")
+        |> Html.map (always die)
 
 
 type Style

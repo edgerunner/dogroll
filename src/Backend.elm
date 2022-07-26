@@ -50,58 +50,79 @@ update msg model =
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontend sessionId _ msg model =
-    Tuple.mapFirst (Debug.log "updateFromFrontend") <|
-        case msg of
-            UserWantsToRollDice dice ->
-                let
-                    participant =
-                        case model.participants |> Tuple.mapBoth ((==) sessionId) ((==) sessionId) of
-                            ( True, _ ) ->
-                                Just Conflict.proponent
+    let
+        participant =
+            case
+                model.participants
+                    |> Tuple.mapBoth ((==) sessionId) ((==) sessionId)
+            of
+                ( True, _ ) ->
+                    Just Conflict.proponent
 
-                            ( _, True ) ->
-                                Just Conflict.opponent
+                ( _, True ) ->
+                    Just Conflict.opponent
 
-                            _ ->
-                                Nothing
+                _ ->
+                    Nothing
+    in
+    case msg of
+        UserWantsToRollDice dice ->
+            let
+                rolled =
+                    Dice.roll model.seed dice
 
-                    rolled =
-                        Dice.roll model.seed dice
+                conflictUpdate =
+                    participant
+                        |> Maybe.map Conflict.takeDice
+                        |> Maybe.withDefault (always Ok)
 
-                    conflictUpdate =
-                        participant
-                            |> Maybe.map Conflict.takeDice
-                            |> Maybe.withDefault (always Ok)
+                updatedConflict =
+                    conflictUpdate rolled model.conflict
+                        |> Result.withDefault model.conflict
 
-                    updatedConflict =
-                        conflictUpdate rolled model.conflict
-                            |> Result.withDefault model.conflict
+                updatedModel =
+                    { model | conflict = updatedConflict }
 
-                    updatedModel =
-                        { model | conflict = updatedConflict }
+                updatedState =
+                    Conflict.state updatedConflict
 
-                    updatedState =
-                        Conflict.state updatedConflict
+                cmds =
+                    Cmd.batch
+                        [ newSeed
+                        , Lamdera.broadcast (ConflictStateUpdated updatedState)
+                        ]
+            in
+            ( updatedModel, cmds )
 
-                    cmds =
-                        Cmd.batch
-                            [ newSeed
-                            , Lamdera.broadcast (ConflictStateUpdated updatedState)
-                            ]
-                in
-                ( updatedModel, cmds )
+        UserWantsToParticipate ->
+            case model.participants of
+                ( "", "" ) ->
+                    ( { model | participants = ( sessionId, "" ) }, Cmd.none )
 
-            UserWantsToParticipate ->
-                case model.participants of
-                    ( "", "" ) ->
-                        ( { model | participants = ( sessionId, "" ) }, Cmd.none )
+                ( proponentId, "" ) ->
+                    if sessionId /= proponentId then
+                        ( { model | participants = ( proponentId, sessionId ) }, Cmd.none )
 
-                    ( proponentId, "" ) ->
-                        if sessionId /= proponentId then
-                            ( { model | participants = ( proponentId, sessionId ) }, Cmd.none )
+                    else
+                        ( model, Cmd.none )
 
-                        else
+                _ ->
+                    ( model, Cmd.none )
+
+        UserWantsToPlayDie die ->
+            case participant of
+                Just side ->
+                    case Conflict.play side die model.conflict of
+                        Ok conflict ->
+                            ( { model | conflict = conflict }
+                            , conflict
+                                |> Conflict.state
+                                |> ConflictStateUpdated
+                                |> Lamdera.broadcast
+                            )
+
+                        Err _ ->
                             ( model, Cmd.none )
 
-                    _ ->
-                        ( model, Cmd.none )
+                Nothing ->
+                    ( model, Cmd.none )
