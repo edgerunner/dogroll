@@ -126,3 +126,21 @@ updateFromFrontend sessionId _ msg model =
 
                 Nothing ->
                     ( model, Cmd.none )
+
+        UserWantsToRaise ->
+            case participant of
+                Just side ->
+                    case Conflict.raise side model.conflict of
+                        Ok conflict ->
+                            ( { model | conflict = conflict }
+                            , conflict
+                                |> Conflict.state
+                                |> ConflictStateUpdated
+                                |> Lamdera.broadcast
+                            )
+
+                        Err _ ->
+                            ( model, Cmd.none )
+
+                Nothing ->
+                    ( model, Cmd.none )

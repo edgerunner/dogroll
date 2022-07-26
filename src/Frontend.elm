@@ -81,6 +81,9 @@ update msg model =
         UserClickedPlayDie die ->
             ( model, sendToBackend (UserWantsToPlayDie die) )
 
+        UserClickedRaise ->
+            ( model, sendToBackend UserWantsToRaise )
+
         UserClickedSomethingUnneeded ->
             ( model, Cmd.none )
 
@@ -115,6 +118,7 @@ view model =
                     |> Conflict.View.view
                         { takeMoreDice = UserClickedTakeMoreDice
                         , playDie = UserClickedPlayDie
+                        , raise = UserClickedRaise
                         , noop = UserClickedSomethingUnneeded
                         }
         ]

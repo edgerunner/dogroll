@@ -1,6 +1,6 @@
 module Conflict.View exposing (Config, view)
 
-import Conflict exposing (Raise(..), State)
+import Conflict exposing (Raise(..), See(..), State)
 import Dice exposing (Dice)
 import Die exposing (Die)
 import Die.View
@@ -12,6 +12,7 @@ import UI
 type alias Config msg =
     { takeMoreDice : msg
     , playDie : Die -> msg
+    , raise : msg
     , noop : msg
     }
 
@@ -36,7 +37,7 @@ actionButton config raise =
     case raise of
         ReadyToRaise _ _ ->
             UI.button "Raise"
-                |> Html.map (always config.noop)
+                |> Html.map (always config.raise)
 
         _ ->
             Html.text ""
@@ -72,5 +73,25 @@ playArea raise =
                 , Die.View.for Die.View.regular die2
                 ]
 
-            _ ->
-                []
+            RaisedWith raise1 raise2 see ->
+                case see of
+                    LoseTheStakes ->
+                        [ Die.View.for Die.View.regular raise1
+                        , Die.View.for Die.View.regular raise2
+                        , UI.poolCaption "Play dice to see the raise"
+                        ]
+
+                    ReverseTheBlow _ ->
+                        Debug.todo "branch 'ReverseTheBlow _' not implemented"
+
+                    BlockOrDodge _ _ ->
+                        Debug.todo "branch 'BlockOrDodge _ _' not implemented"
+
+                    TakeTheBlow _ _ _ _ ->
+                        Debug.todo "branch 'TakeTheBlow _ _ _ _' not implemented"
+
+            PendingFallout _ ->
+                Debug.todo "branch 'PendingFallout _' not implemented"
+
+            GivenUp _ ->
+                Debug.todo "branch 'GivenUp _' not implemented"

@@ -41,12 +41,14 @@ type FrontendMsg
     | UserClickedTakeMoreDice
     | UserClickedPlayDie Die
     | UserClickedSomethingUnneeded
+    | UserClickedRaise
 
 
 type ToBackend
     = UserWantsToRollDice Dice
     | UserWantsToParticipate
     | UserWantsToPlayDie Die
+    | UserWantsToRaise
 
 
 type BackendMsg
