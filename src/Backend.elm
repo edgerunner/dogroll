@@ -1,6 +1,6 @@
 module Backend exposing (..)
 
-import Conflict
+import Conflict exposing (Side)
 import Dice
 import Lamdera exposing (ClientId, SessionId)
 import Random
@@ -50,21 +50,6 @@ update msg model =
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontend sessionId _ msg model =
-    let
-        participant =
-            case
-                model.participants
-                    |> Tuple.mapBoth ((==) sessionId) ((==) sessionId)
-            of
-                ( True, _ ) ->
-                    Just Conflict.proponent
-
-                ( _, True ) ->
-                    Just Conflict.opponent
-
-                _ ->
-                    Nothing
-    in
     case msg of
         UserWantsToRollDice dice ->
             let
@@ -72,7 +57,7 @@ updateFromFrontend sessionId _ msg model =
                     Dice.roll model.seed dice
 
                 conflictUpdate =
-                    participant
+                    identifyParticipant sessionId model.participants
                         |> Maybe.map Conflict.takeDice
                         |> Maybe.withDefault (always Ok)
 
@@ -110,8 +95,8 @@ updateFromFrontend sessionId _ msg model =
                     ( model, Cmd.none )
 
         UserWantsToPlayDie die ->
-            case participant of
-                Just side ->
+            withParticipant sessionId
+                (\side ->
                     case Conflict.play side die model.conflict of
                         Ok conflict ->
                             ( { model | conflict = conflict }
@@ -123,13 +108,12 @@ updateFromFrontend sessionId _ msg model =
 
                         Err _ ->
                             ( model, Cmd.none )
-
-                Nothing ->
-                    ( model, Cmd.none )
+                )
+                model
 
         UserWantsToRaise ->
-            case participant of
-                Just side ->
+            withParticipant sessionId
+                (\side ->
                     case Conflict.raise side model.conflict of
                         Ok conflict ->
                             ( { model | conflict = conflict }
@@ -141,6 +125,24 @@ updateFromFrontend sessionId _ msg model =
 
                         Err _ ->
                             ( model, Cmd.none )
+                )
+                model
 
-                Nothing ->
-                    ( model, Cmd.none )
+
+withParticipant : SessionId -> (Side -> ( Model, Cmd BackendMsg )) -> Model -> ( Model, Cmd BackendMsg )
+withParticipant sessionId transform model =
+    identifyParticipant sessionId model.participants
+        |> Maybe.map transform
+        |> Maybe.withDefault ( model, Cmd.none )
+
+
+identifyParticipant : SessionId -> ( SessionId, SessionId ) -> Maybe Side
+identifyParticipant sessionId ( proponentSessionId, opponentSessionId ) =
+    if sessionId == proponentSessionId then
+        Just Conflict.proponent
+
+    else if sessionId == opponentSessionId then
+        Just Conflict.opponent
+
+    else
+        Nothing
