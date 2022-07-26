@@ -98,7 +98,15 @@ updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
         ConflictStateUpdated newConflictState ->
-            ( { model | conflict = newConflictState |> Debug.log "ConflictStateUpdated" }, Cmd.none )
+            let
+                straighten =
+                    if (model.mySide |> Debug.log "my side") == Just Conflict.opponent then
+                        Conflict.mirror
+
+                    else
+                        identity
+            in
+            ( { model | conflict = straighten newConflictState }, Cmd.none )
 
         RegisteredAs maybeSide ->
             ( { model | mySide = maybeSide }, Cmd.none )
