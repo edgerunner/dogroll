@@ -3,9 +3,11 @@ module Conflict.View exposing (Config, view)
 import Conflict exposing (Raise(..), See(..), State)
 import Dice exposing (Dice)
 import Die exposing (Die)
+import Die.Size
 import Die.View
 import Html exposing (Html)
 import Html.Attributes as Attr
+import Pips
 import UI
 
 
@@ -122,8 +124,17 @@ playArea raise =
                         ]
                             ++ List.map (Die.View.for Die.View.regular) seeMore
 
-            PendingFallout _ ->
-                Debug.todo "branch 'PendingFallout _' not implemented"
+            PendingFallout pips ->
+                Die.Size.all
+                    |> List.map
+                        (\size ->
+                            Die.View.generic
+                                Die.View.faded
+                                size
+                                (Pips.toInt pips |> String.fromInt)
+                                |> Html.map (always <| Die.init size)
+                        )
+                    |> (::) (UI.poolCaption "Take fallout dice to continue")
 
             GivenUp _ ->
                 Debug.todo "branch 'GivenUp _' not implemented"
