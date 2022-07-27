@@ -144,22 +144,22 @@ updateFromFrontend sessionId clientId msg model =
                 model
 
         UserWantsToRestart ->
-            ( { model
-                | conflict =
-                    model.conflict
-                        |> Conflict.keptDie
-                        |> Maybe.andThen
-                            (Dice.add
-                                >> (|>) Dice.empty
-                                >> Conflict.takeDice
-                                    (model.conflict |> Conflict.state |> .go)
-                                >> (|>) Conflict.start
-                                >> Result.toMaybe
-                            )
-                        |> Maybe.withDefault Conflict.start
-              }
-            , newSeed
-            )
+            updateAndPublishConflict
+                (Conflict.keptDie
+                    >> Maybe.andThen
+                        (Dice.add
+                            >> (|>) Dice.empty
+                            >> Conflict.takeDice
+                                (model.conflict |> Conflict.state |> .go)
+                            >> (|>) Conflict.start
+                            >> Result.toMaybe
+                        )
+                    >> Maybe.withDefault Conflict.start
+                    >> Ok
+                )
+                model
+                |> Tuple.mapSecond
+                    (List.singleton >> (::) newSeed >> Cmd.batch)
 
 
 withParticipant : SessionId -> (Side -> Model -> ( Model, Cmd BackendMsg )) -> Model -> ( Model, Cmd BackendMsg )
