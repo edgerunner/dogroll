@@ -81,14 +81,30 @@ playArea raise =
                         , UI.poolCaption "Play dice to see the raise"
                         ]
 
-                    ReverseTheBlow _ ->
-                        Debug.todo "branch 'ReverseTheBlow _' not implemented"
+                    ReverseTheBlow see1 ->
+                        [ Die.View.for Die.View.regular raise1
+                        , Die.View.for Die.View.regular raise2
+                        , UI.poolCaption "Play dice to see the raise"
+                        , Die.View.for Die.View.regular see1
+                        ]
 
-                    BlockOrDodge _ _ ->
-                        Debug.todo "branch 'BlockOrDodge _ _' not implemented"
+                    BlockOrDodge see1 see2 ->
+                        [ Die.View.for Die.View.regular raise1
+                        , Die.View.for Die.View.regular raise2
+                        , UI.poolCaption "Play dice to see the raise"
+                        , Die.View.for Die.View.regular see1
+                        , Die.View.for Die.View.regular see2
+                        ]
 
-                    TakeTheBlow _ _ _ _ ->
-                        Debug.todo "branch 'TakeTheBlow _ _ _ _' not implemented"
+                    TakeTheBlow see1 see2 see3 seeMore ->
+                        [ Die.View.for Die.View.regular raise1
+                        , Die.View.for Die.View.regular raise2
+                        , UI.poolCaption "Play dice to see the raise"
+                        , Die.View.for Die.View.regular see1
+                        , Die.View.for Die.View.regular see2
+                        , Die.View.for Die.View.regular see3
+                        ]
+                            ++ List.map (Die.View.for Die.View.regular) seeMore
 
             PendingFallout _ ->
                 Debug.todo "branch 'PendingFallout _' not implemented"
