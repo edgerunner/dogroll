@@ -108,22 +108,26 @@ updateFromFrontend sessionId clientId msg model =
 
         UserWantsToPlayDie die ->
             withParticipant sessionId
-                (\side ->
-                    updateAndPublishConflict (Conflict.play side die) model
+                (Conflict.play
+                    >> (|>) die
+                    >> updateAndPublishConflict
+                    >> (|>) model
                 )
                 model
 
         UserWantsToRaise ->
             withParticipant sessionId
-                (\side ->
-                    updateAndPublishConflict (Conflict.raise side) model
+                (Conflict.raise
+                    >> updateAndPublishConflict
+                    >> (|>) model
                 )
                 model
 
         UserWantsToSee ->
             withParticipant sessionId
-                (\side ->
-                    updateAndPublishConflict (Conflict.see side) model
+                (Conflict.see
+                    >> updateAndPublishConflict
+                    >> (|>) model
                 )
                 model
 
