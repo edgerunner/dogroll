@@ -46,6 +46,7 @@ type FrontendMsg
     | UserClickedSee
     | UserClickedFalloutSize Die.Size.Size
     | UserClickedRestart
+    | UserClickedGive
 
 
 type ToBackend
@@ -55,6 +56,7 @@ type ToBackend
     | UserWantsToRaise
     | UserWantsToSee
     | UserWantsToSelectFalloutDice Size
+    | UserWantsToGive
     | UserWantsToRestart
 
 

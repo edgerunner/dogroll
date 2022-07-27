@@ -7,6 +7,7 @@ import Die.Size exposing (Size)
 import Die.View
 import Html exposing (Html)
 import Html.Attributes as Attr
+import Html.Events as Event
 import Pips
 import UI
 
@@ -17,6 +18,7 @@ type alias Config msg =
     , raise : msg
     , see : msg
     , fallout : Size -> msg
+    , give : msg
     , restart : msg
     , noop : msg
     }
@@ -24,7 +26,8 @@ type alias Config msg =
 
 view : Config msg -> State -> Html msg
 view config state =
-    [ takeMoreDiceButton
+    [ Html.button [ Attr.class "give", Event.onClick config.give ] [ Html.text "Give" ]
+    , takeMoreDiceButton
         |> Html.map (always config.takeMoreDice)
     , diceSet "my-dice" state.proponent.pool
         |> Html.map config.playDie

@@ -136,6 +136,13 @@ updateFromFrontend sessionId clientId msg model =
                 )
                 model
 
+        UserWantsToGive ->
+            withParticipant sessionId
+                (Conflict.give
+                    >> updateAndPublishConflict
+                )
+                model
+
         UserWantsToRestart ->
             ( { model
                 | conflict =
