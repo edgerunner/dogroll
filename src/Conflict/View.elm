@@ -13,6 +13,7 @@ type alias Config msg =
     { takeMoreDice : msg
     , playDie : Die -> msg
     , raise : msg
+    , see : msg
     , noop : msg
     }
 
@@ -38,6 +39,21 @@ actionButton config raise =
         ReadyToRaise _ _ ->
             UI.button "Raise"
                 |> Html.map (always config.raise)
+
+        RaisedWith _ _ see ->
+            Html.map (always config.see) <|
+                case see of
+                    LoseTheStakes ->
+                        UI.button "Lose the Stakes"
+
+                    ReverseTheBlow _ ->
+                        UI.button "Reverse the Blow"
+
+                    BlockOrDodge _ _ ->
+                        UI.button "Block or Dodge"
+
+                    TakeTheBlow _ _ _ _ ->
+                        UI.button "Take the Blow"
 
         _ ->
             Html.text ""

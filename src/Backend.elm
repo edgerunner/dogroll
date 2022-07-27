@@ -134,6 +134,20 @@ updateFromFrontend sessionId clientId msg model =
                 )
                 model
 
+        UserWantsToSee ->
+            withParticipant sessionId
+                (\side ->
+                    case Conflict.see side model.conflict of
+                        Ok conflict ->
+                            ( { model | conflict = conflict }
+                            , conflict |> publishChanges
+                            )
+
+                        Err _ ->
+                            ( model, Cmd.none )
+                )
+                model
+
 
 withParticipant : SessionId -> (Side -> ( Model, Cmd BackendMsg )) -> Model -> ( Model, Cmd BackendMsg )
 withParticipant sessionId transform model =

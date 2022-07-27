@@ -85,6 +85,9 @@ update msg model =
         UserClickedRaise ->
             ( model, sendToBackend UserWantsToRaise )
 
+        UserClickedSee ->
+            ( model, sendToBackend UserWantsToSee )
+
         UserClickedSomethingUnneeded ->
             ( model, Cmd.none )
 
@@ -131,6 +134,7 @@ view model =
                         { takeMoreDice = UserClickedTakeMoreDice
                         , playDie = UserClickedPlayDie
                         , raise = UserClickedRaise
+                        , see = UserClickedSee
                         , noop = UserClickedSomethingUnneeded
                         }
         ]

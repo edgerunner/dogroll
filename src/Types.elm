@@ -43,6 +43,7 @@ type FrontendMsg
     | UserClickedPlayDie Die
     | UserClickedSomethingUnneeded
     | UserClickedRaise
+    | UserClickedSee
 
 
 type ToBackend
@@ -50,6 +51,7 @@ type ToBackend
     | UserWantsToParticipate
     | UserWantsToPlayDie Die
     | UserWantsToRaise
+    | UserWantsToSee
 
 
 type BackendMsg
