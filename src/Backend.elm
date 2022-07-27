@@ -90,10 +90,21 @@ updateFromFrontend sessionId clientId msg model =
                         )
 
                     else
-                        ( model, Cmd.none )
+                        ( model, Lamdera.sendToFrontend clientId (RegisteredAs (Just Conflict.proponent)) )
 
-                _ ->
-                    ( model, Lamdera.sendToFrontend clientId (RegisteredAs Nothing) )
+                ( proponentId, opponentId ) ->
+                    (if sessionId == proponentId then
+                        Just Conflict.proponent
+
+                     else if sessionId == opponentId then
+                        Just Conflict.opponent
+
+                     else
+                        Nothing
+                    )
+                        |> RegisteredAs
+                        |> Lamdera.sendToFrontend clientId
+                        |> Tuple.pair model
 
         UserWantsToPlayDie die ->
             withParticipant sessionId
