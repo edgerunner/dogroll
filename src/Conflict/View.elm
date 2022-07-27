@@ -17,6 +17,7 @@ type alias Config msg =
     , raise : msg
     , see : msg
     , fallout : Size -> msg
+    , restart : msg
     , noop : msg
     }
 
@@ -69,6 +70,10 @@ actionButton config raise =
                             |> Html.map (always <| config.fallout size)
                     )
                 |> Html.div [ Attr.id "fallout-selector" ]
+
+        GivenUp _ ->
+            UI.button "Start another conflict"
+                |> Html.map (always config.restart)
 
         _ ->
             Html.text ""
@@ -142,5 +147,10 @@ playArea raise =
                 , UI.poolCaption (Pips.repeat "✖︎" pips |> String.join " ")
                 ]
 
-            GivenUp _ ->
-                Debug.todo "branch 'GivenUp _' not implemented"
+            GivenUp Nothing ->
+                [ UI.poolCaption "This conflict is over" ]
+
+            GivenUp (Just die) ->
+                [ UI.poolCaption "This conflict is over"
+                , Die.View.for Die.View.regular die
+                ]

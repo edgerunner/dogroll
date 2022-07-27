@@ -91,6 +91,9 @@ update msg model =
         UserClickedFalloutSize size ->
             ( model, sendToBackend (UserWantsToSelectFalloutDice size) )
 
+        UserClickedRestart ->
+            ( model, sendToBackend UserWantsToRestart )
+
         UserClickedSomethingUnneeded ->
             ( model, Cmd.none )
 
@@ -139,6 +142,7 @@ view model =
                         , raise = UserClickedRaise
                         , see = UserClickedSee
                         , fallout = UserClickedFalloutSize
+                        , restart = UserClickedRestart
                         , noop = UserClickedSomethingUnneeded
                         }
         ]
