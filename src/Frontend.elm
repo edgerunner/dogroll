@@ -88,6 +88,9 @@ update msg model =
         UserClickedSee ->
             ( model, sendToBackend UserWantsToSee )
 
+        UserClickedFalloutSize size ->
+            ( model, sendToBackend (UserWantsToSelectFalloutDice size) )
+
         UserClickedSomethingUnneeded ->
             ( model, Cmd.none )
 
@@ -135,6 +138,7 @@ view model =
                         , playDie = UserClickedPlayDie
                         , raise = UserClickedRaise
                         , see = UserClickedSee
+                        , fallout = UserClickedFalloutSize
                         , noop = UserClickedSomethingUnneeded
                         }
         ]

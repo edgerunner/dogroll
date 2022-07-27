@@ -3,7 +3,7 @@ module Conflict.View exposing (Config, view)
 import Conflict exposing (Raise(..), See(..), State)
 import Dice exposing (Dice)
 import Die exposing (Die)
-import Die.Size
+import Die.Size exposing (Size)
 import Die.View
 import Html exposing (Html)
 import Html.Attributes as Attr
@@ -16,6 +16,7 @@ type alias Config msg =
     , playDie : Die -> msg
     , raise : msg
     , see : msg
+    , fallout : Size -> msg
     , noop : msg
     }
 
@@ -56,6 +57,18 @@ actionButton config raise =
 
                     TakeTheBlow _ _ _ _ ->
                         UI.button "Take the Blow"
+
+        PendingFallout pips ->
+            Die.Size.all
+                |> List.map
+                    (\size ->
+                        Die.View.generic
+                            Die.View.faded
+                            size
+                            (Pips.toInt pips |> String.fromInt)
+                            |> Html.map (always <| config.fallout size)
+                    )
+                |> Html.div [ Attr.id "fallout-selector" ]
 
         _ ->
             Html.text ""
@@ -125,16 +138,9 @@ playArea raise =
                             ++ List.map (Die.View.for Die.View.regular) seeMore
 
             PendingFallout pips ->
-                Die.Size.all
-                    |> List.map
-                        (\size ->
-                            Die.View.generic
-                                Die.View.faded
-                                size
-                                (Pips.toInt pips |> String.fromInt)
-                                |> Html.map (always <| Die.init size)
-                        )
-                    |> (::) (UI.poolCaption "Take fallout dice to continue")
+                [ UI.poolCaption "Take fallout dice to continue"
+                , UI.poolCaption (Pips.repeat "✖︎" pips |> String.join " ")
+                ]
 
             GivenUp _ ->
                 Debug.todo "branch 'GivenUp _' not implemented"

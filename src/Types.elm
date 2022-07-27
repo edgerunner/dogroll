@@ -5,7 +5,7 @@ import Browser.Navigation exposing (Key)
 import Conflict exposing (Conflict, Side)
 import Dice exposing (Dice)
 import Die exposing (Die)
-import Die.Size
+import Die.Size exposing (Size)
 import Lamdera exposing (SessionId)
 import Random exposing (Seed)
 import Setup
@@ -44,6 +44,7 @@ type FrontendMsg
     | UserClickedSomethingUnneeded
     | UserClickedRaise
     | UserClickedSee
+    | UserClickedFalloutSize Die.Size.Size
 
 
 type ToBackend
@@ -52,6 +53,7 @@ type ToBackend
     | UserWantsToPlayDie Die
     | UserWantsToRaise
     | UserWantsToSee
+    | UserWantsToSelectFalloutDice Size
 
 
 type BackendMsg
