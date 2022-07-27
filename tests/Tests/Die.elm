@@ -27,7 +27,6 @@ suite =
             (Die.roll seed
                 >> (\die ->
                         Die.face die
-                            |> Maybe.withDefault 0
                             |> Helpers.between1and (Die.size die |> Die.Size.toInt)
                    )
             )
@@ -47,9 +46,6 @@ suite =
                 in
                 Expect.equal (Die.face rolledOnce) (Die.face rolledTwice)
             )
-        , fuzz Helpers.dieFuzzer
-            "starting without a rolled face"
-            (Die.face >> Expect.equal Nothing)
         , test "string representation"
             (\() ->
                 Die.Size.all

@@ -41,7 +41,7 @@ allPass =
     List.foldl passOrFail Expect.pass
 
 
-dieFuzzer : Fuzzer Die
+dieFuzzer : Fuzzer (Die x)
 dieFuzzer =
     Fuzz.map
         Die.init
