@@ -11,7 +11,7 @@ import Test exposing (Test, describe, test)
 import Tests.Helpers as Helpers
 
 
-fuzzRolls : String -> (Seed -> Dice -> Expectation) -> Test
+fuzzRolls : String -> (Seed -> Dice x -> Expectation) -> Test
 fuzzRolls =
     Test.fuzz2 Helpers.seedFuzzer Helpers.combinedDiceFuzzer
 
@@ -47,7 +47,7 @@ suite =
                         (\die ->
                             Helpers.between1and
                                 (Die.size die |> Die.Size.toInt)
-                                (Die.face die |> Maybe.withDefault 0)
+                                (Die.face die)
                         )
                     >> Helpers.allPass
             )
@@ -63,8 +63,8 @@ suite =
 
                     atMost lg sm =
                         Expect.atMost
-                            (lg |> Die.face |> Maybe.withDefault 0)
-                            (sm |> Die.face |> Maybe.withDefault 11)
+                            (lg |> Die.face)
+                            (sm |> Die.face)
 
                     expectations =
                         List.map2 atMost larger smaller
@@ -113,7 +113,7 @@ suite =
                             |> Dice.toList
                             |> List.map
                                 (\die ->
-                                    ( Die.face die |> Maybe.withDefault 0
+                                    ( Die.face die
                                     , Die.size die |> Die.Size.toInt
                                     )
                                 )

@@ -53,7 +53,7 @@ pipsFuzzer =
     Fuzz.intRange 1 >> Fuzz.map Pips.fromInt
 
 
-diceFuzzer : Fuzzer Dice
+diceFuzzer : Fuzzer (Dice x)
 diceFuzzer =
     Fuzz.map2
         Dice.init
@@ -66,7 +66,7 @@ sizeFuzzer =
     Fuzz.oneOf (List.map Fuzz.constant Die.Size.all)
 
 
-combinedDiceFuzzer : Fuzzer Dice
+combinedDiceFuzzer : Fuzzer (Dice x)
 combinedDiceFuzzer =
     Fuzz.list diceFuzzer
         |> Fuzz.map (List.take 4 >> Dice.combine)

@@ -1,47 +1,47 @@
-module Dice exposing (Dice, add, allRolled, combine, drop, empty, faces, generator, has, init, roll, sizes, toList, toString, total)
+module Dice exposing (Dice, add, combine, drop, empty, faces, generator, has, init, roll, sizes, toList, toString, total)
 
-import Die exposing (Die)
+import Die exposing (Die, Rolled)
 import Die.Size exposing (Size(..))
 import Pips exposing (Pips)
 import Random exposing (Generator, Seed)
 
 
-type Dice
-    = Dice (List Die)
+type Dice x
+    = Dice (List (Die x))
 
 
-init : Size -> Pips -> Dice
+init : Size -> Pips -> Dice x
 init size =
     Pips.repeat (Die.init size) >> Dice
 
 
-toList : Dice -> List Die
+toList : Dice x -> List (Die x)
 toList (Dice list) =
     list
 
 
-faces : Dice -> List Int
+faces : Dice Rolled -> List Int
 faces =
     toList
-        >> List.filterMap Die.face
+        >> List.map Die.face
 
 
-total : Dice -> Int
+total : Dice Rolled -> Int
 total =
     faces >> List.sum
 
 
-combine : List Dice -> Dice
+combine : List (Dice x) -> Dice x
 combine =
     List.concatMap toList >> makeDice
 
 
-sizes : Dice -> List Size
+sizes : Dice x -> List Size
 sizes =
     toList >> List.map Die.size
 
 
-generator : Dice -> Generator Dice
+generator : Dice x -> Generator (Dice Rolled)
 generator =
     toList
         >> List.map Die.generator
@@ -49,7 +49,7 @@ generator =
         >> Random.map makeDice
 
 
-roll : Seed -> Dice -> Dice
+roll : Seed -> Dice x -> Dice Rolled
 roll seed =
     generator
         >> Random.step
@@ -57,22 +57,14 @@ roll seed =
         >> Tuple.first
 
 
-makeDice : List Die -> Dice
+makeDice : List (Die x) -> Dice x
 makeDice =
     List.sortBy
-        (\die ->
-            ( Die.face die
-                |> Maybe.withDefault 0
-                |> negate
-            , Die.size die
-                |> Die.Size.toInt
-                |> negate
-            )
-        )
+        Die.sortValue
         >> Dice
 
 
-toString : Dice -> String
+toString : Dice x -> String
 toString =
     let
         countSizes =
@@ -97,7 +89,7 @@ toString =
     countSizes >> sizesToString >> String.join "+"
 
 
-drop : Die -> Dice -> Dice
+drop : Die x -> Dice x -> Dice x
 drop die =
     let
         drop_die list =
@@ -115,28 +107,16 @@ drop die =
     toList >> drop_die >> makeDice
 
 
-add : Die -> Dice -> Dice
+add : Die x -> Dice x -> Dice x
 add die =
     toList >> (::) die >> makeDice
 
 
-has : Die -> Dice -> Bool
+has : Die x -> Dice x -> Bool
 has die =
     toList >> List.member die
 
 
-empty : Dice
+empty : Dice x
 empty =
     Dice []
-
-
-allRolled : Dice -> Bool
-allRolled =
-    toList
-        >> List.foldl
-            (Die.face
-                >> Maybe.map (always True)
-                >> Maybe.withDefault False
-                >> (&&)
-            )
-            True
