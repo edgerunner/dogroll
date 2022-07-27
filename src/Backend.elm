@@ -109,42 +109,21 @@ updateFromFrontend sessionId clientId msg model =
         UserWantsToPlayDie die ->
             withParticipant sessionId
                 (\side ->
-                    case Conflict.play side die model.conflict of
-                        Ok conflict ->
-                            ( { model | conflict = conflict }
-                            , conflict |> publishChanges
-                            )
-
-                        Err _ ->
-                            ( model, Cmd.none )
+                    updateAndPublishConflict (Conflict.play side die) model
                 )
                 model
 
         UserWantsToRaise ->
             withParticipant sessionId
                 (\side ->
-                    case Conflict.raise side model.conflict of
-                        Ok conflict ->
-                            ( { model | conflict = conflict }
-                            , conflict |> publishChanges
-                            )
-
-                        Err _ ->
-                            ( model, Cmd.none )
+                    updateAndPublishConflict (Conflict.raise side) model
                 )
                 model
 
         UserWantsToSee ->
             withParticipant sessionId
                 (\side ->
-                    case Conflict.see side model.conflict of
-                        Ok conflict ->
-                            ( { model | conflict = conflict }
-                            , conflict |> publishChanges
-                            )
-
-                        Err _ ->
-                            ( model, Cmd.none )
+                    updateAndPublishConflict (Conflict.see side) model
                 )
                 model
 
@@ -180,6 +159,18 @@ identifyParticipant sessionId ( proponentSessionId, opponentSessionId ) =
 
     else
         Nothing
+
+
+updateAndPublishConflict : (Conflict -> Result Conflict.Error Conflict) -> Model -> ( Model, Cmd BackendMsg )
+updateAndPublishConflict transform model =
+    case transform model.conflict of
+        Ok conflict ->
+            ( { model | conflict = conflict }
+            , conflict |> publishChanges
+            )
+
+        Err _ ->
+            ( model, Cmd.none )
 
 
 publishChanges : Conflict -> Cmd BackendMsg
