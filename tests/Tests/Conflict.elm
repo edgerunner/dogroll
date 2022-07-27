@@ -66,7 +66,7 @@ fullPlaythrough () =
             Conflict.opponent
     in
     -- All told, you take up 6d6 plus 1d8, and I take up 8d6.
-    Conflict.start
+    Ok Conflict.start
         -- You roll: 1 2 2 3 4 4 7.
         |> Result.andThen
             (Conflict.takeDice you
@@ -381,7 +381,7 @@ unrolledError () =
             Dice.init D6 Pips.four
     in
     Conflict.start
-        |> Result.andThen (Conflict.takeDice Conflict.proponent dice)
+        |> Conflict.takeDice Conflict.proponent dice
         |> Expect.err
 
 
@@ -393,7 +393,7 @@ onlyRolledDice () =
                 |> Dice.roll (Random.initialSeed 0)
     in
     Conflict.start
-        |> Result.andThen (Conflict.takeDice Conflict.proponent dice)
+        |> Conflict.takeDice Conflict.proponent dice
         |> Expect.ok
 
 
@@ -419,7 +419,7 @@ readiedConflict =
             ]
                 |> List.foldl Dice.add Dice.empty
     in
-    Conflict.start
+    Ok Conflict.start
         |> Result.andThen (Conflict.takeDice Conflict.proponent proponentDice)
         |> Result.andThen (Conflict.takeDice Conflict.opponent opponentDice)
 

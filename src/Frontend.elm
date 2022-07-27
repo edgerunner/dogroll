@@ -2,6 +2,8 @@ module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
+import Conflict
+import Conflict.View
 import Die.Size exposing (Size(..))
 import Lamdera exposing (Key, sendToBackend)
 import Setup
@@ -38,8 +40,11 @@ init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init _ key =
     ( { key = key
       , setup = Setup.empty
+      , conflict = Conflict.initialState
+      , mySide = Nothing
+      , page = Setup
       }
-    , Cmd.none
+    , sendToBackend UserWantsToParticipate
     )
 
 
@@ -69,7 +74,31 @@ update msg model =
 
         UserClickedRollDice ->
             sendToBackend (UserWantsToRollDice model.setup)
-                |> Tuple.pair { model | setup = Setup.empty }
+                |> Tuple.pair { model | setup = Setup.empty, page = Conflict }
+
+        UserClickedTakeMoreDice ->
+            { model | page = Setup } |> noCmd
+
+        UserClickedPlayDie die ->
+            ( model, sendToBackend (UserWantsToPlayDie die) )
+
+        UserClickedRaise ->
+            ( model, sendToBackend UserWantsToRaise )
+
+        UserClickedSee ->
+            ( model, sendToBackend UserWantsToSee )
+
+        UserClickedFalloutSize size ->
+            ( model, sendToBackend (UserWantsToSelectFalloutDice size) )
+
+        UserClickedGive ->
+            ( model, sendToBackend UserWantsToGive )
+
+        UserClickedRestart ->
+            ( model, sendToBackend UserWantsToRestart )
+
+        UserClickedSomethingUnneeded ->
+            ( model, Cmd.none )
 
 
 noCmd : Model -> ( Model, Cmd msg )
@@ -80,19 +109,45 @@ noCmd model =
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
-        NoOpToFrontend ->
-            ( model, Cmd.none )
+        ConflictStateUpdated newConflictState ->
+            let
+                straighten =
+                    if (model.mySide |> Debug.log "my side") == Just Conflict.opponent then
+                        Conflict.mirror
+
+                    else
+                        identity
+            in
+            ( { model | conflict = straighten newConflictState }, Cmd.none )
+
+        RegisteredAs maybeSide ->
+            ( { model | mySide = maybeSide }, Cmd.none )
 
 
 view : Model -> Browser.Document FrontendMsg
 view model =
     { title = "Dogroll"
     , body =
-        [ Setup.view
-            { increment = UserClickedIncrementDie
-            , decrement = UserClickedDecrementDie
-            , roll = UserClickedRollDice
-            }
-            model.setup
+        [ case model.page of
+            Setup ->
+                Setup.view
+                    { increment = UserClickedIncrementDie
+                    , decrement = UserClickedDecrementDie
+                    , roll = UserClickedRollDice
+                    }
+                    model.setup
+
+            Conflict ->
+                model.conflict
+                    |> Conflict.View.view
+                        { takeMoreDice = UserClickedTakeMoreDice
+                        , playDie = UserClickedPlayDie
+                        , raise = UserClickedRaise
+                        , see = UserClickedSee
+                        , fallout = UserClickedFalloutSize
+                        , give = UserClickedGive
+                        , restart = UserClickedRestart
+                        , noop = UserClickedSomethingUnneeded
+                        }
         ]
     }
