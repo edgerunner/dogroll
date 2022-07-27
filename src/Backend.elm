@@ -108,65 +108,39 @@ updateFromFrontend sessionId clientId msg model =
 
         UserWantsToPlayDie die ->
             withParticipant sessionId
-                (\side ->
-                    case Conflict.play side die model.conflict of
-                        Ok conflict ->
-                            ( { model | conflict = conflict }
-                            , conflict |> publishChanges
-                            )
-
-                        Err _ ->
-                            ( model, Cmd.none )
+                (Conflict.play
+                    >> (|>) die
+                    >> updateAndPublishConflict
                 )
                 model
 
         UserWantsToRaise ->
             withParticipant sessionId
-                (\side ->
-                    case Conflict.raise side model.conflict of
-                        Ok conflict ->
-                            ( { model | conflict = conflict }
-                            , conflict |> publishChanges
-                            )
-
-                        Err _ ->
-                            ( model, Cmd.none )
+                (Conflict.raise
+                    >> updateAndPublishConflict
                 )
                 model
 
         UserWantsToSee ->
             withParticipant sessionId
-                (\side ->
-                    case Conflict.see side model.conflict of
-                        Ok conflict ->
-                            ( { model | conflict = conflict }
-                            , conflict |> publishChanges
-                            )
-
-                        Err _ ->
-                            ( model, Cmd.none )
+                (Conflict.see
+                    >> updateAndPublishConflict
                 )
                 model
 
         UserWantsToSelectFalloutDice size ->
             withParticipant sessionId
-                (\side ->
-                    case Conflict.takeFallout side size model.conflict of
-                        Ok conflict ->
-                            ( { model | conflict = conflict }
-                            , conflict |> publishChanges
-                            )
-
-                        Err _ ->
-                            ( model, Cmd.none )
+                (Conflict.takeFallout
+                    >> (|>) size
+                    >> updateAndPublishConflict
                 )
                 model
 
 
-withParticipant : SessionId -> (Side -> ( Model, Cmd BackendMsg )) -> Model -> ( Model, Cmd BackendMsg )
+withParticipant : SessionId -> (Side -> Model -> ( Model, Cmd BackendMsg )) -> Model -> ( Model, Cmd BackendMsg )
 withParticipant sessionId transform model =
     identifyParticipant sessionId model.participants
-        |> Maybe.map transform
+        |> Maybe.map (transform >> (|>) model)
         |> Maybe.withDefault ( model, Cmd.none )
 
 
@@ -180,6 +154,18 @@ identifyParticipant sessionId ( proponentSessionId, opponentSessionId ) =
 
     else
         Nothing
+
+
+updateAndPublishConflict : (Conflict -> Result Conflict.Error Conflict) -> Model -> ( Model, Cmd BackendMsg )
+updateAndPublishConflict transform model =
+    case transform model.conflict of
+        Ok conflict ->
+            ( { model | conflict = conflict }
+            , conflict |> publishChanges
+            )
+
+        Err _ ->
+            ( model, Cmd.none )
 
 
 publishChanges : Conflict -> Cmd BackendMsg
