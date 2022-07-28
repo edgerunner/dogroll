@@ -15,7 +15,6 @@ suite =
     describe "Conflict"
         [ describe "taking dice"
             [ test "only rolled dice are accepted" onlyRolledDice
-            , test "unrolled dice returns an error" unrolledError
             ]
         , describe "playing dice"
             [ test "dice from the correct side are accepted" playCorrectSide
@@ -372,17 +371,6 @@ playCorrectSide () =
         |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 3))
         |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 5))
         |> Expect.ok
-
-
-unrolledError : () -> Expectation
-unrolledError () =
-    let
-        dice =
-            Dice.init D6 Pips.four
-    in
-    Conflict.start
-        |> Conflict.takeDice Conflict.proponent dice
-        |> Expect.err
 
 
 onlyRolledDice : () -> Expectation
