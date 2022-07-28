@@ -129,10 +129,12 @@ section.pile {
     justify-content: center;
     align-content: center;
     gap: 8px;
+    flex-grow: 1;
 }
 
 section.pile#their-dice {
     flex-wrap: wrap-reverse;
+    flex-grow: 3;
 }
 
 main {
