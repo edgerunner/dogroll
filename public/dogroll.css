@@ -108,7 +108,7 @@ section.pool.raised:first-child {
     align-self: stretch;
     width: 100%;
     margin-inline: revert;
-    margin-bottom: -16px;
+    margin-bottom: -32px;
 }
 
 section.pool h3 {
@@ -127,14 +127,13 @@ section.pile {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
-    align-content: center;
+    align-content: flex-end;
     gap: 8px;
-    flex-grow: 1;
 }
 
 section.pile#their-dice {
     flex-wrap: wrap-reverse;
-    flex-grow: 3;
+    flex-grow: 1;
 }
 
 main {
@@ -143,8 +142,8 @@ main {
     align-items: stretch;
     width: 100vw;
     min-height: 100vh;
-    gap: 16px;
-    padding: 16px 0;
+    gap: 32px;
+    padding: 32px 0;
 }
 
 #setup section.pool:first-child div {
