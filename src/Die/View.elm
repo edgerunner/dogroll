@@ -24,16 +24,18 @@ generic style_ size face =
 
 
 held : Style -> Die Held -> Html (Die Held)
-held style_ die =
-    generic style_
+held (Style style_) die =
+    generic
+        ([ "held", style_ ] |> String.join " " |> Style)
         (die |> Die.size)
         " "
         |> Html.map (always die)
 
 
 rolled : Style -> Die Rolled -> Html (Die Rolled)
-rolled style_ die =
-    generic style_
+rolled (Style style_) die =
+    generic
+        ([ "rolled", style_ ] |> String.join " " |> Style)
         (die |> Die.size)
         (die |> Die.face |> String.fromInt)
         |> Html.map (always die)

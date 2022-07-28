@@ -1,11 +1,11 @@
 module Conflict.View exposing (Config, view)
 
-import Conflict exposing (Raise(..), See(..), State)
+import Conflict exposing (Raise(..), See(..), Side(..), State)
 import Dice exposing (Dice)
 import Die exposing (Die, Rolled)
 import Die.Size exposing (Size)
 import Die.View
-import Html exposing (Html)
+import Html exposing (Attribute, Html)
 import Html.Attributes as Attr
 import Html.Events as Event
 import Pips
@@ -21,6 +21,7 @@ type alias Config msg =
     , give : msg
     , restart : msg
     , noop : msg
+    , mySide : Maybe Side
     }
 
 
@@ -29,15 +30,44 @@ view config state =
     [ Html.button [ Attr.class "give", Event.onClick config.give ] [ Html.text "Give" ]
     , takeMoreDiceButton
         |> Html.map (always config.takeMoreDice)
-    , diceSet "my-dice" state.proponent.pool
+    , config.mySide
+        |> Maybe.withDefault Conflict.proponent
+        |> Conflict.player
+        |> (|>) state
+        |> .pool
+        |> diceSet "my-dice"
         |> Html.map config.playDie
-    , playArea state.raise
+    , playArea (textGetter config.mySide state.go) state.raise
         |> Html.map (always config.noop)
-    , actionButton config state.raise
-    , diceSet "their-dice" state.opponent.pool
+    , if config.mySide == Just state.go then
+        actionButton config state.raise
+
+      else
+        Html.text ""
+    , config.mySide
+        |> Maybe.withDefault Conflict.proponent
+        |> Conflict.otherSide
+        |> Conflict.player
+        |> (|>) state
+        |> .pool
+        |> diceSet "their-dice"
         |> Html.map (always config.noop)
     ]
-        |> Html.main_ [ Attr.id "conflict" ]
+        |> Html.main_ [ Attr.id "conflict", sideClass config.mySide ]
+
+
+sideClass : Maybe Side -> Attribute msg
+sideClass side =
+    Attr.class <|
+        case side of
+            Nothing ->
+                "spectator"
+
+            Just Proponent ->
+                "proponent"
+
+            Just Opponent ->
+                "opponent"
 
 
 actionButton : Config msg -> Raise -> Html msg
@@ -47,11 +77,15 @@ actionButton config raise =
             UI.button "Raise"
                 |> Html.map (always config.raise)
 
+        RaisedWith _ _ LoseTheStakes ->
+            UI.button "Lose the Stakes"
+                |> Html.map (always config.give)
+
         RaisedWith _ _ see ->
             Html.map (always config.see) <|
                 case see of
                     LoseTheStakes ->
-                        UI.button "Lose the Stakes"
+                        Html.text ""
 
                     ReverseTheBlow _ ->
                         UI.button "Reverse the Blow"
@@ -91,46 +125,97 @@ diceSet : String -> Dice Rolled -> Html (Die Rolled)
 diceSet id =
     Dice.toList
         >> List.map (Die.View.rolled Die.View.regular)
-        >> Html.section [ Attr.id id ]
+        >> UI.pile id identity
 
 
-playArea : Raise -> Html (Die Rolled)
-playArea raise =
+type alias TextFor =
+    { myTurn : String
+    , notMyTurn : ( String, String )
+    }
+
+
+textGetter : Maybe Side -> Side -> TextFor -> String
+textGetter mySide go =
+    case Maybe.map ((==) go) mySide of
+        Just True ->
+            .myTurn
+
+        Just False ->
+            .notMyTurn >> (\( pre, post ) -> [ pre, "other side", post ] |> String.concat)
+
+        Nothing ->
+            .notMyTurn
+                >> (\( pre, post ) ->
+                        [ pre
+                        , case go of
+                            Proponent ->
+                                "proponent"
+
+                            Opponent ->
+                                "opponent"
+                        , post
+                        ]
+                            |> String.concat
+                   )
+
+
+playArea : (TextFor -> String) -> Raise -> Html (Die Rolled)
+playArea textFor raise =
     UI.pool <|
         case raise of
             PendingTwoDice ->
-                [ UI.poolCaption "Play two dice to raise" ]
+                [ { myTurn = "Play two dice to raise"
+                  , notMyTurn = ( "Waiting for the ", " to raise" )
+                  }
+                    |> textFor
+                    |> UI.poolCaption
+                ]
 
             PendingOneDie die1 ->
-                [ UI.poolCaption "Play one die to raise"
+                [ { myTurn = "Play one die to raise"
+                  , notMyTurn = ( "Waiting for the ", " to raise" )
+                  }
+                    |> textFor
+                    |> UI.poolCaption
                 , Die.View.rolled Die.View.regular die1
                 ]
 
             ReadyToRaise die1 die2 ->
-                [ UI.poolCaption "Ready to raise"
+                [ { myTurn = "Go ahead and raise"
+                  , notMyTurn = ( "Waiting for the ", " to raise" )
+                  }
+                    |> textFor
+                    |> UI.poolCaption
                 , Die.View.rolled Die.View.regular die1
                 , Die.View.rolled Die.View.regular die2
                 ]
 
             RaisedWith raise1 raise2 see ->
+                let
+                    seeCaption =
+                        textFor
+                            { myTurn = "Play dice to see the raise"
+                            , notMyTurn = ( "Waiting for the ", " to see" )
+                            }
+                in
                 case see of
                     LoseTheStakes ->
                         [ Die.View.rolled Die.View.regular raise1
                         , Die.View.rolled Die.View.regular raise2
-                        , UI.poolCaption "Play dice to see the raise"
+                        , UI.poolCaption seeCaption
                         ]
 
                     ReverseTheBlow see1 ->
                         [ Die.View.rolled Die.View.regular raise1
                         , Die.View.rolled Die.View.regular raise2
-                        , UI.poolCaption "Play dice to see the raise"
+                        , UI.poolCaption seeCaption
                         , Die.View.rolled Die.View.regular see1
                         ]
 
                     BlockOrDodge see1 see2 ->
                         [ Die.View.rolled Die.View.regular raise1
                         , Die.View.rolled Die.View.regular raise2
-                        , UI.poolCaption "Play dice to see the raise"
+                        , UI.poolCaption seeCaption
                         , Die.View.rolled Die.View.regular see1
                         , Die.View.rolled Die.View.regular see2
                         ]
@@ -138,7 +223,7 @@ playArea raise =
                     TakeTheBlow see1 see2 see3 seeMore ->
                         [ Die.View.rolled Die.View.regular raise1
                         , Die.View.rolled Die.View.regular raise2
-                        , UI.poolCaption "Play dice to see the raise"
+                        , UI.poolCaption seeCaption
                         , Die.View.rolled Die.View.regular see1
                         , Die.View.rolled Die.View.regular see2
                         , Die.View.rolled Die.View.regular see3
@@ -146,7 +231,11 @@ playArea raise =
                             ++ List.map (Die.View.rolled Die.View.regular) seeMore
 
             PendingFallout pips ->
-                [ UI.poolCaption "Take fallout dice to continue"
+                [ { myTurn = "Take fallout dice to continue"
+                  , notMyTurn = ( "Waiting for the ", " to take fallout dice" )
+                  }
+                    |> textFor
+                    |> UI.poolCaption
                 , UI.poolCaption (Pips.repeat "✖︎" pips |> String.join " ")
                 ]
 
@@ -154,6 +243,10 @@ playArea raise =
                 [ UI.poolCaption "This conflict is over" ]
 
             GivenUp (Just die) ->
-                [ UI.poolCaption "This conflict is over"
+                [ { myTurn = "You can take your best die to a follow-up conflict"
+                  , notMyTurn = ( "The ", " can take their best die to a follow-up conflict" )
+                  }
+                    |> textFor
+                    |> UI.poolCaption
                 , Die.View.rolled Die.View.regular die
                 ]
