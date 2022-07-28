@@ -4,7 +4,7 @@ import Die
 import Die.Size exposing (Size(..))
 import Expect
 import Random exposing (Seed)
-import Test exposing (Test, describe, fuzz, fuzz2, test)
+import Test exposing (Test, describe, fuzz, test)
 import Tests.Helpers as Helpers
 
 
