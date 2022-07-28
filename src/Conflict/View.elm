@@ -77,11 +77,15 @@ actionButton config raise =
             UI.button "Raise"
                 |> Html.map (always config.raise)
 
+        RaisedWith _ _ LoseTheStakes ->
+            UI.button "Lose the Stakes"
+                |> Html.map (always config.give)
+
         RaisedWith _ _ see ->
             Html.map (always config.see) <|
                 case see of
                     LoseTheStakes ->
-                        UI.button "Lose the Stakes"
+                        Html.text ""
 
                     ReverseTheBlow _ ->
                         UI.button "Reverse the Blow"
