@@ -121,7 +121,7 @@ diceSet : String -> Dice Rolled -> Html (Die Rolled)
 diceSet id =
     Dice.toList
         >> List.map (Die.View.rolled Die.View.regular)
-        >> Html.section [ Attr.id id ]
+        >> UI.pile id identity
 
 
 playArea : Raise -> Html (Die Rolled)

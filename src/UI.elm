@@ -32,7 +32,7 @@ poolCaption =
         >> Html.h3 []
 
 
-pile : (a -> Html msg) -> List a -> Html msg
-pile toHtml =
+pile : String -> (a -> Html msg) -> List a -> Html msg
+pile id toHtml =
     List.map toHtml
-        >> Html.section [ Attr.class "pile" ]
+        >> Html.section [ Attr.class "pile", Attr.id id ]
