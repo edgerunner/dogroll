@@ -11,6 +11,13 @@
     --faded-fg: var(--color-earth);
 }
 
+main,
+section,
+div,
+article {
+    box-sizing: border-box;
+}
+
 data.die {
     display: inline-flex;
     width: 64px;
@@ -86,6 +93,7 @@ section.pool {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    align-self: center;
     padding: 16px;
     border-radius: 32px;
     gap: 16px;
@@ -95,7 +103,9 @@ section.pool {
 
 section.pool.raised:first-child {
     border-radius: 0;
-    width: auto;
+    align-self: stretch;
+    width: 100%;
+    margin-bottom: -16px;
 }
 
 section.pool h3 {
@@ -115,13 +125,18 @@ section.pile {
     gap: 8px;
 }
 
-main#setup {
+section.pile#their-dice {
+    flex-wrap: wrap-reverse;
+}
+
+main {
     display: flex;
     flex-direction: column-reverse;
-    align-content: stretch;
+    align-items: stretch;
     width: 100vw;
     min-height: 100vh;
     gap: 16px;
+    padding: 16px 0;
 }
 
 #setup section.pool:first-child div {
@@ -136,6 +151,7 @@ main#setup {
     justify-content: space-around;
     align-items: flex-end;
     padding: 0 16px;
+    flex-grow: 1;
 }
 
 #setup section.dice>div {
