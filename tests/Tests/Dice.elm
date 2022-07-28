@@ -2,7 +2,7 @@ module Tests.Dice exposing (suite)
 
 import Dice exposing (Dice)
 import Dice.Type exposing (DemonicInfluence(..), Gun(..), Quality(..), Stat(..), Type(..))
-import Die
+import Die exposing (Held)
 import Die.Size
 import Expect exposing (Expectation)
 import Pips
@@ -11,7 +11,7 @@ import Test exposing (Test, describe, test)
 import Tests.Helpers as Helpers
 
 
-fuzzRolls : String -> (Seed -> Dice x -> Expectation) -> Test
+fuzzRolls : String -> (Seed -> Dice Held -> Expectation) -> Test
 fuzzRolls =
     Test.fuzz2 Helpers.seedFuzzer Helpers.combinedDiceFuzzer
 
@@ -70,20 +70,6 @@ suite =
                         List.map2 atMost larger smaller
                 in
                 Helpers.allPass expectations
-            )
-        , fuzzRolls "held dice are sorted after rolled dice"
-            (\seed pool ->
-                let
-                    rolled =
-                        Dice.roll seed pool
-
-                    combined =
-                        Dice.combine [ pool, rolled ] |> Dice.toList
-
-                    expected =
-                        (rolled |> Dice.toList) ++ (pool |> Dice.toList)
-                in
-                Expect.equal expected combined
             )
         , fuzzRolls "held dice are sorted by decreasing size"
             (\_ pool ->

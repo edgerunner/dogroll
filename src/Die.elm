@@ -1,4 +1,4 @@
-module Die exposing (Die, Rolled, cheat, face, generator, init, roll, size, sortValue, toString)
+module Die exposing (Die, Held, Rolled, cheat, face, generator, init, roll, size, sortValue, toString)
 
 import Die.Size as Size exposing (Size(..))
 import Random exposing (Generator, Seed)
@@ -10,10 +10,14 @@ type Die x
 
 
 type Rolled
-    = ReallyRolled Rolled
+    = ReallyRolled Never
 
 
-init : Size -> Die x
+type Held
+    = ReallyHeld Never
+
+
+init : Size -> Die Held
 init =
     Held
 
@@ -33,7 +37,7 @@ size die =
             size_
 
 
-generator : Die x -> Generator (Die Rolled)
+generator : Die Held -> Generator (Die Rolled)
 generator die =
     case die of
         Held size_ ->
@@ -46,7 +50,7 @@ generator die =
             Random.constant (Rolled size_ value_)
 
 
-roll : Seed -> Die x -> Die Rolled
+roll : Seed -> Die Held -> Die Rolled
 roll seed =
     generator
         >> Random.step

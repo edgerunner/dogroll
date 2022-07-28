@@ -30,22 +30,6 @@ suite =
                             |> Helpers.between1and (Die.size die |> Die.Size.toInt)
                    )
             )
-        , fuzz2 Helpers.seedFuzzer
-            Helpers.dieFuzzer
-            "not rolling twice"
-            (\seed_ die ->
-                let
-                    rolledOnce =
-                        Die.roll seed_ die
-
-                    anotherSeed =
-                        Random.step Random.independentSeed seed_ |> Tuple.first
-
-                    rolledTwice =
-                        Die.roll anotherSeed rolledOnce
-                in
-                Expect.equal (Die.face rolledOnce) (Die.face rolledTwice)
-            )
         , test "string representation"
             (\() ->
                 Die.Size.all

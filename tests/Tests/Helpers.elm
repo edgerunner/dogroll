@@ -1,7 +1,7 @@
 module Tests.Helpers exposing (allPass, between1and, combinedDiceFuzzer, diceFuzzer, dieFuzzer, passOrFail, seedFuzzer)
 
 import Dice exposing (Dice)
-import Die exposing (Die)
+import Die exposing (Die, Held)
 import Die.Size exposing (Size(..))
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
@@ -41,7 +41,7 @@ allPass =
     List.foldl passOrFail Expect.pass
 
 
-dieFuzzer : Fuzzer (Die x)
+dieFuzzer : Fuzzer (Die Held)
 dieFuzzer =
     Fuzz.map
         Die.init
@@ -53,7 +53,7 @@ pipsFuzzer =
     Fuzz.intRange 1 >> Fuzz.map Pips.fromInt
 
 
-diceFuzzer : Fuzzer (Dice x)
+diceFuzzer : Fuzzer (Dice Held)
 diceFuzzer =
     Fuzz.map2
         Dice.init
@@ -66,7 +66,7 @@ sizeFuzzer =
     Fuzz.oneOf (List.map Fuzz.constant Die.Size.all)
 
 
-combinedDiceFuzzer : Fuzzer (Dice x)
+combinedDiceFuzzer : Fuzzer (Dice Held)
 combinedDiceFuzzer =
     Fuzz.list diceFuzzer
         |> Fuzz.map (List.take 4 >> Dice.combine)

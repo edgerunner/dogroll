@@ -13,6 +13,7 @@ module Dice.Type exposing
     )
 
 import Dice exposing (Dice)
+import Die exposing (Held)
 import Die.Size exposing (Size(..))
 import Pips exposing (Pips)
 
@@ -89,7 +90,7 @@ type Background
     | ComplicatedCommunity
 
 
-toDice : Type -> Dice x
+toDice : Type -> Dice Held
 toDice type_ =
     case type_ of
         Stat _ pips ->
@@ -120,22 +121,22 @@ toDice type_ =
             toDice_background background pool
 
 
-toDice_stat : Pips -> Dice x
+toDice_stat : Pips -> Dice Held
 toDice_stat =
     Pips.add Pips.two >> Dice.init D6
 
 
-toDice_trait : Size -> Pips -> Dice x
+toDice_trait : Size -> Pips -> Dice Held
 toDice_trait size =
     Pips.add Pips.one >> Dice.init size
 
 
-toDice_relationship : Size -> Pips -> Dice x
+toDice_relationship : Size -> Pips -> Dice Held
 toDice_relationship size =
     Pips.add Pips.one >> Dice.init size
 
 
-toDice_quality : Quality -> Dice x
+toDice_quality : Quality -> Dice Held
 toDice_quality quality =
     case quality of
         Normal ->
@@ -154,7 +155,7 @@ toDice_quality quality =
             Dice.init D4 Pips.one
 
 
-toDice_gun : Gun -> Dice x
+toDice_gun : Gun -> Dice Held
 toDice_gun gun =
     case gun of
         Gun ->
@@ -164,7 +165,7 @@ toDice_gun gun =
             Dice.init D4 Pips.zero
 
 
-toDice_initiation : Dice x
+toDice_initiation : Dice Held
 toDice_initiation =
     Dice.combine
         [ Dice.init D10 Pips.four
@@ -172,7 +173,7 @@ toDice_initiation =
         ]
 
 
-toDice_demonicInfluence : DemonicInfluence -> Dice x
+toDice_demonicInfluence : DemonicInfluence -> Dice Held
 toDice_demonicInfluence demonicInfluence =
     case demonicInfluence of
         Injustice ->
@@ -191,7 +192,7 @@ toDice_demonicInfluence demonicInfluence =
             Dice.init D10 Pips.five
 
 
-toDice_fallout : Fallout -> Pips -> Dice x
+toDice_fallout : Fallout -> Pips -> Dice Held
 toDice_fallout fallout =
     case fallout of
         JustTalking ->
@@ -210,7 +211,7 @@ toDice_fallout fallout =
             toDice_ceremony (ceremony :: ceremonies)
 
 
-toDice_ceremony : List Ceremony -> Pips -> Dice x
+toDice_ceremony : List Ceremony -> Pips -> Dice Held
 toDice_ceremony ceremonies =
     ceremonies
         |> List.map
@@ -244,7 +245,7 @@ toDice_ceremony ceremonies =
         |> Dice.init
 
 
-toDice_background : Background -> Pool -> Dice x
+toDice_background : Background -> Pool -> Dice Held
 toDice_background background pool =
     Dice.combine
         (case ( background, pool ) of

@@ -1,6 +1,6 @@
 module Dice exposing (Dice, add, combine, drop, empty, faces, generator, has, init, roll, sizes, toList, toString, total)
 
-import Die exposing (Die, Rolled)
+import Die exposing (Die, Held, Rolled)
 import Die.Size exposing (Size(..))
 import Pips exposing (Pips)
 import Random exposing (Generator, Seed)
@@ -10,7 +10,7 @@ type Dice x
     = Dice (List (Die x))
 
 
-init : Size -> Pips -> Dice x
+init : Size -> Pips -> Dice Held
 init size =
     Pips.repeat (Die.init size) >> Dice
 
@@ -41,7 +41,7 @@ sizes =
     toList >> List.map Die.size
 
 
-generator : Dice x -> Generator (Dice Rolled)
+generator : Dice Held -> Generator (Dice Rolled)
 generator =
     toList
         >> List.map Die.generator
@@ -49,7 +49,7 @@ generator =
         >> Random.map makeDice
 
 
-roll : Seed -> Dice x -> Dice Rolled
+roll : Seed -> Dice Held -> Dice Rolled
 roll seed =
     generator
         >> Random.step
