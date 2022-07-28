@@ -148,6 +148,7 @@ view model =
                         , give = UserClickedGive
                         , restart = UserClickedRestart
                         , noop = UserClickedSomethingUnneeded
+                        , mySide = model.mySide
                         }
         ]
     }

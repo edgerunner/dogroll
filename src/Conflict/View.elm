@@ -1,11 +1,11 @@
 module Conflict.View exposing (Config, view)
 
-import Conflict exposing (Raise(..), See(..), State)
+import Conflict exposing (Raise(..), See(..), Side(..), State)
 import Dice exposing (Dice)
 import Die exposing (Die, Rolled)
 import Die.Size exposing (Size)
 import Die.View
-import Html exposing (Html)
+import Html exposing (Attribute, Html)
 import Html.Attributes as Attr
 import Html.Events as Event
 import Pips
@@ -21,6 +21,7 @@ type alias Config msg =
     , give : msg
     , restart : msg
     , noop : msg
+    , mySide : Maybe Side
     }
 
 
@@ -37,7 +38,21 @@ view config state =
     , diceSet "their-dice" state.opponent.pool
         |> Html.map (always config.noop)
     ]
-        |> Html.main_ [ Attr.id "conflict" ]
+        |> Html.main_ [ Attr.id "conflict", sideClass config.mySide ]
+
+
+sideClass : Maybe Side -> Attribute msg
+sideClass side =
+    Attr.class <|
+        case side of
+            Nothing ->
+                "spectator"
+
+            Just Proponent ->
+                "proponent"
+
+            Just Opponent ->
+                "opponent"
 
 
 actionButton : Config msg -> Raise -> Html msg
