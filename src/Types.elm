@@ -4,7 +4,7 @@ import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Conflict exposing (Conflict, Side)
 import Dice exposing (Dice)
-import Die exposing (Die)
+import Die exposing (Die, Held, Rolled)
 import Die.Size exposing (Size)
 import Lamdera exposing (SessionId)
 import Random exposing (Seed)
@@ -40,7 +40,7 @@ type FrontendMsg
     | UserClickedDecrementDie Die.Size.Size
     | UserClickedRollDice
     | UserClickedTakeMoreDice
-    | UserClickedPlayDie Die
+    | UserClickedPlayDie (Die Rolled)
     | UserClickedSomethingUnneeded
     | UserClickedRaise
     | UserClickedSee
@@ -50,9 +50,9 @@ type FrontendMsg
 
 
 type ToBackend
-    = UserWantsToRollDice Dice
+    = UserWantsToRollDice (Dice Held)
     | UserWantsToParticipate
-    | UserWantsToPlayDie Die
+    | UserWantsToPlayDie (Die Rolled)
     | UserWantsToRaise
     | UserWantsToSee
     | UserWantsToSelectFalloutDice Size
