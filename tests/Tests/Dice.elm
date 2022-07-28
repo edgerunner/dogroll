@@ -2,7 +2,7 @@ module Tests.Dice exposing (suite)
 
 import Dice exposing (Dice)
 import Dice.Type exposing (DemonicInfluence(..), Gun(..), Quality(..), Stat(..), Type(..))
-import Die
+import Die exposing (Held)
 import Die.Size
 import Expect exposing (Expectation)
 import Pips
@@ -11,7 +11,7 @@ import Test exposing (Test, describe, test)
 import Tests.Helpers as Helpers
 
 
-fuzzRolls : String -> (Seed -> Dice -> Expectation) -> Test
+fuzzRolls : String -> (Seed -> Dice Held -> Expectation) -> Test
 fuzzRolls =
     Test.fuzz2 Helpers.seedFuzzer Helpers.combinedDiceFuzzer
 
@@ -47,7 +47,7 @@ suite =
                         (\die ->
                             Helpers.between1and
                                 (Die.size die |> Die.Size.toInt)
-                                (Die.face die |> Maybe.withDefault 0)
+                                (Die.face die)
                         )
                     >> Helpers.allPass
             )
@@ -63,27 +63,13 @@ suite =
 
                     atMost lg sm =
                         Expect.atMost
-                            (lg |> Die.face |> Maybe.withDefault 0)
-                            (sm |> Die.face |> Maybe.withDefault 11)
+                            (lg |> Die.face)
+                            (sm |> Die.face)
 
                     expectations =
                         List.map2 atMost larger smaller
                 in
                 Helpers.allPass expectations
-            )
-        , fuzzRolls "held dice are sorted after rolled dice"
-            (\seed pool ->
-                let
-                    rolled =
-                        Dice.roll seed pool
-
-                    combined =
-                        Dice.combine [ pool, rolled ] |> Dice.toList
-
-                    expected =
-                        (rolled |> Dice.toList) ++ (pool |> Dice.toList)
-                in
-                Expect.equal expected combined
             )
         , fuzzRolls "held dice are sorted by decreasing size"
             (\_ pool ->
@@ -113,7 +99,7 @@ suite =
                             |> Dice.toList
                             |> List.map
                                 (\die ->
-                                    ( Die.face die |> Maybe.withDefault 0
+                                    ( Die.face die
                                     , Die.size die |> Die.Size.toInt
                                     )
                                 )

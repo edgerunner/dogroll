@@ -1,7 +1,7 @@
 module Setup exposing (Config, Model, decrement, empty, increment, toDice, view)
 
 import Dice exposing (Dice)
-import Die
+import Die exposing (Held)
 import Die.Size exposing (Size)
 import Die.View
 import Html exposing (Html)
@@ -10,7 +10,7 @@ import UI
 
 
 type alias Model =
-    Dice
+    Dice Held
 
 
 type alias Config msg =
@@ -81,6 +81,6 @@ decrement size =
     Die.init size |> Dice.drop
 
 
-toDice : Model -> Dice
+toDice : Model -> Dice Held
 toDice =
     identity

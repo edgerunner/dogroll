@@ -1,9 +1,17 @@
 module Conflict exposing (Conflict, Error, Player, Raise(..), See(..), Side(..), State, give, initialState, keptDie, mirror, opponent, play, proponent, raise, see, start, state, takeDice, takeFallout)
 
-import Dice exposing (Dice)
-import Die exposing (Die)
+import Dice
+import Die
 import Die.Size exposing (Size)
 import Pips exposing (Pips)
+
+
+type alias Die =
+    Die.Die Die.Rolled
+
+
+type alias Dice =
+    Dice.Dice Die.Rolled
 
 
 type Conflict
@@ -28,13 +36,9 @@ start =
     Conflict []
 
 
-takeDice : Side -> Dice -> Conflict -> Result Error Conflict
+takeDice : Side -> Dice -> Conflict -> Result error Conflict
 takeDice side dice =
-    if Dice.allRolled dice then
-        push side (TookDice dice)
-
-    else
-        Err DiceNotRolled |> always
+    push side (TookDice dice)
 
 
 play : Side -> Die -> Conflict -> Result Error Conflict
@@ -190,8 +194,7 @@ opponent =
 
 
 type Error
-    = DiceNotRolled
-    | DieNotInPool
+    = DieNotInPool
     | RaiseWithTwoDice
     | NotYourTurn
     | NotEnoughToSee
@@ -213,8 +216,8 @@ type alias State =
 
 type alias Player =
     { pool : Dice
-    , fallout : Dice
-    , bestDie : Die
+    , fallout : Dice.Dice Die.Held
+    , bestDie : Maybe Die
     }
 
 
@@ -248,10 +251,13 @@ handleEvent sideEvent current =
                     { currentPlayer
                         | pool = Dice.combine [ dice, currentPlayer.pool ]
                         , bestDie =
-                            Dice.add currentPlayer.bestDie dice
-                                |> Dice.toList
-                                |> List.head
-                                |> Maybe.withDefault Die.null
+                            dice
+                                |> (currentPlayer.bestDie
+                                        |> Maybe.map Dice.add
+                                        |> Maybe.withDefault identity
+                                   )
+                                |> (Dice.toList >> List.head)
+                                |> Debug.log "bestDie"
                     }
                 )
                 side
@@ -330,14 +336,14 @@ finalizeSee raise_ =
             PendingTwoDice
 
 
-finalizeGive : Die -> Raise -> Raise
+finalizeGive : Maybe Die -> Raise -> Raise
 finalizeGive bestDie_ raise_ =
     case raise_ of
         RaisedWith _ _ _ ->
             GivenUp Nothing
 
         _ ->
-            GivenUp (Just bestDie_)
+            GivenUp bestDie_
 
 
 raiseWith : Die -> Raise -> Raise
@@ -375,8 +381,8 @@ seeWith die see_ =
 
 initialState : State
 initialState =
-    { proponent = { pool = Dice.empty, fallout = Dice.empty, bestDie = Die.null }
-    , opponent = { pool = Dice.empty, fallout = Dice.empty, bestDie = Die.null }
+    { proponent = { pool = Dice.empty, fallout = Dice.empty, bestDie = Nothing }
+    , opponent = { pool = Dice.empty, fallout = Dice.empty, bestDie = Nothing }
     , raise = PendingTwoDice
     , go = proponent
     }

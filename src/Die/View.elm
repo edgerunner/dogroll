@@ -1,6 +1,6 @@
-module Die.View exposing (Click, faded, for, generic, regular)
+module Die.View exposing (Click, faded, generic, held, regular, rolled)
 
-import Die exposing (Die)
+import Die exposing (Die, Held, Rolled)
 import Die.Size exposing (Size)
 import Html exposing (Attribute, Html)
 import Html.Attributes as Attr
@@ -23,11 +23,19 @@ generic style_ size face =
             ]
 
 
-for : Style -> Die -> Html Die
-for style_ die =
+held : Style -> Die Held -> Html (Die Held)
+held style_ die =
     generic style_
         (die |> Die.size)
-        (die |> Die.face |> Maybe.map String.fromInt |> Maybe.withDefault " ")
+        " "
+        |> Html.map (always die)
+
+
+rolled : Style -> Die Rolled -> Html (Die Rolled)
+rolled style_ die =
+    generic style_
+        (die |> Die.size)
+        (die |> Die.face |> String.fromInt)
         |> Html.map (always die)
 
 

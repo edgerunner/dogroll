@@ -2,7 +2,7 @@ module Conflict.View exposing (Config, view)
 
 import Conflict exposing (Raise(..), See(..), State)
 import Dice exposing (Dice)
-import Die exposing (Die)
+import Die exposing (Die, Rolled)
 import Die.Size exposing (Size)
 import Die.View
 import Html exposing (Html)
@@ -14,7 +14,7 @@ import UI
 
 type alias Config msg =
     { takeMoreDice : msg
-    , playDie : Die -> msg
+    , playDie : Die Rolled -> msg
     , raise : msg
     , see : msg
     , fallout : Size -> msg
@@ -87,14 +87,14 @@ takeMoreDiceButton =
     UI.button "Take More Dice"
 
 
-diceSet : String -> Dice -> Html Die
+diceSet : String -> Dice Rolled -> Html (Die Rolled)
 diceSet id =
     Dice.toList
-        >> List.map (Die.View.for Die.View.regular)
+        >> List.map (Die.View.rolled Die.View.regular)
         >> Html.section [ Attr.id id ]
 
 
-playArea : Raise -> Html Die
+playArea : Raise -> Html (Die Rolled)
 playArea raise =
     UI.pool <|
         case raise of
@@ -103,47 +103,47 @@ playArea raise =
 
             PendingOneDie die1 ->
                 [ UI.poolCaption "Play one die to raise"
-                , Die.View.for Die.View.regular die1
+                , Die.View.rolled Die.View.regular die1
                 ]
 
             ReadyToRaise die1 die2 ->
                 [ UI.poolCaption "Ready to raise"
-                , Die.View.for Die.View.regular die1
-                , Die.View.for Die.View.regular die2
+                , Die.View.rolled Die.View.regular die1
+                , Die.View.rolled Die.View.regular die2
                 ]
 
             RaisedWith raise1 raise2 see ->
                 case see of
                     LoseTheStakes ->
-                        [ Die.View.for Die.View.regular raise1
-                        , Die.View.for Die.View.regular raise2
+                        [ Die.View.rolled Die.View.regular raise1
+                        , Die.View.rolled Die.View.regular raise2
                         , UI.poolCaption "Play dice to see the raise"
                         ]
 
                     ReverseTheBlow see1 ->
-                        [ Die.View.for Die.View.regular raise1
-                        , Die.View.for Die.View.regular raise2
+                        [ Die.View.rolled Die.View.regular raise1
+                        , Die.View.rolled Die.View.regular raise2
                         , UI.poolCaption "Play dice to see the raise"
-                        , Die.View.for Die.View.regular see1
+                        , Die.View.rolled Die.View.regular see1
                         ]
 
                     BlockOrDodge see1 see2 ->
-                        [ Die.View.for Die.View.regular raise1
-                        , Die.View.for Die.View.regular raise2
+                        [ Die.View.rolled Die.View.regular raise1
+                        , Die.View.rolled Die.View.regular raise2
                         , UI.poolCaption "Play dice to see the raise"
-                        , Die.View.for Die.View.regular see1
-                        , Die.View.for Die.View.regular see2
+                        , Die.View.rolled Die.View.regular see1
+                        , Die.View.rolled Die.View.regular see2
                         ]
 
                     TakeTheBlow see1 see2 see3 seeMore ->
-                        [ Die.View.for Die.View.regular raise1
-                        , Die.View.for Die.View.regular raise2
+                        [ Die.View.rolled Die.View.regular raise1
+                        , Die.View.rolled Die.View.regular raise2
                         , UI.poolCaption "Play dice to see the raise"
-                        , Die.View.for Die.View.regular see1
-                        , Die.View.for Die.View.regular see2
-                        , Die.View.for Die.View.regular see3
+                        , Die.View.rolled Die.View.regular see1
+                        , Die.View.rolled Die.View.regular see2
+                        , Die.View.rolled Die.View.regular see3
                         ]
-                            ++ List.map (Die.View.for Die.View.regular) seeMore
+                            ++ List.map (Die.View.rolled Die.View.regular) seeMore
 
             PendingFallout pips ->
                 [ UI.poolCaption "Take fallout dice to continue"
@@ -155,5 +155,5 @@ playArea raise =
 
             GivenUp (Just die) ->
                 [ UI.poolCaption "This conflict is over"
-                , Die.View.for Die.View.regular die
+                , Die.View.rolled Die.View.regular die
                 ]
