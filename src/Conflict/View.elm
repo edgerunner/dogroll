@@ -37,7 +37,7 @@ view config state =
         |> .pool
         |> diceSet "my-dice"
         |> Html.map config.playDie
-    , playArea state.raise
+    , playArea (textGetter config.mySide state.go) state.raise
         |> Html.map (always config.noop)
     , if config.mySide == Just state.go then
         actionButton config state.raise
@@ -124,43 +124,94 @@ diceSet id =
         >> UI.pile id identity
 
 
-playArea : Raise -> Html (Die Rolled)
-playArea raise =
+type alias TextFor =
+    { myTurn : String
+    , notMyTurn : ( String, String )
+    }
+
+
+textGetter : Maybe Side -> Side -> TextFor -> String
+textGetter mySide go =
+    case Maybe.map ((==) go) mySide of
+        Just True ->
+            .myTurn
+
+        Just False ->
+            .notMyTurn >> (\( pre, post ) -> [ pre, "other side", post ] |> String.concat)
+
+        Nothing ->
+            .notMyTurn
+                >> (\( pre, post ) ->
+                        [ pre
+                        , case go of
+                            Proponent ->
+                                "proponent"
+
+                            Opponent ->
+                                "opponent"
+                        , post
+                        ]
+                            |> String.concat
+                   )
+
+
+playArea : (TextFor -> String) -> Raise -> Html (Die Rolled)
+playArea textFor raise =
     UI.pool <|
         case raise of
             PendingTwoDice ->
-                [ UI.poolCaption "Play two dice to raise" ]
+                [ { myTurn = "Play two dice to raise"
+                  , notMyTurn = ( "Waiting for the ", " to raise" )
+                  }
+                    |> textFor
+                    |> UI.poolCaption
+                ]
 
             PendingOneDie die1 ->
-                [ UI.poolCaption "Play one die to raise"
+                [ { myTurn = "Play one die to raise"
+                  , notMyTurn = ( "Waiting for the ", " to raise" )
+                  }
+                    |> textFor
+                    |> UI.poolCaption
                 , Die.View.rolled Die.View.regular die1
                 ]
 
             ReadyToRaise die1 die2 ->
-                [ UI.poolCaption "Ready to raise"
+                [ { myTurn = "Go ahead and raise"
+                  , notMyTurn = ( "Waiting for the ", " to raise" )
+                  }
+                    |> textFor
+                    |> UI.poolCaption
                 , Die.View.rolled Die.View.regular die1
                 , Die.View.rolled Die.View.regular die2
                 ]
 
             RaisedWith raise1 raise2 see ->
+                let
+                    seeCaption =
+                        textFor
+                            { myTurn = "Play dice to see the raise"
+                            , notMyTurn = ( "Waiting for the ", " to see" )
+                            }
+                in
                 case see of
                     LoseTheStakes ->
                         [ Die.View.rolled Die.View.regular raise1
                         , Die.View.rolled Die.View.regular raise2
-                        , UI.poolCaption "Play dice to see the raise"
+                        , UI.poolCaption seeCaption
                         ]
 
                     ReverseTheBlow see1 ->
                         [ Die.View.rolled Die.View.regular raise1
                         , Die.View.rolled Die.View.regular raise2
-                        , UI.poolCaption "Play dice to see the raise"
+                        , UI.poolCaption seeCaption
                         , Die.View.rolled Die.View.regular see1
                         ]
 
                     BlockOrDodge see1 see2 ->
                         [ Die.View.rolled Die.View.regular raise1
                         , Die.View.rolled Die.View.regular raise2
-                        , UI.poolCaption "Play dice to see the raise"
+                        , UI.poolCaption seeCaption
                         , Die.View.rolled Die.View.regular see1
                         , Die.View.rolled Die.View.regular see2
                         ]
@@ -168,7 +219,7 @@ playArea raise =
                     TakeTheBlow see1 see2 see3 seeMore ->
                         [ Die.View.rolled Die.View.regular raise1
                         , Die.View.rolled Die.View.regular raise2
-                        , UI.poolCaption "Play dice to see the raise"
+                        , UI.poolCaption seeCaption
                         , Die.View.rolled Die.View.regular see1
                         , Die.View.rolled Die.View.regular see2
                         , Die.View.rolled Die.View.regular see3
@@ -176,7 +227,11 @@ playArea raise =
                             ++ List.map (Die.View.rolled Die.View.regular) seeMore
 
             PendingFallout pips ->
-                [ UI.poolCaption "Take fallout dice to continue"
+                [ { myTurn = "Take fallout dice to continue"
+                  , notMyTurn = ( "Waiting for the ", " to take fallout dice" )
+                  }
+                    |> textFor
+                    |> UI.poolCaption
                 , UI.poolCaption (Pips.repeat "✖︎" pips |> String.join " ")
                 ]
 
@@ -184,6 +239,10 @@ playArea raise =
                 [ UI.poolCaption "This conflict is over" ]
 
             GivenUp (Just die) ->
-                [ UI.poolCaption "This conflict is over"
+                [ { myTurn = "You can take your best die to a follow-up conflict"
+                  , notMyTurn = ( "The ", " can take their best die to a follow-up conflict" )
+                  }
+                    |> textFor
+                    |> UI.poolCaption
                 , Die.View.rolled Die.View.regular die
                 ]
