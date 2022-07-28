@@ -30,12 +30,27 @@ view config state =
     [ Html.button [ Attr.class "give", Event.onClick config.give ] [ Html.text "Give" ]
     , takeMoreDiceButton
         |> Html.map (always config.takeMoreDice)
-    , diceSet "my-dice" state.proponent.pool
+    , config.mySide
+        |> Maybe.withDefault Conflict.proponent
+        |> Conflict.player
+        |> (|>) state
+        |> .pool
+        |> diceSet "my-dice"
         |> Html.map config.playDie
     , playArea state.raise
         |> Html.map (always config.noop)
-    , actionButton config state.raise
-    , diceSet "their-dice" state.opponent.pool
+    , if config.mySide == Just state.go then
+        actionButton config state.raise
+
+      else
+        Html.text ""
+    , config.mySide
+        |> Maybe.withDefault Conflict.proponent
+        |> Conflict.otherSide
+        |> Conflict.player
+        |> (|>) state
+        |> .pool
+        |> diceSet "their-dice"
         |> Html.map (always config.noop)
     ]
         |> Html.main_ [ Attr.id "conflict", sideClass config.mySide ]
