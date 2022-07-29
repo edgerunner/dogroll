@@ -165,15 +165,23 @@ playArea config state =
         caption =
             textGetter config.mySide state.go
                 >> UI.poolCaption
+
+        raiseRecommendations =
+            Conflict.player state.go state
+                |> .pool
+                |> Dice.best 2
+                |> Dice.toList
+                |> List.map (Die.View.rolled Die.View.faded)
     in
     UI.pool <|
         case state.raise of
             PendingTwoDice ->
-                [ { myTurn = "Play two dice to raise"
-                  , notMyTurn = ( "Waiting for the ", " to raise" )
-                  }
+                ({ myTurn = "Play two dice to raise"
+                 , notMyTurn = ( "Waiting for the ", " to raise" )
+                 }
                     |> caption
-                ]
+                )
+                    :: raiseRecommendations
 
             PendingOneDie die1 ->
                 [ { myTurn = "Play one die to raise"
@@ -182,6 +190,7 @@ playArea config state =
                     |> caption
                 , Die.View.rolled Die.View.regular die1
                 ]
+                    ++ List.take 1 raiseRecommendations
 
             ReadyToRaise die1 die2 ->
                 [ { myTurn = "Go ahead and raise"
