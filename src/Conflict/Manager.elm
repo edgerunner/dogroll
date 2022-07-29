@@ -56,7 +56,14 @@ register side participantId =
                     |> Maybe.map (.id >> (/=) participantId)
                     |> Maybe.withDefault True
             then
+                let
+                    sideTakenError =
+                        getSide side model
+                            |> Maybe.map (always <| setError SideAlreadyRegistered)
+                            |> Maybe.withDefault identity
+                in
                 model
+                    |> sideTakenError
                     |> updateSide side
                         (Maybe.withDefault { id = participantId } >> Just)
 
@@ -81,6 +88,7 @@ opponent (Manager model) =
 
 type Error
     = CanNotParticipateAsBothSides
+    | SideAlreadyRegistered
 
 
 error : Manager -> Maybe Error

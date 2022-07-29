@@ -18,8 +18,20 @@ suite =
             , test "does not register the same participant for both sides" doesNotRegisterSameParticipantForBothSides
             ]
         , describe "errors"
-            [ test "keeps the error for the last update" keepsErrorForLastUpdate ]
+            [ test "keeps the error for the last update" keepsErrorForLastUpdate
+            , test "replaces the error with the last update" replacesErrorWithLastUpdate
+            ]
         ]
+
+
+replacesErrorWithLastUpdate : () -> Expectation
+replacesErrorWithLastUpdate () =
+    Manager.init "testingId"
+        |> Manager.register Conflict.proponent "proponent"
+        |> Manager.register Conflict.opponent "proponent"
+        |> Manager.register Conflict.proponent "someone else"
+        |> Manager.error
+        |> Expect.equal (Just Manager.SideAlreadyRegistered)
 
 
 keepsErrorForLastUpdate : () -> Expectation
