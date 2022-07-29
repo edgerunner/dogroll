@@ -12,7 +12,17 @@ suite =
     describe "Conflict manager"
         [ test "stores a string ID" storesStringId
         , test "initializes and exposes a conflict" initializesAndExposesConflict
+        , test "registers a participant as the proponent" registersProponent
         ]
+
+
+registersProponent : () -> Expectation
+registersProponent () =
+    Manager.init "for proponent"
+        |> Manager.registerProponent "proponent"
+        |> Manager.proponent
+        |> Maybe.map .id
+        |> Expect.equal (Just "proponent")
 
 
 initializesAndExposesConflict : () -> Expectation
