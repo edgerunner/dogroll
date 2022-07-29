@@ -208,38 +208,61 @@ playArea config state =
                             { myTurn = "Play dice to see the raise"
                             , notMyTurn = ( "Waiting for the ", " to see" )
                             }
+
+                    raiseValue =
+                        Die.face raise1 + Die.face raise2
+
+                    seeRecommendations seen =
+                        let
+                            seeValue =
+                                List.foldl
+                                    (\seeDie remaining ->
+                                        remaining - Die.face seeDie
+                                    )
+                                    raiseValue
+                                    seen
+                        in
+                        Conflict.player state.go state
+                            |> .pool
+                            |> Dice.match seeValue
+                            |> Dice.toList
+                            |> List.map (Die.View.rolled Die.View.faded)
                 in
                 case see of
                     LoseTheStakes ->
-                        [ Die.View.rolled Die.View.regular raise1
-                        , Die.View.rolled Die.View.regular raise2
-                        , seeCaption
-                        ]
+                        seeRecommendations []
+                            ++ [ seeCaption
+                               , Die.View.rolled Die.View.regular raise1
+                               , Die.View.rolled Die.View.regular raise2
+                               ]
 
                     ReverseTheBlow see1 ->
-                        [ Die.View.rolled Die.View.regular raise1
-                        , Die.View.rolled Die.View.regular raise2
-                        , seeCaption
-                        , Die.View.rolled Die.View.regular see1
-                        ]
+                        Die.View.rolled Die.View.regular see1
+                            :: seeRecommendations [ see1 ]
+                            ++ [ seeCaption
+                               , Die.View.rolled Die.View.regular raise1
+                               , Die.View.rolled Die.View.regular raise2
+                               ]
 
                     BlockOrDodge see1 see2 ->
-                        [ Die.View.rolled Die.View.regular raise1
-                        , Die.View.rolled Die.View.regular raise2
-                        , seeCaption
-                        , Die.View.rolled Die.View.regular see1
-                        , Die.View.rolled Die.View.regular see2
-                        ]
+                        Die.View.rolled Die.View.regular see1
+                            :: Die.View.rolled Die.View.regular see2
+                            :: seeRecommendations [ see1, see2 ]
+                            ++ [ seeCaption
+                               , Die.View.rolled Die.View.regular raise1
+                               , Die.View.rolled Die.View.regular raise2
+                               ]
 
                     TakeTheBlow see1 see2 see3 seeMore ->
-                        [ Die.View.rolled Die.View.regular raise1
-                        , Die.View.rolled Die.View.regular raise2
-                        , seeCaption
-                        , Die.View.rolled Die.View.regular see1
-                        , Die.View.rolled Die.View.regular see2
-                        , Die.View.rolled Die.View.regular see3
-                        ]
-                            ++ List.map (Die.View.rolled Die.View.regular) seeMore
+                        Die.View.rolled Die.View.regular see1
+                            :: Die.View.rolled Die.View.regular see2
+                            :: Die.View.rolled Die.View.regular see3
+                            :: List.map (Die.View.rolled Die.View.regular) seeMore
+                            ++ seeRecommendations (see1 :: see2 :: see3 :: seeMore)
+                            ++ [ seeCaption
+                               , Die.View.rolled Die.View.regular raise1
+                               , Die.View.rolled Die.View.regular raise2
+                               ]
 
             PendingFallout pips ->
                 [ { myTurn = "Take fallout dice to continue"
