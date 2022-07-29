@@ -137,7 +137,7 @@ match threshold =
     toList
         >> subsequences
         >> List.map (List.foldl add empty)
-        >> List.sortBy (\dice -> ( total dice, count dice ))
+        >> List.sortBy (\dice -> ( count dice, total dice ))
         >> List.foldr
             (\subset selected ->
                 if total subset >= threshold then

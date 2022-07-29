@@ -166,9 +166,21 @@ suite =
                         |> Dice.toList
                         |> Expect.equalLists
                             [ Die.cheat Die.Size.D10 9
-                            , Die.cheat Die.Size.D10 2
-                            , Die.cheat Die.Size.D6 2
+                            , Die.cheat Die.Size.D6 5
                             ]
+                )
+            , test "matching dice with least number of dice"
+                (\_ ->
+                    [ Die.cheat Die.Size.D10 9
+                    , Die.cheat Die.Size.D10 2
+                    , Die.cheat Die.Size.D6 5
+                    , Die.cheat Die.Size.D6 2
+                    ]
+                        |> List.foldl Dice.add Dice.empty
+                        |> Dice.match 4
+                        |> Dice.toList
+                        |> Expect.equalLists
+                            [ Die.cheat Die.Size.D6 5 ]
                 )
             ]
         , describe
