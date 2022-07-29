@@ -37,8 +37,7 @@ view config state =
         |> .pool
         |> diceSet "my-dice"
         |> Html.map config.playDie
-    , playArea (textGetter config.mySide state.go) state.raise
-        |> Html.map (always config.noop)
+    , playArea config state
     , if config.mySide == Just state.go then
         actionButton config state.raise
 
@@ -53,7 +52,27 @@ view config state =
         |> diceSet "their-dice"
         |> Html.map (always config.noop)
     ]
-        |> Html.main_ [ Attr.id "conflict", sideClass config.mySide ]
+        |> Html.main_
+            [ Attr.id "conflict"
+            , sideClass config.mySide
+            , turnClass config.mySide state.go
+            ]
+
+
+turnClass : Maybe Side -> Side -> Attribute msg
+turnClass mySide go =
+    case
+        mySide
+            |> Maybe.map ((==) go)
+    of
+        Just True ->
+            Attr.class "my-turn"
+
+        Just False ->
+            Attr.class "their-turn"
+
+        Nothing ->
+            Attr.class "no-turn"
 
 
 sideClass : Maybe Side -> Attribute msg
@@ -159,83 +178,122 @@ textGetter mySide go =
                    )
 
 
-playArea : (TextFor -> String) -> Raise -> Html (Die Rolled)
-playArea textFor raise =
+playArea : Config msg -> State -> Html msg
+playArea config state =
+    let
+        caption =
+            textGetter config.mySide state.go
+                >> UI.poolCaption
+
+        raiseRecommendations =
+            Conflict.player state.go state
+                |> .pool
+                |> Dice.best 2
+                |> Dice.toList
+                |> List.map
+                    (Die.View.rolled Die.View.faded
+                        >> Html.map config.playDie
+                    )
+
+        noClick =
+            Html.map (always config.noop)
+    in
     UI.pool <|
-        case raise of
+        case state.raise of
             PendingTwoDice ->
-                [ { myTurn = "Play two dice to raise"
-                  , notMyTurn = ( "Waiting for the ", " to raise" )
-                  }
-                    |> textFor
-                    |> UI.poolCaption
-                ]
+                ({ myTurn = "Play two dice to raise"
+                 , notMyTurn = ( "Waiting for the ", " to raise" )
+                 }
+                    |> caption
+                )
+                    :: raiseRecommendations
 
             PendingOneDie die1 ->
                 [ { myTurn = "Play one die to raise"
                   , notMyTurn = ( "Waiting for the ", " to raise" )
                   }
-                    |> textFor
-                    |> UI.poolCaption
-                , Die.View.rolled Die.View.regular die1
+                    |> caption
+                , Die.View.rolled Die.View.regular die1 |> noClick
                 ]
+                    ++ List.take 1 raiseRecommendations
 
             ReadyToRaise die1 die2 ->
                 [ { myTurn = "Go ahead and raise"
                   , notMyTurn = ( "Waiting for the ", " to raise" )
                   }
-                    |> textFor
-                    |> UI.poolCaption
-                , Die.View.rolled Die.View.regular die1
-                , Die.View.rolled Die.View.regular die2
+                    |> caption
+                , Die.View.rolled Die.View.regular die1 |> noClick
+                , Die.View.rolled Die.View.regular die2 |> noClick
                 ]
 
             RaisedWith raise1 raise2 see ->
                 let
                     seeCaption =
-                        textFor
+                        caption
                             { myTurn = "Play dice to see the raise"
                             , notMyTurn = ( "Waiting for the ", " to see" )
                             }
+
+                    raiseDice =
+                        [ Die.View.rolled Die.View.regular raise1 |> noClick
+                        , Die.View.rolled Die.View.regular raise2 |> noClick
+                        ]
+
+                    raiseValue =
+                        Die.face raise1 + Die.face raise2
+
+                    seeRecommendations seen =
+                        let
+                            seeValue =
+                                List.foldl
+                                    (\seeDie remaining ->
+                                        remaining - Die.face seeDie
+                                    )
+                                    raiseValue
+                                    seen
+                        in
+                        Conflict.player state.go state
+                            |> .pool
+                            |> Dice.match seeValue
+                            |> Dice.toList
+                            |> List.map
+                                (Die.View.rolled Die.View.faded
+                                    >> Html.map config.playDie
+                                )
                 in
                 case see of
                     LoseTheStakes ->
-                        [ Die.View.rolled Die.View.regular raise1
-                        , Die.View.rolled Die.View.regular raise2
-                        , UI.poolCaption seeCaption
-                        ]
+                        raiseDice
+                            ++ seeCaption
+                            :: seeRecommendations []
 
                     ReverseTheBlow see1 ->
-                        [ Die.View.rolled Die.View.regular raise1
-                        , Die.View.rolled Die.View.regular raise2
-                        , UI.poolCaption seeCaption
-                        , Die.View.rolled Die.View.regular see1
-                        ]
+                        raiseDice
+                            ++ seeCaption
+                            :: (Die.View.rolled Die.View.regular see1 |> noClick)
+                            :: seeRecommendations [ see1 ]
 
                     BlockOrDodge see1 see2 ->
-                        [ Die.View.rolled Die.View.regular raise1
-                        , Die.View.rolled Die.View.regular raise2
-                        , UI.poolCaption seeCaption
-                        , Die.View.rolled Die.View.regular see1
-                        , Die.View.rolled Die.View.regular see2
-                        ]
+                        raiseDice
+                            ++ seeCaption
+                            :: (Die.View.rolled Die.View.regular see1 |> noClick)
+                            :: (Die.View.rolled Die.View.regular see2 |> noClick)
+                            :: seeRecommendations [ see1, see2 ]
 
                     TakeTheBlow see1 see2 see3 seeMore ->
-                        [ Die.View.rolled Die.View.regular raise1
-                        , Die.View.rolled Die.View.regular raise2
-                        , UI.poolCaption seeCaption
-                        , Die.View.rolled Die.View.regular see1
-                        , Die.View.rolled Die.View.regular see2
-                        , Die.View.rolled Die.View.regular see3
-                        ]
-                            ++ List.map (Die.View.rolled Die.View.regular) seeMore
+                        raiseDice
+                            ++ seeCaption
+                            :: (Die.View.rolled Die.View.regular see1 |> noClick)
+                            :: (Die.View.rolled Die.View.regular see2 |> noClick)
+                            :: (Die.View.rolled Die.View.regular see3 |> noClick)
+                            :: List.map (Die.View.rolled Die.View.regular >> noClick) seeMore
+                            ++ seeRecommendations (see1 :: see2 :: see3 :: seeMore)
 
             PendingFallout pips ->
                 [ { myTurn = "Take fallout dice to continue"
                   , notMyTurn = ( "Waiting for the ", " to take fallout dice" )
                   }
-                    |> textFor
-                    |> UI.poolCaption
+                    |> caption
                 , UI.poolCaption (Pips.repeat "✖︎" pips |> String.join " ")
                 ]
 
@@ -246,7 +304,7 @@ playArea textFor raise =
                 [ { myTurn = "You can take your best die to a follow-up conflict"
                   , notMyTurn = ( "The ", " can take their best die to a follow-up conflict" )
                   }
-                    |> textFor
-                    |> UI.poolCaption
+                    |> caption
                 , Die.View.rolled Die.View.regular die
+                    |> Html.map (always config.restart)
                 ]
