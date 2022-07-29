@@ -60,7 +60,7 @@ register side participantId =
                     sideTakenError =
                         getSide side model
                             |> Maybe.map (always <| setError SideAlreadyRegistered)
-                            |> Maybe.withDefault identity
+                            |> Maybe.withDefault clearError
                 in
                 model
                     |> sideTakenError
@@ -99,6 +99,11 @@ error (Manager model) =
 setError : Error -> Model -> Model
 setError error_ model =
     { model | error = Just error_ }
+
+
+clearError : Model -> Model
+clearError model =
+    { model | error = Nothing }
 
 
 

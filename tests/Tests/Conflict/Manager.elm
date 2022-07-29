@@ -20,8 +20,23 @@ suite =
         , describe "errors"
             [ test "keeps the error for the last update" keepsErrorForLastUpdate
             , test "replaces the error with the last update" replacesErrorWithLastUpdate
+            , test "clears the error after a successful update" clearsErrorAfterSuccessfulUpdate
             ]
         ]
+
+
+clearsErrorAfterSuccessfulUpdate : () -> Expectation
+clearsErrorAfterSuccessfulUpdate () =
+    Manager.init "testingId"
+        |> Manager.register Conflict.proponent "proponent"
+        |> Manager.register Conflict.opponent "proponent"
+        |> Manager.register Conflict.proponent "someone else"
+        |> Manager.register Conflict.opponent "opponent"
+        |> Expect.all
+            [ Manager.error >> Expect.equal Nothing
+            , Manager.proponent >> Maybe.map .id >> Expect.equal (Just "proponent")
+            , Manager.opponent >> Maybe.map .id >> Expect.equal (Just "opponent")
+            ]
 
 
 replacesErrorWithLastUpdate : () -> Expectation
