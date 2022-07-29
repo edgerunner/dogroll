@@ -5,49 +5,49 @@ import Random exposing (Generator, Seed)
 
 
 type Die x
-    = Held Size
-    | Rolled Size Int
+    = HeldDie Size
+    | RolledDie Size Int
 
 
 type Rolled
-    = ReallyRolled Never
+    = Rolled Rolled
 
 
 type Held
-    = ReallyHeld Never
+    = Held Held
 
 
 init : Size -> Die Held
 init =
-    Held
+    HeldDie
 
 
 cheat : Size -> Int -> Die Rolled
 cheat =
-    Rolled
+    RolledDie
 
 
 size : Die x -> Size
 size die =
     case die of
-        Held size_ ->
+        HeldDie size_ ->
             size_
 
-        Rolled size_ _ ->
+        RolledDie size_ _ ->
             size_
 
 
 generator : Die Held -> Generator (Die Rolled)
 generator die =
     case die of
-        Held size_ ->
+        HeldDie size_ ->
             size_
                 |> Size.toInt
                 |> Random.int 1
-                |> Random.map (die |> size |> Rolled)
+                |> Random.map (die |> size |> RolledDie)
 
-        Rolled size_ value_ ->
-            Random.constant (Rolled size_ value_)
+        RolledDie size_ value_ ->
+            Random.constant (RolledDie size_ value_)
 
 
 roll : Seed -> Die Held -> Die Rolled
@@ -61,10 +61,10 @@ roll seed =
 face : Die Rolled -> Int
 face die =
     case die of
-        Held _ ->
+        HeldDie _ ->
             0
 
-        Rolled _ face_ ->
+        RolledDie _ face_ ->
             face_
 
 
@@ -76,8 +76,8 @@ toString =
 sortValue : Die x -> ( Int, Int )
 sortValue die =
     case die of
-        Held size_ ->
+        HeldDie size_ ->
             ( 0, Size.toInt size_ |> negate )
 
-        Rolled size_ value_ ->
+        RolledDie size_ value_ ->
             ( negate value_, Size.toInt size_ |> negate )
