@@ -167,3 +167,7 @@ main {
     justify-content: flex-start;
     width: 64px;
 }
+
+main#conflict.their-turn section.pool {
+    flex-wrap: wrap-reverse;
+}

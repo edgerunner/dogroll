@@ -53,7 +53,27 @@ view config state =
         |> diceSet "their-dice"
         |> Html.map (always config.noop)
     ]
-        |> Html.main_ [ Attr.id "conflict", sideClass config.mySide ]
+        |> Html.main_
+            [ Attr.id "conflict"
+            , sideClass config.mySide
+            , turnClass config.mySide state.go
+            ]
+
+
+turnClass : Maybe Side -> Side -> Attribute msg
+turnClass mySide go =
+    case
+        mySide
+            |> Maybe.map ((==) go)
+    of
+        Just True ->
+            Attr.class "my-turn"
+
+        Just False ->
+            Attr.class "their-turn"
+
+        Nothing ->
+            Attr.class "no-turn"
 
 
 sideClass : Maybe Side -> Attribute msg
@@ -230,39 +250,39 @@ playArea config state =
                 in
                 case see of
                     LoseTheStakes ->
-                        seeRecommendations []
-                            ++ [ seeCaption
-                               , Die.View.rolled Die.View.regular raise1
-                               , Die.View.rolled Die.View.regular raise2
-                               ]
+                        [ Die.View.rolled Die.View.regular raise1
+                        , Die.View.rolled Die.View.regular raise2
+                        , seeCaption
+                        ]
+                            ++ seeRecommendations []
 
                     ReverseTheBlow see1 ->
-                        Die.View.rolled Die.View.regular see1
+                        [ Die.View.rolled Die.View.regular raise1
+                        , Die.View.rolled Die.View.regular raise2
+                        , seeCaption
+                        ]
+                            ++ Die.View.rolled Die.View.regular see1
                             :: seeRecommendations [ see1 ]
-                            ++ [ seeCaption
-                               , Die.View.rolled Die.View.regular raise1
-                               , Die.View.rolled Die.View.regular raise2
-                               ]
 
                     BlockOrDodge see1 see2 ->
-                        Die.View.rolled Die.View.regular see1
+                        [ Die.View.rolled Die.View.regular raise1
+                        , Die.View.rolled Die.View.regular raise2
+                        , seeCaption
+                        ]
+                            ++ Die.View.rolled Die.View.regular see1
                             :: Die.View.rolled Die.View.regular see2
                             :: seeRecommendations [ see1, see2 ]
-                            ++ [ seeCaption
-                               , Die.View.rolled Die.View.regular raise1
-                               , Die.View.rolled Die.View.regular raise2
-                               ]
 
                     TakeTheBlow see1 see2 see3 seeMore ->
-                        Die.View.rolled Die.View.regular see1
+                        [ Die.View.rolled Die.View.regular raise1
+                        , Die.View.rolled Die.View.regular raise2
+                        , seeCaption
+                        ]
+                            ++ Die.View.rolled Die.View.regular see1
                             :: Die.View.rolled Die.View.regular see2
                             :: Die.View.rolled Die.View.regular see3
                             :: List.map (Die.View.rolled Die.View.regular) seeMore
                             ++ seeRecommendations (see1 :: see2 :: see3 :: seeMore)
-                            ++ [ seeCaption
-                               , Die.View.rolled Die.View.regular raise1
-                               , Die.View.rolled Die.View.regular raise2
-                               ]
 
             PendingFallout pips ->
                 [ { myTurn = "Take fallout dice to continue"
