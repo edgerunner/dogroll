@@ -1,4 +1,4 @@
-module Dice exposing (Dice, add, combine, drop, empty, faces, generator, has, init, roll, sizes, toList, toString, total)
+module Dice exposing (Dice, add, best, combine, drop, empty, faces, generator, has, init, roll, sizes, toList, toString, total)
 
 import Die exposing (Die, Held, Rolled)
 import Die.Size exposing (Size(..))
@@ -120,3 +120,8 @@ has die =
 empty : Dice x
 empty =
     Dice []
+
+
+best : Int -> Dice x -> Dice x
+best count =
+    toList >> List.take count >> makeDice

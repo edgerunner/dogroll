@@ -123,6 +123,38 @@ suite =
                 in
                 Helpers.allPass expectations
             )
+        , describe "finding dice"
+            [ test "best rolled dice"
+                (\_ ->
+                    [ Die.cheat Die.Size.D10 9
+                    , Die.cheat Die.Size.D10 2
+                    , Die.cheat Die.Size.D6 5
+                    , Die.cheat Die.Size.D6 1
+                    ]
+                        |> List.foldl Dice.add Dice.empty
+                        |> Dice.best 2
+                        |> Dice.toList
+                        |> Expect.equalLists
+                            [ Die.cheat Die.Size.D10 9
+                            , Die.cheat Die.Size.D6 5
+                            ]
+                )
+            , test "best held dice"
+                (\_ ->
+                    [ Die.init Die.Size.D10
+                    , Die.init Die.Size.D4
+                    , Die.init Die.Size.D6
+                    , Die.init Die.Size.D6
+                    ]
+                        |> List.foldl Dice.add Dice.empty
+                        |> Dice.best 2
+                        |> Dice.toList
+                        |> Expect.equalLists
+                            [ Die.init Die.Size.D10
+                            , Die.init Die.Size.D6
+                            ]
+                )
+            ]
         , describe
             "string representation"
             [ test "single type"
