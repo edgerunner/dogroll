@@ -14,7 +14,18 @@ suite =
         , test "initializes and exposes a conflict" initializesAndExposesConflict
         , test "registers a participant as the proponent" registersProponent
         , test "does not register a participant if that side is already registered" doesNotRegisterIfAlreadyRegistered
+        , test "does not register the same participant for both sides" doesNotRegisterSameParticipantForBothSides
         ]
+
+
+doesNotRegisterSameParticipantForBothSides : () -> Expectation
+doesNotRegisterSameParticipantForBothSides () =
+    Manager.init "for double proponent"
+        |> Manager.registerProponent "proponent"
+        |> Manager.registerOpponent "proponent"
+        |> Manager.opponent
+        |> Maybe.map .id
+        |> Expect.equal Nothing
 
 
 doesNotRegisterIfAlreadyRegistered : () -> Expectation

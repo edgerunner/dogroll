@@ -1,4 +1,4 @@
-module Conflict.Manager exposing (Manager, conflict, id, init, proponent, registerProponent)
+module Conflict.Manager exposing (Manager, conflict, id, init, opponent, proponent, registerOpponent, registerProponent)
 
 import Conflict exposing (Conflict)
 
@@ -7,6 +7,7 @@ type alias Model =
     { id : Id
     , conflict : Conflict
     , proponent : Maybe Participant
+    , opponent : Maybe Participant
     }
 
 
@@ -29,6 +30,7 @@ init id_ =
         { id = id_
         , conflict = Conflict.start
         , proponent = Nothing
+        , opponent = Nothing
         }
 
 
@@ -46,18 +48,52 @@ registerProponent : String -> Manager -> Manager
 registerProponent proponentId =
     updateModel
         (\model ->
-            { model
-                | proponent =
-                    model.proponent
-                        |> Maybe.withDefault { id = proponentId }
-                        |> Just
-            }
+            if
+                model.opponent
+                    |> Maybe.map (.id >> (/=) proponentId)
+                    |> Maybe.withDefault True
+            then
+                { model
+                    | proponent =
+                        model.proponent
+                            |> Maybe.withDefault { id = proponentId }
+                            |> Just
+                }
+
+            else
+                model
+        )
+
+
+registerOpponent : String -> Manager -> Manager
+registerOpponent opponentId =
+    updateModel
+        (\model ->
+            if
+                model.proponent
+                    |> Maybe.map (.id >> (/=) opponentId)
+                    |> Maybe.withDefault True
+            then
+                { model
+                    | opponent =
+                        model.opponent
+                            |> Maybe.withDefault { id = opponentId }
+                            |> Just
+                }
+
+            else
+                model
         )
 
 
 proponent : Manager -> Maybe Participant
 proponent (Manager model) =
     model.proponent
+
+
+opponent : Manager -> Maybe Participant
+opponent (Manager model) =
+    model.opponent
 
 
 
