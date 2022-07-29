@@ -1,4 +1,4 @@
-module Conflict.Manager exposing (Manager, conflict, id, init, opponent, proponent, register)
+module Conflict.Manager exposing (Error(..), Manager, conflict, error, id, init, opponent, proponent, register)
 
 import Conflict exposing (Conflict, Side)
 
@@ -8,6 +8,7 @@ type alias Model =
     , conflict : Conflict
     , proponent : Maybe Participant
     , opponent : Maybe Participant
+    , error : Maybe Error
     }
 
 
@@ -31,6 +32,7 @@ init id_ =
         , conflict = Conflict.start
         , proponent = Nothing
         , opponent = Nothing
+        , error = Nothing
         }
 
 
@@ -59,7 +61,7 @@ register side participantId =
                         (Maybe.withDefault { id = participantId } >> Just)
 
             else
-                model
+                model |> setError CanNotParticipateAsBothSides
         )
 
 
@@ -71,6 +73,24 @@ proponent (Manager model) =
 opponent : Manager -> Maybe Participant
 opponent (Manager model) =
     model.opponent
+
+
+
+-- ERRORS
+
+
+type Error
+    = CanNotParticipateAsBothSides
+
+
+error : Manager -> Maybe Error
+error (Manager model) =
+    model.error
+
+
+setError : Error -> Model -> Model
+setError error_ model =
+    { model | error = Just error_ }
 
 
 
