@@ -12,9 +12,11 @@ suite =
     describe "Conflict manager"
         [ test "stores a string ID" storesStringId
         , test "initializes and exposes a conflict" initializesAndExposesConflict
-        , test "registers a participant as the proponent" registersProponent
-        , test "does not register a participant if that side is already registered" doesNotRegisterIfAlreadyRegistered
-        , test "does not register the same participant for both sides" doesNotRegisterSameParticipantForBothSides
+        , describe "registering"
+            [ test "registers a participant as the proponent" registersProponent
+            , test "does not register a participant if that side is already registered" doesNotRegisterIfAlreadyRegistered
+            , test "does not register the same participant for both sides" doesNotRegisterSameParticipantForBothSides
+            ]
         ]
 
 
