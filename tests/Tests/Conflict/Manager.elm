@@ -21,8 +21,8 @@ suite =
 doesNotRegisterSameParticipantForBothSides : () -> Expectation
 doesNotRegisterSameParticipantForBothSides () =
     Manager.init "for double proponent"
-        |> Manager.registerProponent "proponent"
-        |> Manager.registerOpponent "proponent"
+        |> Manager.register Conflict.proponent "proponent"
+        |> Manager.register Conflict.opponent "proponent"
         |> Manager.opponent
         |> Maybe.map .id
         |> Expect.equal Nothing
@@ -31,8 +31,8 @@ doesNotRegisterSameParticipantForBothSides () =
 doesNotRegisterIfAlreadyRegistered : () -> Expectation
 doesNotRegisterIfAlreadyRegistered () =
     Manager.init "for double proponent"
-        |> Manager.registerProponent "proponent"
-        |> Manager.registerProponent "someone else"
+        |> Manager.register Conflict.proponent "proponent"
+        |> Manager.register Conflict.proponent "someone else"
         |> Manager.proponent
         |> Maybe.map .id
         |> Expect.equal (Just "proponent")
@@ -41,7 +41,7 @@ doesNotRegisterIfAlreadyRegistered () =
 registersProponent : () -> Expectation
 registersProponent () =
     Manager.init "for proponent"
-        |> Manager.registerProponent "proponent"
+        |> Manager.register Conflict.proponent "proponent"
         |> Manager.proponent
         |> Maybe.map .id
         |> Expect.equal (Just "proponent")

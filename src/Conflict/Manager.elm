@@ -1,6 +1,6 @@
-module Conflict.Manager exposing (Manager, conflict, id, init, opponent, proponent, registerOpponent, registerProponent)
+module Conflict.Manager exposing (Manager, conflict, id, init, opponent, proponent, register)
 
-import Conflict exposing (Conflict)
+import Conflict exposing (Conflict, Side)
 
 
 type alias Model =
@@ -44,42 +44,19 @@ conflict (Manager model) =
     model.conflict
 
 
-registerProponent : String -> Manager -> Manager
-registerProponent proponentId =
+register : Side -> String -> Manager -> Manager
+register side participantId =
     updateModel
         (\model ->
             if
-                model.opponent
-                    |> Maybe.map (.id >> (/=) proponentId)
-                    |> Maybe.withDefault True
-            then
-                { model
-                    | proponent =
-                        model.proponent
-                            |> Maybe.withDefault { id = proponentId }
-                            |> Just
-                }
-
-            else
                 model
-        )
-
-
-registerOpponent : String -> Manager -> Manager
-registerOpponent opponentId =
-    updateModel
-        (\model ->
-            if
-                model.proponent
-                    |> Maybe.map (.id >> (/=) opponentId)
+                    |> (side |> Conflict.otherSide |> getSide)
+                    |> Maybe.map (.id >> (/=) participantId)
                     |> Maybe.withDefault True
             then
-                { model
-                    | opponent =
-                        model.opponent
-                            |> Maybe.withDefault { id = opponentId }
-                            |> Just
-                }
+                model
+                    |> updateSide side
+                        (Maybe.withDefault { id = participantId } >> Just)
 
             else
                 model
@@ -103,3 +80,23 @@ opponent (Manager model) =
 updateModel : (Model -> Model) -> Manager -> Manager
 updateModel updateFn (Manager model) =
     Manager (updateFn model)
+
+
+updateSide : Side -> (Maybe Participant -> Maybe Participant) -> Model -> Model
+updateSide side fn model =
+    case side of
+        Conflict.Proponent ->
+            { model | proponent = fn model.proponent }
+
+        Conflict.Opponent ->
+            { model | opponent = fn model.opponent }
+
+
+getSide : Side -> Model -> Maybe Participant
+getSide side =
+    case side of
+        Conflict.Proponent ->
+            .proponent
+
+        Conflict.Opponent ->
+            .opponent
