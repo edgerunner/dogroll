@@ -37,7 +37,7 @@ view config state =
         |> .pool
         |> diceSet "my-dice"
         |> Html.map config.playDie
-    , playArea (textGetter config.mySide state.go) state.raise
+    , playArea config state
         |> Html.map (always config.noop)
     , if config.mySide == Just state.go then
         actionButton config state.raise
@@ -159,24 +159,27 @@ textGetter mySide go =
                    )
 
 
-playArea : (TextFor -> String) -> Raise -> Html (Die Rolled)
-playArea textFor raise =
+playArea : Config msg -> State -> Html (Die Rolled)
+playArea config state =
+    let
+        caption =
+            textGetter config.mySide state.go
+                >> UI.poolCaption
+    in
     UI.pool <|
-        case raise of
+        case state.raise of
             PendingTwoDice ->
                 [ { myTurn = "Play two dice to raise"
                   , notMyTurn = ( "Waiting for the ", " to raise" )
                   }
-                    |> textFor
-                    |> UI.poolCaption
+                    |> caption
                 ]
 
             PendingOneDie die1 ->
                 [ { myTurn = "Play one die to raise"
                   , notMyTurn = ( "Waiting for the ", " to raise" )
                   }
-                    |> textFor
-                    |> UI.poolCaption
+                    |> caption
                 , Die.View.rolled Die.View.regular die1
                 ]
 
@@ -184,8 +187,7 @@ playArea textFor raise =
                 [ { myTurn = "Go ahead and raise"
                   , notMyTurn = ( "Waiting for the ", " to raise" )
                   }
-                    |> textFor
-                    |> UI.poolCaption
+                    |> caption
                 , Die.View.rolled Die.View.regular die1
                 , Die.View.rolled Die.View.regular die2
                 ]
@@ -193,7 +195,7 @@ playArea textFor raise =
             RaisedWith raise1 raise2 see ->
                 let
                     seeCaption =
-                        textFor
+                        caption
                             { myTurn = "Play dice to see the raise"
                             , notMyTurn = ( "Waiting for the ", " to see" )
                             }
@@ -202,20 +204,20 @@ playArea textFor raise =
                     LoseTheStakes ->
                         [ Die.View.rolled Die.View.regular raise1
                         , Die.View.rolled Die.View.regular raise2
-                        , UI.poolCaption seeCaption
+                        , seeCaption
                         ]
 
                     ReverseTheBlow see1 ->
                         [ Die.View.rolled Die.View.regular raise1
                         , Die.View.rolled Die.View.regular raise2
-                        , UI.poolCaption seeCaption
+                        , seeCaption
                         , Die.View.rolled Die.View.regular see1
                         ]
 
                     BlockOrDodge see1 see2 ->
                         [ Die.View.rolled Die.View.regular raise1
                         , Die.View.rolled Die.View.regular raise2
-                        , UI.poolCaption seeCaption
+                        , seeCaption
                         , Die.View.rolled Die.View.regular see1
                         , Die.View.rolled Die.View.regular see2
                         ]
@@ -223,7 +225,7 @@ playArea textFor raise =
                     TakeTheBlow see1 see2 see3 seeMore ->
                         [ Die.View.rolled Die.View.regular raise1
                         , Die.View.rolled Die.View.regular raise2
-                        , UI.poolCaption seeCaption
+                        , seeCaption
                         , Die.View.rolled Die.View.regular see1
                         , Die.View.rolled Die.View.regular see2
                         , Die.View.rolled Die.View.regular see3
@@ -234,8 +236,7 @@ playArea textFor raise =
                 [ { myTurn = "Take fallout dice to continue"
                   , notMyTurn = ( "Waiting for the ", " to take fallout dice" )
                   }
-                    |> textFor
-                    |> UI.poolCaption
+                    |> caption
                 , UI.poolCaption (Pips.repeat "✖︎" pips |> String.join " ")
                 ]
 
@@ -246,7 +247,6 @@ playArea textFor raise =
                 [ { myTurn = "You can take your best die to a follow-up conflict"
                   , notMyTurn = ( "The ", " can take their best die to a follow-up conflict" )
                   }
-                    |> textFor
-                    |> UI.poolCaption
+                    |> caption
                 , Die.View.rolled Die.View.regular die
                 ]
