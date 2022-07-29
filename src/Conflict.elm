@@ -257,7 +257,6 @@ handleEvent sideEvent current =
                                         |> Maybe.withDefault identity
                                    )
                                 |> (Dice.toList >> List.head)
-                                |> Debug.log "bestDie"
                     }
                 )
                 side
