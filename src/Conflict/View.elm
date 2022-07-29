@@ -38,7 +38,6 @@ view config state =
         |> diceSet "my-dice"
         |> Html.map config.playDie
     , playArea config state
-        |> Html.map (always config.noop)
     , if config.mySide == Just state.go then
         actionButton config state.raise
 
@@ -179,7 +178,7 @@ textGetter mySide go =
                    )
 
 
-playArea : Config msg -> State -> Html (Die Rolled)
+playArea : Config msg -> State -> Html msg
 playArea config state =
     let
         caption =
@@ -191,7 +190,13 @@ playArea config state =
                 |> .pool
                 |> Dice.best 2
                 |> Dice.toList
-                |> List.map (Die.View.rolled Die.View.faded)
+                |> List.map
+                    (Die.View.rolled Die.View.faded
+                        >> Html.map config.playDie
+                    )
+
+        noClick =
+            Html.map (always config.noop)
     in
     UI.pool <|
         case state.raise of
@@ -208,7 +213,7 @@ playArea config state =
                   , notMyTurn = ( "Waiting for the ", " to raise" )
                   }
                     |> caption
-                , Die.View.rolled Die.View.regular die1
+                , Die.View.rolled Die.View.regular die1 |> noClick
                 ]
                     ++ List.take 1 raiseRecommendations
 
@@ -217,8 +222,8 @@ playArea config state =
                   , notMyTurn = ( "Waiting for the ", " to raise" )
                   }
                     |> caption
-                , Die.View.rolled Die.View.regular die1
-                , Die.View.rolled Die.View.regular die2
+                , Die.View.rolled Die.View.regular die1 |> noClick
+                , Die.View.rolled Die.View.regular die2 |> noClick
                 ]
 
             RaisedWith raise1 raise2 see ->
@@ -228,6 +233,11 @@ playArea config state =
                             { myTurn = "Play dice to see the raise"
                             , notMyTurn = ( "Waiting for the ", " to see" )
                             }
+
+                    raiseDice =
+                        [ Die.View.rolled Die.View.regular raise1 |> noClick
+                        , Die.View.rolled Die.View.regular raise2 |> noClick
+                        ]
 
                     raiseValue =
                         Die.face raise1 + Die.face raise2
@@ -246,42 +256,37 @@ playArea config state =
                             |> .pool
                             |> Dice.match seeValue
                             |> Dice.toList
-                            |> List.map (Die.View.rolled Die.View.faded)
+                            |> List.map
+                                (Die.View.rolled Die.View.faded
+                                    >> Html.map config.playDie
+                                )
                 in
                 case see of
                     LoseTheStakes ->
-                        [ Die.View.rolled Die.View.regular raise1
-                        , Die.View.rolled Die.View.regular raise2
-                        , seeCaption
-                        ]
-                            ++ seeRecommendations []
+                        raiseDice
+                            ++ seeCaption
+                            :: seeRecommendations []
 
                     ReverseTheBlow see1 ->
-                        [ Die.View.rolled Die.View.regular raise1
-                        , Die.View.rolled Die.View.regular raise2
-                        , seeCaption
-                        ]
-                            ++ Die.View.rolled Die.View.regular see1
+                        raiseDice
+                            ++ seeCaption
+                            :: (Die.View.rolled Die.View.regular see1 |> noClick)
                             :: seeRecommendations [ see1 ]
 
                     BlockOrDodge see1 see2 ->
-                        [ Die.View.rolled Die.View.regular raise1
-                        , Die.View.rolled Die.View.regular raise2
-                        , seeCaption
-                        ]
-                            ++ Die.View.rolled Die.View.regular see1
-                            :: Die.View.rolled Die.View.regular see2
+                        raiseDice
+                            ++ seeCaption
+                            :: (Die.View.rolled Die.View.regular see1 |> noClick)
+                            :: (Die.View.rolled Die.View.regular see2 |> noClick)
                             :: seeRecommendations [ see1, see2 ]
 
                     TakeTheBlow see1 see2 see3 seeMore ->
-                        [ Die.View.rolled Die.View.regular raise1
-                        , Die.View.rolled Die.View.regular raise2
-                        , seeCaption
-                        ]
-                            ++ Die.View.rolled Die.View.regular see1
-                            :: Die.View.rolled Die.View.regular see2
-                            :: Die.View.rolled Die.View.regular see3
-                            :: List.map (Die.View.rolled Die.View.regular) seeMore
+                        raiseDice
+                            ++ seeCaption
+                            :: (Die.View.rolled Die.View.regular see1 |> noClick)
+                            :: (Die.View.rolled Die.View.regular see2 |> noClick)
+                            :: (Die.View.rolled Die.View.regular see3 |> noClick)
+                            :: List.map (Die.View.rolled Die.View.regular >> noClick) seeMore
                             ++ seeRecommendations (see1 :: see2 :: see3 :: seeMore)
 
             PendingFallout pips ->
@@ -301,4 +306,5 @@ playArea config state =
                   }
                     |> caption
                 , Die.View.rolled Die.View.regular die
+                    |> Html.map (always config.restart)
                 ]
