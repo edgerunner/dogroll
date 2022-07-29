@@ -13,7 +13,18 @@ suite =
         [ test "stores a string ID" storesStringId
         , test "initializes and exposes a conflict" initializesAndExposesConflict
         , test "registers a participant as the proponent" registersProponent
+        , test "does not register a participant if that side is already registered" doesNotRegisterIfAlreadyRegistered
         ]
+
+
+doesNotRegisterIfAlreadyRegistered : () -> Expectation
+doesNotRegisterIfAlreadyRegistered () =
+    Manager.init "for double proponent"
+        |> Manager.registerProponent "proponent"
+        |> Manager.registerProponent "someone else"
+        |> Manager.proponent
+        |> Maybe.map .id
+        |> Expect.equal (Just "proponent")
 
 
 registersProponent : () -> Expectation
