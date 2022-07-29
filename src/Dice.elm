@@ -1,4 +1,4 @@
-module Dice exposing (Dice, add, best, combine, drop, empty, faces, generator, has, init, roll, sizes, toList, toString, total)
+module Dice exposing (Dice, add, best, combine, count, drop, empty, faces, generator, has, init, match, roll, sizes, toList, toString, total)
 
 import Die exposing (Die, Held, Rolled)
 import Die.Size exposing (Size(..))
@@ -29,6 +29,11 @@ faces =
 total : Dice Rolled -> Int
 total =
     faces >> List.sum
+
+
+count : Dice x -> Int
+count =
+    toList >> List.length
 
 
 combine : List (Dice x) -> Dice x
@@ -78,12 +83,12 @@ toString =
             ]
                 |> List.filter ((/=) "")
 
-        sizeToString size count =
-            if count < 1 then
+        sizeToString size count_ =
+            if count_ < 1 then
                 ""
 
             else
-                String.fromInt count
+                String.fromInt count_
                     ++ Die.Size.toString size
     in
     countSizes >> sizesToString >> String.join "+"
@@ -123,5 +128,40 @@ empty =
 
 
 best : Int -> Dice x -> Dice x
-best count =
-    toList >> List.take count >> makeDice
+best count_ =
+    toList >> List.take count_ >> makeDice
+
+
+match : Int -> Dice Rolled -> Dice Rolled
+match threshold =
+    toList
+        >> subsequences
+        >> List.map (List.foldl add empty)
+        >> List.sortBy (\dice -> ( total dice, count dice ))
+        >> List.foldr
+            (\subset selected ->
+                if total subset >= threshold then
+                    subset
+
+                else
+                    selected
+            )
+            empty
+
+
+
+-- Taken from https://github.com/elm-community/list-extra/blob/8.6.0/src/List/Extra.elm#L1039
+
+
+subsequences : List a -> List (List a)
+subsequences list =
+    case list of
+        [] ->
+            []
+
+        first :: rest ->
+            let
+                f ys r =
+                    ys :: (first :: ys) :: r
+            in
+            [ first ] :: List.foldr f [] (subsequences rest)
