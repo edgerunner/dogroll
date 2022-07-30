@@ -1,7 +1,7 @@
 module Tests.Conflict.Manager exposing (suite)
 
 import Conflict
-import Conflict.Manager as Manager exposing (Effect(..), Manager)
+import Conflict.Manager as Manager exposing (Effect(..), Error(..), Manager)
 import Dice exposing (Dice)
 import Die exposing (Rolled)
 import Die.Size exposing (Size(..))
@@ -46,8 +46,31 @@ suite =
             [ Test.fuzz (Fuzzer.rolledDice Fuzzer.combinedDice)
                 "sends the conflict update effect after successful actions"
                 sendsConflictUpdateEffectAfterSuccessfulActions
+            , Test.fuzz (Fuzzer.rolledDice Fuzzer.combinedDice)
+                "sends the error effect after failed actions"
+                sendsErrorEffectAfterFailedActions
             ]
         ]
+
+
+sendsErrorEffectAfterFailedActions : Dice Rolled -> Expectation
+sendsErrorEffectAfterFailedActions dice =
+    run (Manager.init "testingId")
+        [ Manager.register Conflict.proponent "proponent"
+        , Manager.register Conflict.opponent "opponent"
+        , Manager.takeAction (Conflict.takeDice dice) "someone else"
+        ]
+        |> Tuple.second
+        |> List.map
+            (\effect ->
+                case effect of
+                    ErrorResponse "someone else" NotAParticipant ->
+                        Expect.pass
+
+                    _ ->
+                        Expect.fail "Expected error response only"
+            )
+        |> Helpers.allPass
 
 
 sendsConflictUpdateEffectAfterSuccessfulActions : Dice Rolled -> Expectation
