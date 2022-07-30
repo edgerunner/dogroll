@@ -10,7 +10,7 @@ type alias Model =
     , proponent : Maybe Participant
     , opponent : Maybe Participant
     , error : Maybe Error
-    , spectators : Set String
+    , spectators : Set Id
     }
 
 
@@ -53,7 +53,7 @@ conflict (Manager model) =
 -- UPDATERS: x -> Manager -> Manager
 
 
-register : Side -> String -> Manager -> Manager
+register : Side -> Id -> Manager -> Manager
 register side participantId =
     updateModel
         (\model ->
@@ -91,7 +91,7 @@ takeAction action participantId =
         )
 
 
-addSpectator : String -> Manager -> Manager
+addSpectator : Id -> Manager -> Manager
 addSpectator spectatorId =
     updateModel
         (\model -> { model | spectators = Set.insert spectatorId model.spectators })
