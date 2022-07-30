@@ -1,4 +1,4 @@
-module Conflict.Manager exposing (Error(..), Manager, conflict, error, id, init, opponent, proponent, register)
+module Conflict.Manager exposing (Error(..), Manager, conflict, error, id, init, opponent, proponent, register, takeAction)
 
 import Conflict exposing (Conflict, Side)
 
@@ -72,6 +72,17 @@ register side participantId =
         )
 
 
+takeAction : (Side -> Conflict -> Result Conflict.Error Conflict) -> Id -> Manager -> Manager
+takeAction action participantId =
+    updateModel
+        (\model ->
+            identifySide participantId model
+                |> Result.andThen (action >> (|>) model.conflict >> Result.mapError ConflictError)
+                |> Result.map (\conflict_ -> { model | conflict = conflict_ })
+                |> Result.withDefault model
+        )
+
+
 proponent : Manager -> Maybe Participant
 proponent (Manager model) =
     model.proponent
@@ -89,6 +100,8 @@ opponent (Manager model) =
 type Error
     = CanNotParticipateAsBothSides
     | SideAlreadyRegistered
+    | NotAParticipant
+    | ConflictError Conflict.Error
 
 
 error : Manager -> Maybe Error
@@ -133,3 +146,15 @@ getSide side =
 
         Conflict.Opponent ->
             .opponent
+
+
+identifySide : Id -> Model -> Result Error Side
+identifySide participantId model =
+    if Maybe.map (.id >> (==) participantId) model.proponent == Just True then
+        Ok Conflict.Proponent
+
+    else if Maybe.map (.id >> (==) participantId) model.opponent == Just True then
+        Ok Conflict.Opponent
+
+    else
+        Err NotAParticipant

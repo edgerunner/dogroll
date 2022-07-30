@@ -2,6 +2,8 @@ module Tests.Conflict.Manager exposing (suite)
 
 import Conflict
 import Conflict.Manager as Manager
+import Dice
+import Die
 import Die.Size exposing (Size(..))
 import Expect exposing (Expectation)
 import Test exposing (Test, describe, test)
@@ -22,7 +24,25 @@ suite =
             , test "replaces the error with the last update" replacesErrorWithLastUpdate
             , test "clears the error after a successful update" clearsErrorAfterSuccessfulUpdate
             ]
+        , describe "actions"
+            [ test "passes actions to the conflict" passesActionsToConflict
+            ]
         ]
+
+
+passesActionsToConflict : () -> Expectation
+passesActionsToConflict () =
+    Manager.init "testingId"
+        |> Manager.register Conflict.proponent "proponent"
+        |> Manager.register Conflict.opponent "opponent"
+        |> Manager.takeAction (Conflict.takeDice (Dice.add (Die.cheat D8 7) Dice.empty)) "proponent"
+        |> Manager.takeAction (Conflict.takeDice (Dice.add (Die.cheat D6 3) Dice.empty)) "opponent"
+        |> Manager.conflict
+        |> Conflict.state
+        |> Expect.all
+            [ .proponent >> .pool >> Expect.equal (Dice.add (Die.cheat D8 7) Dice.empty)
+            , .opponent >> .pool >> Expect.equal (Dice.add (Die.cheat D6 3) Dice.empty)
+            ]
 
 
 clearsErrorAfterSuccessfulUpdate : () -> Expectation
