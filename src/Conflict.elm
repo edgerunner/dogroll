@@ -36,13 +36,13 @@ start =
     Conflict []
 
 
-takeDice : Side -> Dice -> Conflict -> Result error Conflict
-takeDice side dice =
+takeDice : Dice -> Side -> Conflict -> Result error Conflict
+takeDice dice side =
     push side (TookDice dice)
 
 
-play : Side -> Die -> Conflict -> Result Error Conflict
-play side die =
+play : Die -> Side -> Conflict -> Result Error Conflict
+play die side =
     check
         (player side
             >> .pool
@@ -72,8 +72,8 @@ see side =
         >> Result.andThen (push side Seen)
 
 
-takeFallout : Side -> Size -> Conflict -> Result Error Conflict
-takeFallout side size =
+takeFallout : Size -> Side -> Conflict -> Result Error Conflict
+takeFallout size side =
     check
         (mustTakeFallout >> toError NoPendingFallout)
         >> Result.andThen (checkPlayerTurn side)

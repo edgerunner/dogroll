@@ -58,11 +58,11 @@ updateFromFrontend sessionId clientId msg model =
 
                 conflictUpdate =
                     identifyParticipant sessionId model.participants
-                        |> Maybe.map Conflict.takeDice
-                        |> Maybe.withDefault (always Ok)
+                        |> Maybe.map (Conflict.takeDice rolled)
+                        |> Maybe.withDefault Ok
 
                 updatedConflict =
-                    conflictUpdate rolled model.conflict
+                    conflictUpdate model.conflict
                         |> Result.withDefault model.conflict
 
                 updatedModel =
@@ -108,8 +108,7 @@ updateFromFrontend sessionId clientId msg model =
 
         UserWantsToPlayDie die ->
             withParticipant sessionId
-                (Conflict.play
-                    >> (|>) die
+                (Conflict.play die
                     >> updateAndPublishConflict
                 )
                 model
@@ -130,8 +129,7 @@ updateFromFrontend sessionId clientId msg model =
 
         UserWantsToSelectFalloutDice size ->
             withParticipant sessionId
-                (Conflict.takeFallout
-                    >> (|>) size
+                (Conflict.takeFallout size
                     >> updateAndPublishConflict
                 )
                 model
@@ -150,7 +148,7 @@ updateFromFrontend sessionId clientId msg model =
                         (Dice.add
                             >> (|>) Dice.empty
                             >> Conflict.takeDice
-                                (model.conflict |> Conflict.state |> .go)
+                            >> (|>) (model.conflict |> Conflict.state |> .go)
                             >> (|>) Conflict.start
                             >> Result.toMaybe
                         )
