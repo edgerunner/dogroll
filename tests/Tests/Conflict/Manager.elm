@@ -31,8 +31,26 @@ suite =
                 (Fuzzer.rolledDice Fuzzer.combinedDice)
                 "passes actions to the conflict"
                 passesActionsToConflict
+            , Test.fuzz2
+                (Fuzzer.rolledDice Fuzzer.combinedDice)
+                (Fuzzer.rolledDice Fuzzer.combinedDice)
+                "exposes conflict errors"
+                exposesConflictErrors
             ]
         ]
+
+
+exposesConflictErrors : Dice Rolled -> Dice Rolled -> Expectation
+exposesConflictErrors proponentDice opponentDice =
+    Manager.init "testingId"
+        |> Manager.register Conflict.proponent "proponent"
+        |> Manager.register Conflict.opponent "opponent"
+        |> Manager.takeAction (Conflict.takeDice proponentDice) "proponent"
+        |> Manager.takeAction (Conflict.takeDice opponentDice) "opponent"
+        -- Deliberately play impossible die to test that the error is exposed.
+        |> Manager.takeAction (Conflict.play (Die.cheat D4 10)) "proponent"
+        |> Manager.error
+        |> Expect.equal (Just <| Manager.ConflictError Conflict.DieNotInPool)
 
 
 passesActionsToConflict : Dice Rolled -> Dice Rolled -> Expectation

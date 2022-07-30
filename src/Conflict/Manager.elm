@@ -79,7 +79,8 @@ takeAction action participantId =
             identifySide participantId model
                 |> Result.andThen (action >> (|>) model.conflict >> Result.mapError ConflictError)
                 |> Result.map (\conflict_ -> { model | conflict = conflict_ })
-                |> Result.withDefault model
+                |> Result.mapError (setError >> (|>) model)
+                |> collapseResult
         )
 
 
@@ -158,3 +159,13 @@ identifySide participantId model =
 
     else
         Err NotAParticipant
+
+
+collapseResult : Result a a -> a
+collapseResult result =
+    case result of
+        Ok ok ->
+            ok
+
+        Err err ->
+            err
