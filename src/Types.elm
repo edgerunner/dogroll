@@ -2,11 +2,11 @@ module Types exposing (..)
 
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
-import Conflict exposing (Conflict, Side)
+import Conflict exposing (Side)
+import Conflict.Manager
 import Dice exposing (Dice)
 import Die exposing (Die, Held, Rolled)
 import Die.Size exposing (Size)
-import Lamdera exposing (SessionId)
 import Random exposing (Seed)
 import Setup
 import Url exposing (Url)
@@ -28,8 +28,7 @@ type Page
 
 type alias BackendModel =
     { seed : Seed
-    , conflict : Conflict
-    , participants : ( SessionId, SessionId )
+    , conflict : Conflict.Manager.Manager
     }
 
 
@@ -47,11 +46,12 @@ type FrontendMsg
     | UserClickedFalloutSize Die.Size.Size
     | UserClickedRestart
     | UserClickedGive
+    | UserClickedParticipate Side
 
 
 type ToBackend
-    = UserWantsToRollDice (Dice Held)
-    | UserWantsToParticipate
+    = UserWantsToParticipate Side
+    | UserWantsToRollDice (Dice Held)
     | UserWantsToPlayDie (Die Rolled)
     | UserWantsToRaise
     | UserWantsToSee
@@ -66,4 +66,4 @@ type BackendMsg
 
 type ToFrontend
     = ConflictStateUpdated Conflict.State
-    | RegisteredAs (Maybe Side)
+    | RegisteredAs Side
