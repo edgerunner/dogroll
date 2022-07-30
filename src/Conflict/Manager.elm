@@ -1,6 +1,7 @@
-module Conflict.Manager exposing (Error(..), Manager, conflict, error, id, init, opponent, proponent, register, takeAction)
+module Conflict.Manager exposing (Error(..), Manager, addSpectator, conflict, error, id, init, opponent, proponent, register, spectators, takeAction)
 
 import Conflict exposing (Conflict, Side)
+import Set exposing (Set)
 
 
 type alias Model =
@@ -9,6 +10,7 @@ type alias Model =
     , proponent : Maybe Participant
     , opponent : Maybe Participant
     , error : Maybe Error
+    , spectators : Set String
     }
 
 
@@ -33,6 +35,7 @@ init id_ =
         , proponent = Nothing
         , opponent = Nothing
         , error = Nothing
+        , spectators = Set.empty
         }
 
 
@@ -44,6 +47,10 @@ id (Manager model) =
 conflict : Manager -> Conflict
 conflict (Manager model) =
     model.conflict
+
+
+
+-- UPDATERS: x -> Manager -> Manager
 
 
 register : Side -> String -> Manager -> Manager
@@ -84,6 +91,16 @@ takeAction action participantId =
         )
 
 
+addSpectator : String -> Manager -> Manager
+addSpectator spectatorId =
+    updateModel
+        (\model -> { model | spectators = Set.insert spectatorId model.spectators })
+
+
+
+-- GETTERS: Manager -> x
+
+
 proponent : Manager -> Maybe Participant
 proponent (Manager model) =
     model.proponent
@@ -92,6 +109,16 @@ proponent (Manager model) =
 opponent : Manager -> Maybe Participant
 opponent (Manager model) =
     model.opponent
+
+
+spectators : Manager -> Set String
+spectators (Manager model) =
+    model.spectators
+
+
+error : Manager -> Maybe Error
+error (Manager model) =
+    model.error
 
 
 
@@ -103,11 +130,6 @@ type Error
     | SideAlreadyRegistered
     | NotAParticipant
     | ConflictError Conflict.Error
-
-
-error : Manager -> Maybe Error
-error (Manager model) =
-    model.error
 
 
 setError : Error -> Model -> Model

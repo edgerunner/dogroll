@@ -6,6 +6,7 @@ import Dice exposing (Dice)
 import Die exposing (Rolled)
 import Die.Size exposing (Size(..))
 import Expect exposing (Expectation)
+import Set
 import Test exposing (Test, describe, test)
 import Tests.Fuzzer as Fuzzer
 
@@ -37,7 +38,21 @@ suite =
                 "exposes conflict errors"
                 exposesConflictErrors
             ]
+        , describe "spectators"
+            [ test "adds a spectator" addsASpectator
+            ]
         ]
+
+
+addsASpectator : () -> Expectation
+addsASpectator () =
+    Manager.init "testingId"
+        |> Manager.register Conflict.proponent "proponent"
+        |> Manager.register Conflict.opponent "opponent"
+        |> Manager.addSpectator "spectator"
+        |> Manager.spectators
+        |> Set.member "spectator"
+        |> Expect.true "Expected to find spectator in spectators"
 
 
 exposesConflictErrors : Dice Rolled -> Dice Rolled -> Expectation
