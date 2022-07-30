@@ -1,4 +1,4 @@
-module Conflict.Manager exposing (Error(..), Manager, addSpectator, conflict, error, id, init, opponent, proponent, register, spectators, takeAction)
+module Conflict.Manager exposing (Error(..), Manager, addSpectator, conflict, error, id, init, opponent, proponent, register, spectators, subscribers, takeAction)
 
 import Conflict exposing (Conflict, Side)
 import Set exposing (Set)
@@ -111,9 +111,17 @@ opponent (Manager model) =
     model.opponent
 
 
-spectators : Manager -> Set String
+spectators : Manager -> Set Id
 spectators (Manager model) =
     model.spectators
+
+
+subscribers : Manager -> List Id
+subscribers manager =
+    spectators manager
+        |> (manager |> proponent |> Maybe.map (.id >> Set.insert) |> Maybe.withDefault identity)
+        |> (manager |> opponent |> Maybe.map (.id >> Set.insert) |> Maybe.withDefault identity)
+        |> Set.toList
 
 
 error : Manager -> Maybe Error
