@@ -7,7 +7,7 @@ import Die exposing (Rolled)
 import Die.Size exposing (Size(..))
 import Expect exposing (Expectation)
 import Test exposing (Test, describe, test)
-import Tests.Helpers as Helpers
+import Tests.Fuzzer as Fuzzer
 
 
 suite : Test
@@ -27,8 +27,8 @@ suite =
             ]
         , describe "actions"
             [ Test.fuzz2
-                (Helpers.rolledDiceFuzzer Helpers.combinedDiceFuzzer)
-                (Helpers.rolledDiceFuzzer Helpers.combinedDiceFuzzer)
+                (Fuzzer.rolledDice Fuzzer.combinedDice)
+                (Fuzzer.rolledDice Fuzzer.combinedDice)
                 "passes actions to the conflict"
                 passesActionsToConflict
             ]
