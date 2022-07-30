@@ -2,11 +2,12 @@ module Tests.Conflict.Manager exposing (suite)
 
 import Conflict
 import Conflict.Manager as Manager
-import Dice
-import Die
+import Dice exposing (Dice)
+import Die exposing (Rolled)
 import Die.Size exposing (Size(..))
 import Expect exposing (Expectation)
 import Test exposing (Test, describe, test)
+import Tests.Helpers as Helpers
 
 
 suite : Test
@@ -25,23 +26,27 @@ suite =
             , test "clears the error after a successful update" clearsErrorAfterSuccessfulUpdate
             ]
         , describe "actions"
-            [ test "passes actions to the conflict" passesActionsToConflict
+            [ Test.fuzz2
+                (Helpers.rolledDiceFuzzer Helpers.combinedDiceFuzzer)
+                (Helpers.rolledDiceFuzzer Helpers.combinedDiceFuzzer)
+                "passes actions to the conflict"
+                passesActionsToConflict
             ]
         ]
 
 
-passesActionsToConflict : () -> Expectation
-passesActionsToConflict () =
+passesActionsToConflict : Dice Rolled -> Dice Rolled -> Expectation
+passesActionsToConflict proponentDice opponentDice =
     Manager.init "testingId"
         |> Manager.register Conflict.proponent "proponent"
         |> Manager.register Conflict.opponent "opponent"
-        |> Manager.takeAction (Conflict.takeDice (Dice.add (Die.cheat D8 7) Dice.empty)) "proponent"
-        |> Manager.takeAction (Conflict.takeDice (Dice.add (Die.cheat D6 3) Dice.empty)) "opponent"
+        |> Manager.takeAction (Conflict.takeDice proponentDice) "proponent"
+        |> Manager.takeAction (Conflict.takeDice opponentDice) "opponent"
         |> Manager.conflict
         |> Conflict.state
         |> Expect.all
-            [ .proponent >> .pool >> Expect.equal (Dice.add (Die.cheat D8 7) Dice.empty)
-            , .opponent >> .pool >> Expect.equal (Dice.add (Die.cheat D6 3) Dice.empty)
+            [ .proponent >> .pool >> Expect.equal proponentDice
+            , .opponent >> .pool >> Expect.equal opponentDice
             ]
 
 

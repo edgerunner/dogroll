@@ -1,7 +1,7 @@
-module Tests.Helpers exposing (allPass, between1and, combinedDiceFuzzer, diceFuzzer, dieFuzzer, passOrFail, seedFuzzer)
+module Tests.Helpers exposing (allPass, between1and, combinedDiceFuzzer, diceFuzzer, dieFuzzer, passOrFail, rolledDiceFuzzer, seedFuzzer)
 
 import Dice exposing (Dice)
-import Die exposing (Die, Held)
+import Die exposing (Die, Held, Rolled)
 import Die.Size exposing (Size(..))
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
@@ -75,3 +75,8 @@ combinedDiceFuzzer =
 seedFuzzer : Fuzzer Seed
 seedFuzzer =
     Fuzz.custom Random.independentSeed Shrink.noShrink
+
+
+rolledDiceFuzzer : Fuzzer (Dice Held) -> Fuzzer (Dice Rolled)
+rolledDiceFuzzer =
+    Fuzz.map2 Dice.roll seedFuzzer
