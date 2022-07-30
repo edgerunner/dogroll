@@ -9,7 +9,7 @@ type alias Model =
     , conflict : Conflict
     , proponent : Maybe Participant
     , opponent : Maybe Participant
-    , error : Maybe Error
+    , error : Maybe ( Error, Id )
     , spectators : Set Id
     }
 
@@ -66,7 +66,7 @@ register side participantId =
                 let
                     sideTakenError =
                         getSide side model
-                            |> Maybe.map (always <| setError SideAlreadyRegistered)
+                            |> Maybe.map (always <| setError SideAlreadyRegistered participantId)
                             |> Maybe.withDefault clearError
                 in
                 model
@@ -75,7 +75,7 @@ register side participantId =
                         (Maybe.withDefault { id = participantId } >> Just)
 
             else
-                model |> setError CanNotParticipateAsBothSides
+                model |> setError CanNotParticipateAsBothSides participantId
         )
 
 
@@ -86,7 +86,7 @@ takeAction action participantId =
             identifySide participantId model
                 |> Result.andThen (action >> (|>) model.conflict >> Result.mapError ConflictError)
                 |> Result.map (\conflict_ -> { model | conflict = conflict_ })
-                |> Result.mapError (setError >> (|>) model)
+                |> Result.mapError (setError >> (|>) participantId >> (|>) model)
                 |> collapseResult
         )
 
@@ -124,7 +124,7 @@ subscribers manager =
         |> Set.toList
 
 
-error : Manager -> Maybe Error
+error : Manager -> Maybe ( Error, Id )
 error (Manager model) =
     model.error
 
@@ -140,9 +140,9 @@ type Error
     | ConflictError Conflict.Error
 
 
-setError : Error -> Model -> Model
-setError error_ model =
-    { model | error = Just error_ }
+setError : Error -> Id -> Model -> Model
+setError error_ id_ model =
+    { model | error = Just ( error_, id_ ) }
 
 
 clearError : Model -> Model

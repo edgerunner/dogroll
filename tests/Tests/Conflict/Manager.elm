@@ -80,7 +80,7 @@ exposesConflictErrors proponentDice opponentDice =
         -- Deliberately play impossible die to test that the error is exposed.
         |> Manager.takeAction (Conflict.play (Die.cheat D4 10)) "proponent"
         |> Manager.error
-        |> Expect.equal (Just <| Manager.ConflictError Conflict.DieNotInPool)
+        |> Expect.equal (Just ( Manager.ConflictError Conflict.DieNotInPool, "proponent" ))
 
 
 passesActionsToConflict : Dice Rolled -> Dice Rolled -> Expectation
@@ -119,7 +119,7 @@ replacesErrorWithLastUpdate () =
         |> Manager.register Conflict.opponent "proponent"
         |> Manager.register Conflict.proponent "someone else"
         |> Manager.error
-        |> Expect.equal (Just Manager.SideAlreadyRegistered)
+        |> Expect.equal (Just ( Manager.SideAlreadyRegistered, "someone else" ))
 
 
 keepsErrorForLastUpdate : () -> Expectation
@@ -128,7 +128,7 @@ keepsErrorForLastUpdate () =
         |> Manager.register Conflict.proponent "proponent"
         |> Manager.register Conflict.opponent "proponent"
         |> Manager.error
-        |> Expect.equal (Just Manager.CanNotParticipateAsBothSides)
+        |> Expect.equal (Just ( Manager.CanNotParticipateAsBothSides, "proponent" ))
 
 
 doesNotRegisterSameParticipantForBothSides : () -> Expectation
