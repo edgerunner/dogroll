@@ -95,7 +95,12 @@ takeAction action participantId =
         (\model ->
             identifySide participantId model
                 |> Result.andThen (action >> (|>) model.conflict >> Result.mapError ConflictError)
-                |> Result.map (\conflict_ -> ( { model | conflict = conflict_ }, [] ))
+                |> Result.map
+                    (\conflict_ ->
+                        ( { model | conflict = conflict_ }
+                        , [ StateUpdate (getSubscribers model) (Conflict.state conflict_) ]
+                        )
+                    )
                 |> Result.mapError (ErrorResponse participantId >> List.singleton >> Tuple.pair model)
                 |> collapseResult
         )

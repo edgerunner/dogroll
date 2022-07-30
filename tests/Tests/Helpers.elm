@@ -31,5 +31,11 @@ between1and n value =
 
 
 allPass : List Expectation -> Expectation
-allPass =
-    List.foldl passOrFail Expect.pass
+allPass expectations =
+    expectations
+        |> List.foldl passOrFail
+            (expectations
+                |> List.length
+                |> Expect.atLeast 1
+                |> Expect.onFail "there are no expectations"
+            )

@@ -1,7 +1,7 @@
 module Tests.Conflict.Manager exposing (suite)
 
 import Conflict
-import Conflict.Manager as Manager exposing (Effect, Manager)
+import Conflict.Manager as Manager exposing (Effect(..), Manager)
 import Dice exposing (Dice)
 import Die exposing (Rolled)
 import Die.Size exposing (Size(..))
@@ -9,6 +9,7 @@ import Expect exposing (Expectation)
 import Set
 import Test exposing (Test, describe, test)
 import Tests.Fuzzer as Fuzzer
+import Tests.Helpers as Helpers
 
 
 suite : Test
@@ -41,7 +42,37 @@ suite =
             [ test "adds a spectator" addsASpectator
             , test "presents a subscriber list of participants and spectators" presentsNotificationList
             ]
+        , describe "effects"
+            [ Test.fuzz (Fuzzer.rolledDice Fuzzer.combinedDice)
+                "sends the conflict update effect after successful actions"
+                sendsConflictUpdateEffectAfterSuccessfulActions
+            ]
         ]
+
+
+sendsConflictUpdateEffectAfterSuccessfulActions : Dice Rolled -> Expectation
+sendsConflictUpdateEffectAfterSuccessfulActions dice =
+    run (Manager.init "testingId")
+        [ Manager.register Conflict.proponent "proponent"
+        , Manager.register Conflict.opponent "opponent"
+        , Manager.takeAction (Conflict.takeDice dice) "proponent"
+        ]
+        |> Tuple.second
+        |> List.filterMap
+            (\effect ->
+                case effect of
+                    StateUpdate recipents state ->
+                        Helpers.allPass
+                            [ recipents |> List.member "proponent" |> Expect.true "proponent is not in recipents"
+                            , recipents |> List.member "opponent" |> Expect.true "opponent is not in recipents"
+                            , state.proponent.pool |> Expect.equal dice
+                            ]
+                            |> Just
+
+                    _ ->
+                        Nothing
+            )
+        |> Helpers.allPass
 
 
 presentsNotificationList : () -> Expectation

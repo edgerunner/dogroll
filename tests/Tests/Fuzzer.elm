@@ -21,8 +21,12 @@ seed =
 
 combinedDice : Fuzzer (Dice Held)
 combinedDice =
-    Fuzz.list dice
-        |> Fuzz.map (List.take 4 >> Dice.combine)
+    Fuzz.constant []
+        |> Fuzz.map2 (::) dice
+        |> Fuzz.map2 (::) dice
+        |> Fuzz.map2 (::) dice
+        |> Fuzz.map2 (::) dice
+        |> Fuzz.map Dice.combine
 
 
 size : Fuzzer Size
