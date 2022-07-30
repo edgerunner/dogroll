@@ -1,4 +1,4 @@
-module Conflict.Manager exposing (Error(..), Manager, addSpectator, conflict, error, id, init, opponent, proponent, register, spectators, subscribers, takeAction)
+module Conflict.Manager exposing (Effect(..), Error(..), Manager, addSpectator, conflict, id, init, opponent, proponent, register, spectators, subscribers, takeAction)
 
 import Conflict exposing (Conflict, Side)
 import Set exposing (Set)
@@ -9,7 +9,6 @@ type alias Model =
     , conflict : Conflict
     , proponent : Maybe Participant
     , opponent : Maybe Participant
-    , error : Maybe ( Error, Id )
     , spectators : Set Id
     }
 
@@ -27,6 +26,19 @@ type alias Participant =
     }
 
 
+type Effect
+    = StateUpdate (List Id) Conflict.State
+    | ParticipantUpdate (List Id) Bool Bool
+    | ErrorResponse Id Error
+
+
+type Error
+    = CanNotParticipateAsBothSides
+    | SideAlreadyRegistered
+    | NotAParticipant
+    | ConflictError Conflict.Error
+
+
 init : Id -> Manager
 init id_ =
     Manager
@@ -34,26 +46,15 @@ init id_ =
         , conflict = Conflict.start
         , proponent = Nothing
         , opponent = Nothing
-        , error = Nothing
         , spectators = Set.empty
         }
 
 
-id : Manager -> Id
-id (Manager model) =
-    model.id
+
+-- UPDATERS: x -> Manager -> (Manager, List Effect)
 
 
-conflict : Manager -> Conflict
-conflict (Manager model) =
-    model.conflict
-
-
-
--- UPDATERS: x -> Manager -> Manager
-
-
-register : Side -> Id -> Manager -> Manager
+register : Side -> Id -> Manager -> ( Manager, List Effect )
 register side participantId =
     updateModel
         (\model ->
@@ -64,41 +65,60 @@ register side participantId =
                     |> Maybe.withDefault True
             then
                 let
-                    sideTakenError =
-                        getSide side model
-                            |> Maybe.map (always <| setError SideAlreadyRegistered participantId)
-                            |> Maybe.withDefault clearError
+                    newModel =
+                        model
+                            |> updateSide side
+                                (Maybe.withDefault { id = participantId } >> Just)
+
+                    sideFilled =
+                        Maybe.map (always True)
+                            >> Maybe.withDefault False
+
+                    participantUpdate =
+                        ParticipantUpdate
+                            (getSubscribers newModel)
+                            (sideFilled newModel.proponent)
+                            (sideFilled newModel.opponent)
                 in
-                model
-                    |> sideTakenError
-                    |> updateSide side
-                        (Maybe.withDefault { id = participantId } >> Just)
+                getSide side model
+                    |> Maybe.map (always ( model, [ ErrorResponse participantId SideAlreadyRegistered ] ))
+                    |> Maybe.withDefault ( newModel, [ participantUpdate ] )
 
             else
-                model |> setError CanNotParticipateAsBothSides participantId
+                ( model, [ ErrorResponse participantId CanNotParticipateAsBothSides ] )
         )
 
 
-takeAction : (Side -> Conflict -> Result Conflict.Error Conflict) -> Id -> Manager -> Manager
+takeAction : (Side -> Conflict -> Result Conflict.Error Conflict) -> Id -> Manager -> ( Manager, List Effect )
 takeAction action participantId =
     updateModel
         (\model ->
             identifySide participantId model
                 |> Result.andThen (action >> (|>) model.conflict >> Result.mapError ConflictError)
-                |> Result.map (\conflict_ -> { model | conflict = conflict_ })
-                |> Result.mapError (setError >> (|>) participantId >> (|>) model)
+                |> Result.map (\conflict_ -> ( { model | conflict = conflict_ }, [] ))
+                |> Result.mapError (ErrorResponse participantId >> List.singleton >> Tuple.pair model)
                 |> collapseResult
         )
 
 
-addSpectator : Id -> Manager -> Manager
+addSpectator : Id -> Manager -> ( Manager, List Effect )
 addSpectator spectatorId =
     updateModel
-        (\model -> { model | spectators = Set.insert spectatorId model.spectators })
+        (\model -> ( { model | spectators = Set.insert spectatorId model.spectators }, [] ))
 
 
 
 -- GETTERS: Manager -> x
+
+
+id : Manager -> Id
+id (Manager model) =
+    model.id
+
+
+conflict : Manager -> Conflict
+conflict (Manager model) =
+    model.conflict
 
 
 proponent : Manager -> Maybe Participant
@@ -117,46 +137,19 @@ spectators (Manager model) =
 
 
 subscribers : Manager -> List Id
-subscribers manager =
-    spectators manager
-        |> (manager |> proponent |> Maybe.map (.id >> Set.insert) |> Maybe.withDefault identity)
-        |> (manager |> opponent |> Maybe.map (.id >> Set.insert) |> Maybe.withDefault identity)
-        |> Set.toList
-
-
-error : Manager -> Maybe ( Error, Id )
-error (Manager model) =
-    model.error
-
-
-
--- ERRORS
-
-
-type Error
-    = CanNotParticipateAsBothSides
-    | SideAlreadyRegistered
-    | NotAParticipant
-    | ConflictError Conflict.Error
-
-
-setError : Error -> Id -> Model -> Model
-setError error_ id_ model =
-    { model | error = Just ( error_, id_ ) }
-
-
-clearError : Model -> Model
-clearError model =
-    { model | error = Nothing }
+subscribers (Manager model) =
+    getSubscribers model
 
 
 
 -- HELPERS
 
 
-updateModel : (Model -> Model) -> Manager -> Manager
+updateModel : (Model -> ( Model, List Effect )) -> Manager -> ( Manager, List Effect )
 updateModel updateFn (Manager model) =
-    Manager (updateFn model)
+    model
+        |> updateFn
+        |> Tuple.mapFirst Manager
 
 
 updateSide : Side -> (Maybe Participant -> Maybe Participant) -> Model -> Model
@@ -189,6 +182,14 @@ identifySide participantId model =
 
     else
         Err NotAParticipant
+
+
+getSubscribers : Model -> List Id
+getSubscribers model =
+    model.spectators
+        |> (model.proponent |> Maybe.map (.id >> Set.insert) |> Maybe.withDefault identity)
+        |> (model.opponent |> Maybe.map (.id >> Set.insert) |> Maybe.withDefault identity)
+        |> Set.toList
 
 
 collapseResult : Result a a -> a

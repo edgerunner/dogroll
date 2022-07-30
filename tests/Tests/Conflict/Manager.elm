@@ -1,7 +1,7 @@
 module Tests.Conflict.Manager exposing (suite)
 
 import Conflict
-import Conflict.Manager as Manager
+import Conflict.Manager as Manager exposing (Effect, Manager)
 import Dice exposing (Dice)
 import Die exposing (Rolled)
 import Die.Size exposing (Size(..))
@@ -22,9 +22,8 @@ suite =
             , test "does not register the same participant for both sides" doesNotRegisterSameParticipantForBothSides
             ]
         , describe "errors"
-            [ test "keeps the error for the last update" keepsErrorForLastUpdate
-            , test "replaces the error with the last update" replacesErrorWithLastUpdate
-            , test "clears the error after a successful update" clearsErrorAfterSuccessfulUpdate
+            [ test "sends the error for the last update" sendsErrorForLastUpdate
+            , test "does not repeat previous errors" doesNotRepeatPreviousErrors
             ]
         , describe "actions"
             [ Test.fuzz2
@@ -47,11 +46,13 @@ suite =
 
 presentsNotificationList : () -> Expectation
 presentsNotificationList () =
-    Manager.init "testingId"
-        |> Manager.register Conflict.proponent "proponent"
-        |> Manager.register Conflict.opponent "opponent"
-        |> Manager.addSpectator "spectator a"
-        |> Manager.addSpectator "spectator b"
+    run (Manager.init "testingId")
+        [ Manager.register Conflict.proponent "proponent"
+        , Manager.register Conflict.opponent "opponent"
+        , Manager.addSpectator "spectator a"
+        , Manager.addSpectator "spectator b"
+        ]
+        |> Tuple.first
         |> Manager.subscribers
         |> Expect.all
             ([ "proponent", "opponent", "spectator a", "spectator b" ]
@@ -61,10 +62,12 @@ presentsNotificationList () =
 
 addsASpectator : () -> Expectation
 addsASpectator () =
-    Manager.init "testingId"
-        |> Manager.register Conflict.proponent "proponent"
-        |> Manager.register Conflict.opponent "opponent"
-        |> Manager.addSpectator "spectator"
+    run (Manager.init "testingId")
+        [ Manager.register Conflict.proponent "proponent"
+        , Manager.register Conflict.opponent "opponent"
+        , Manager.addSpectator "spectator"
+        ]
+        |> Tuple.first
         |> Manager.spectators
         |> Set.member "spectator"
         |> Expect.true "Expected to find spectator in spectators"
@@ -72,24 +75,28 @@ addsASpectator () =
 
 exposesConflictErrors : Dice Rolled -> Dice Rolled -> Expectation
 exposesConflictErrors proponentDice opponentDice =
-    Manager.init "testingId"
-        |> Manager.register Conflict.proponent "proponent"
-        |> Manager.register Conflict.opponent "opponent"
-        |> Manager.takeAction (Conflict.takeDice proponentDice) "proponent"
-        |> Manager.takeAction (Conflict.takeDice opponentDice) "opponent"
+    run (Manager.init "testingId")
+        [ Manager.register Conflict.proponent "proponent"
+        , Manager.register Conflict.opponent "opponent"
+        , Manager.takeAction (Conflict.takeDice proponentDice) "proponent"
+        , Manager.takeAction (Conflict.takeDice opponentDice) "opponent"
+
         -- Deliberately play impossible die to test that the error is exposed.
-        |> Manager.takeAction (Conflict.play (Die.cheat D4 10)) "proponent"
-        |> Manager.error
-        |> Expect.equal (Just ( Manager.ConflictError Conflict.DieNotInPool, "proponent" ))
+        , Manager.takeAction (Conflict.play (Die.cheat D4 10)) "proponent"
+        ]
+        |> Tuple.second
+        |> Expect.equal [ Manager.ErrorResponse "proponent" (Manager.ConflictError Conflict.DieNotInPool) ]
 
 
 passesActionsToConflict : Dice Rolled -> Dice Rolled -> Expectation
 passesActionsToConflict proponentDice opponentDice =
-    Manager.init "testingId"
-        |> Manager.register Conflict.proponent "proponent"
-        |> Manager.register Conflict.opponent "opponent"
-        |> Manager.takeAction (Conflict.takeDice proponentDice) "proponent"
-        |> Manager.takeAction (Conflict.takeDice opponentDice) "opponent"
+    run (Manager.init "testingId")
+        [ Manager.register Conflict.proponent "proponent"
+        , Manager.register Conflict.opponent "opponent"
+        , Manager.takeAction (Conflict.takeDice proponentDice) "proponent"
+        , Manager.takeAction (Conflict.takeDice opponentDice) "opponent"
+        ]
+        |> Tuple.first
         |> Manager.conflict
         |> Conflict.state
         |> Expect.all
@@ -98,44 +105,46 @@ passesActionsToConflict proponentDice opponentDice =
             ]
 
 
-clearsErrorAfterSuccessfulUpdate : () -> Expectation
-clearsErrorAfterSuccessfulUpdate () =
-    Manager.init "testingId"
-        |> Manager.register Conflict.proponent "proponent"
-        |> Manager.register Conflict.opponent "proponent"
-        |> Manager.register Conflict.proponent "someone else"
-        |> Manager.register Conflict.opponent "opponent"
+doesNotRepeatPreviousErrors : () -> Expectation
+doesNotRepeatPreviousErrors () =
+    run (Manager.init "testingId")
+        [ Manager.register Conflict.proponent "proponent"
+        , Manager.register Conflict.opponent "proponent"
+        , Manager.register Conflict.proponent "someone else"
+        , Manager.register Conflict.opponent "opponent"
+        ]
         |> Expect.all
-            [ Manager.error >> Expect.equal Nothing
-            , Manager.proponent >> Maybe.map .id >> Expect.equal (Just "proponent")
-            , Manager.opponent >> Maybe.map .id >> Expect.equal (Just "opponent")
+            [ Tuple.first
+                >> Manager.proponent
+                >> Maybe.map .id
+                >> Expect.equal (Just "proponent")
+            , Tuple.first
+                >> Manager.opponent
+                >> Maybe.map .id
+                >> Expect.equal (Just "opponent")
+            , Tuple.second
+                >> List.member (Manager.ErrorResponse "someone else" Manager.SideAlreadyRegistered)
+                >> Expect.false "Expected to find no errors"
             ]
 
 
-replacesErrorWithLastUpdate : () -> Expectation
-replacesErrorWithLastUpdate () =
-    Manager.init "testingId"
-        |> Manager.register Conflict.proponent "proponent"
-        |> Manager.register Conflict.opponent "proponent"
-        |> Manager.register Conflict.proponent "someone else"
-        |> Manager.error
-        |> Expect.equal (Just ( Manager.SideAlreadyRegistered, "someone else" ))
-
-
-keepsErrorForLastUpdate : () -> Expectation
-keepsErrorForLastUpdate () =
-    Manager.init "testingId"
-        |> Manager.register Conflict.proponent "proponent"
-        |> Manager.register Conflict.opponent "proponent"
-        |> Manager.error
-        |> Expect.equal (Just ( Manager.CanNotParticipateAsBothSides, "proponent" ))
+sendsErrorForLastUpdate : () -> Expectation
+sendsErrorForLastUpdate () =
+    run (Manager.init "testingId")
+        [ Manager.register Conflict.proponent "proponent"
+        , Manager.register Conflict.opponent "proponent"
+        ]
+        |> Tuple.second
+        |> Expect.equal [ Manager.ErrorResponse "proponent" Manager.CanNotParticipateAsBothSides ]
 
 
 doesNotRegisterSameParticipantForBothSides : () -> Expectation
 doesNotRegisterSameParticipantForBothSides () =
-    Manager.init "testingId"
-        |> Manager.register Conflict.proponent "proponent"
-        |> Manager.register Conflict.opponent "proponent"
+    run (Manager.init "testingId")
+        [ Manager.register Conflict.proponent "proponent"
+        , Manager.register Conflict.opponent "proponent"
+        ]
+        |> Tuple.first
         |> Manager.opponent
         |> Maybe.map .id
         |> Expect.equal Nothing
@@ -143,9 +152,11 @@ doesNotRegisterSameParticipantForBothSides () =
 
 doesNotRegisterIfAlreadyRegistered : () -> Expectation
 doesNotRegisterIfAlreadyRegistered () =
-    Manager.init "testingId"
-        |> Manager.register Conflict.proponent "proponent"
-        |> Manager.register Conflict.proponent "someone else"
+    run (Manager.init "testingId")
+        [ Manager.register Conflict.proponent "proponent"
+        , Manager.register Conflict.proponent "someone else"
+        ]
+        |> Tuple.first
         |> Manager.proponent
         |> Maybe.map .id
         |> Expect.equal (Just "proponent")
@@ -153,8 +164,9 @@ doesNotRegisterIfAlreadyRegistered () =
 
 registersProponent : () -> Expectation
 registersProponent () =
-    Manager.init "testingId"
-        |> Manager.register Conflict.proponent "proponent"
+    run (Manager.init "testingId")
+        [ Manager.register Conflict.proponent "proponent" ]
+        |> Tuple.first
         |> Manager.proponent
         |> Maybe.map .id
         |> Expect.equal (Just "proponent")
@@ -172,3 +184,18 @@ storesStringId () =
     Manager.init "testingId"
         |> Manager.id
         |> Expect.equal "testingId"
+
+
+
+-- HELPERS
+
+
+{-| This is a helper function that runs the `Manager` with the given actions.
+It ignores the effects fired in between,
+returning the result of the last action.
+-}
+run : Manager -> List (Manager -> ( Manager, List Effect )) -> ( Manager, List Effect )
+run initialManager =
+    List.foldl
+        (\action -> Tuple.first >> action)
+        ( initialManager, [] )
