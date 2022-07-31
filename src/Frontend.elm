@@ -42,6 +42,7 @@ init _ key =
       , setup = Setup.empty
       , conflict = Conflict.initialState
       , mySide = Nothing
+      , sides = ( False, False )
       , page = Conflict
       }
     , Lamdera.sendToBackend ClientInitialized
@@ -118,9 +119,8 @@ updateFromBackend msg model =
         RegisteredAs side ->
             ( { model | mySide = Just side }, Cmd.none )
 
-        ParticipantsUpdated _ _ ->
-            -- TODO: keep track of participant status
-            ( model, Cmd.none )
+        ParticipantsUpdated proponent opponent ->
+            ( { model | sides = ( proponent, opponent ) }, Cmd.none )
 
         ErrorReported _ ->
             -- TODO: show error
@@ -153,6 +153,7 @@ view model =
                         , participate = UserClickedParticipate
                         , noop = UserClickedSomethingUnneeded
                         , mySide = model.mySide
+                        , sides = model.sides
                         }
         ]
     }

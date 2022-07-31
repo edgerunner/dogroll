@@ -23,6 +23,7 @@ type alias Config msg =
     , participate : Side -> msg
     , noop : msg
     , mySide : Maybe Side
+    , sides : ( Bool, Bool )
     }
 
 
@@ -31,8 +32,16 @@ view config state =
     [ if config.mySide == Nothing then
         Html.div [ Attr.id "join-buttons" ]
             [ Html.h4 [] [ Html.text "Participate as…" ]
-            , Html.button [ Event.onClick (config.participate Conflict.proponent) ] [ Html.text "Proponent" ]
-            , Html.button [ Event.onClick (config.participate Conflict.opponent) ] [ Html.text "Opponent" ]
+            , if not <| Tuple.first config.sides then
+                Html.button [ Event.onClick (config.participate Conflict.proponent) ] [ Html.text "Proponent" ]
+
+              else
+                Html.text ""
+            , if not <| Tuple.second config.sides then
+                Html.button [ Event.onClick (config.participate Conflict.opponent) ] [ Html.text "Opponent" ]
+
+              else
+                Html.text ""
             ]
 
       else

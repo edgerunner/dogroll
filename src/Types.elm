@@ -17,6 +17,7 @@ type alias FrontendModel =
     , setup : Setup.Model
     , conflict : Conflict.State
     , mySide : Maybe Side
+    , sides : ( Bool, Bool )
     , page : Page
     }
 
