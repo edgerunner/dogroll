@@ -113,13 +113,12 @@ handleConflictManagerUpdate ( manager, effects ) model =
     effects
         |> List.map
             (\effect ->
-                -- tentative until we sort out the session/client id question
                 case effect of
-                    StateUpdate _ state ->
-                        ConflictStateUpdated state |> Lamdera.broadcast
+                    StateUpdate ids state ->
+                        ConflictStateUpdated state |> sendAllToFrontends ids
 
-                    ParticipantUpdate _ proponent opponent ->
-                        ParticipantsUpdated proponent opponent |> Lamdera.broadcast
+                    ParticipantUpdate ids proponent opponent ->
+                        ParticipantsUpdated proponent opponent |> sendAllToFrontends ids
 
                     RegistrationNotice id side ->
                         RegisteredAs side |> Lamdera.sendToFrontend id
@@ -129,6 +128,12 @@ handleConflictManagerUpdate ( manager, effects ) model =
             )
         |> Cmd.batch
         |> Tuple.pair { model | conflict = manager }
+
+
+sendAllToFrontends : List SessionId -> ToFrontend -> Cmd BackendMsg
+sendAllToFrontends ids msg =
+    List.map (Lamdera.sendToFrontend >> with msg) ids
+        |> Cmd.batch
 
 
 with : a -> (a -> b) -> b
