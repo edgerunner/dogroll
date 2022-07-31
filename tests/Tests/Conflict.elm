@@ -68,104 +68,108 @@ fullPlaythrough () =
     Ok Conflict.start
         -- You roll: 1 2 2 3 4 4 7.
         |> Result.andThen
-            (Conflict.takeDice you
-                ([ 1, 2, 2, 3, 4, 4 ]
-                    |> List.foldl (Die.cheat D6 >> Dice.add) Dice.empty
-                    |> Dice.add (Die.cheat D8 7)
-                )
+            (you
+                |> Conflict.takeDice
+                    ([ 1, 2, 2, 3, 4, 4 ]
+                        |> List.foldl (Die.cheat D6 >> Dice.add) Dice.empty
+                        |> Dice.add (Die.cheat D8 7)
+                    )
             )
         -- I roll: 1 1 1 3 4 5 6 6.
         |> Result.andThen
-            (Conflict.takeDice me
-                ([ 1, 1, 1, 3, 4, 5, 6, 6 ]
-                    |> List.foldl (Die.cheat D6 >> Dice.add) Dice.empty
-                )
+            (me
+                |> Conflict.takeDice
+                    ([ 1, 1, 1, 3, 4, 5, 6, 6 ]
+                        |> List.foldl (Die.cheat D6 >> Dice.add) Dice.empty
+                    )
             )
         -- You’re opening the conflict, so you start: “Hey, Zeke, you don’t just go shoot people,”
         -- you have your character say. “Let’s talk about this.” You Raise with a 4 and a 3, for 7.
-        |> Result.andThen (Conflict.play you (Die.cheat D6 4))
-        |> Result.andThen (Conflict.play you (Die.cheat D6 3))
-        |> Result.andThen (Conflict.raise you)
+        |> Result.andThen (you |> Conflict.play (Die.cheat D6 4))
+        |> Result.andThen (you |> Conflict.play (Die.cheat D6 3))
+        |> Result.andThen (you |> Conflict.raise)
         -- I put forward my own 4 and 3 to See. “Get out of my way, boy,” I have my character say.
-        |> Result.andThen (Conflict.play me (Die.cheat D6 4))
-        |> Result.andThen (Conflict.play me (Die.cheat D6 3))
-        |> Result.andThen (Conflict.see me)
+        |> Result.andThen (me |> Conflict.play (Die.cheat D6 4))
+        |> Result.andThen (me |> Conflict.play (Die.cheat D6 3))
+        |> Result.andThen (me |> Conflict.see)
         -- “In fact, if you had any conscience of your own, you’d be with me.”
         -- That’s my Raise, so I put forward a 5 and a 6, for 11.
-        |> Result.andThen (Conflict.play me (Die.cheat D6 5))
-        |> Result.andThen (Conflict.play me (Die.cheat D6 6))
-        |> Result.andThen (Conflict.raise me)
+        |> Result.andThen (me |> Conflict.play (Die.cheat D6 5))
+        |> Result.andThen (me |> Conflict.play (Die.cheat D6 6))
+        |> Result.andThen (me |> Conflict.raise)
         -- You have my 11 to See, so you slide forward your 7 and your second 4.
         -- “Don’t try to tell me about my conscience,” you have your character say;
         -- that’s your See…
-        |> Result.andThen (Conflict.play you (Die.cheat D8 7))
-        |> Result.andThen (Conflict.play you (Die.cheat D6 4))
-        |> Result.andThen (Conflict.see you)
+        |> Result.andThen (you |> Conflict.play (Die.cheat D8 7))
+        |> Result.andThen (you |> Conflict.play (Die.cheat D6 4))
+        |> Result.andThen (you |> Conflict.see)
         -- Here’s your Raise: “you go home and see to your son.”
         -- Raising with your best dice left: two 2s
-        |> Result.andThen (Conflict.play you (Die.cheat D6 2))
-        |> Result.andThen (Conflict.play you (Die.cheat D6 2))
-        |> Result.andThen (Conflict.raise you)
+        |> Result.andThen (you |> Conflict.play (Die.cheat D6 2))
+        |> Result.andThen (you |> Conflict.play (Die.cheat D6 2))
+        |> Result.andThen (you |> Conflict.raise)
         -- I see with my last 6, Reversing The Blow.
         -- “Ha! I remember how he used to look up to you!
         -- Maybe if you’d been in his life he wouldn’t have gone this way.”
-        |> Result.andThen (Conflict.play me (Die.cheat D6 6))
-        |> Result.andThen (Conflict.see me)
+        |> Result.andThen (me |> Conflict.play (Die.cheat D6 6))
+        |> Result.andThen (me |> Conflict.see)
         -- Because I Reversed The Blow, I get to keep the 6 for my Raise. I add one of my 1s to it.
-        |> Result.andThen (Conflict.play me (Die.cheat D6 1))
-        |> Result.andThen (Conflict.raise me)
+        |> Result.andThen (me |> Conflict.play (Die.cheat D6 1))
+        |> Result.andThen (me |> Conflict.raise)
         -- “Forget this,” you say. “I punch you.”
         -- Let’s say that your character’s Body plus Will is 7d6.
         -- You roll: 1 3 4 5 5 5 6.
         |> Result.andThen
-            (Conflict.takeDice you
-                ([ 1, 3, 4, 5, 5, 5, 6 ]
-                    |> List.foldl (Die.cheat D6 >> Dice.add) Dice.empty
-                    -- Also, let’s say that your character has “Fist fighting 1d8” as a Trait,
-                    -- so you roll that d8 as soon as you say “I punch you.”
-                    -- You roll a 4 on the d8 and you still have that 1 left from before too.
-                    |> Dice.add (Die.cheat D8 4)
-                )
+            (you
+                |> Conflict.takeDice
+                    ([ 1, 3, 4, 5, 5, 5, 6 ]
+                        |> List.foldl (Die.cheat D6 >> Dice.add) Dice.empty
+                        -- Also, let’s say that your character has “Fist fighting 1d8” as a Trait,
+                        -- so you roll that d8 as soon as you say “I punch you.”
+                        -- You roll a 4 on the d8 and you still have that 1 left from before too.
+                        |> Dice.add (Die.cheat D8 4)
+                    )
             )
         -- So you See my outstanding 7 with your 4 and your 3,
-        |> Result.andThen (Conflict.play you (Die.cheat D6 4))
-        |> Result.andThen (Conflict.play you (Die.cheat D6 3))
-        |> Result.andThen (Conflict.see you)
+        |> Result.andThen (you |> Conflict.play (Die.cheat D6 4))
+        |> Result.andThen (you |> Conflict.play (Die.cheat D6 3))
+        |> Result.andThen (you |> Conflict.see)
         -- and put forward two of your 5s to Raise.
-        |> Result.andThen (Conflict.play you (Die.cheat D6 5))
-        |> Result.andThen (Conflict.play you (Die.cheat D6 5))
-        |> Result.andThen (Conflict.raise you)
+        |> Result.andThen (you |> Conflict.play (Die.cheat D6 5))
+        |> Result.andThen (you |> Conflict.play (Die.cheat D6 5))
+        |> Result.andThen (you |> Conflict.raise)
         -- Let’s say that my character’s Body plus Will is 6d6.
         -- I roll crap: 1 1 2 2 2 5. I have no immediately relevant Trait
         -- and my two leftover 1s aren’t much comfort.
         |> Result.andThen
-            (Conflict.takeDice me
-                ([ 1, 1, 2, 2, 2, 5 ]
-                    |> List.foldl (Die.cheat D6 >> Dice.add) Dice.empty
-                )
+            (me
+                |> Conflict.takeDice
+                    ([ 1, 1, 2, 2, 2, 5 ]
+                        |> List.foldl (Die.cheat D6 >> Dice.add) Dice.empty
+                    )
             )
         -- I have to See your 10. I See with my 5, two 2s and a 1.
-        |> Result.andThen (Conflict.play me (Die.cheat D6 5))
-        |> Result.andThen (Conflict.play me (Die.cheat D6 2))
-        |> Result.andThen (Conflict.play me (Die.cheat D6 2))
-        |> Result.andThen (Conflict.play me (Die.cheat D6 1))
+        |> Result.andThen (me |> Conflict.play (Die.cheat D6 5))
+        |> Result.andThen (me |> Conflict.play (Die.cheat D6 2))
+        |> Result.andThen (me |> Conflict.play (Die.cheat D6 2))
+        |> Result.andThen (me |> Conflict.play (Die.cheat D6 1))
         -- Because I’m Seeing with more than two dice, I’m Taking The Blow:
         -- “I’m surprised and you catch me right in the jaw,” I say.
-        |> Result.andThen (Conflict.see me)
+        |> Result.andThen (me |> Conflict.see)
         -- I take four Fallout Dice, the number of dice I used to See,
         -- and since I took a punch they’re d6s. I set 4d6 aside for after the conflict.
-        |> Result.andThen (Conflict.takeFallout me D6)
+        |> Result.andThen (me |> Conflict.takeFallout D6)
         -- Now all I have left to Raise with is a 2 and some 1s,
         -- and you have a 6, a 5, a 4 and some stuff. If I stay in the fight,
         -- you’ll beat the crap out of me. Instead I Give.
-        |> Result.andThen (Conflict.give me)
+        |> Result.andThen (me |> Conflict.give)
         |> Expect.ok
 
 
 noSeeNoDiceOnGive : () -> Expectation
 noSeeNoDiceOnGive () =
     readiedConflictAfterRaise
-        |> Result.andThen (Conflict.give Conflict.opponent)
+        |> Result.andThen (Conflict.opponent |> Conflict.give)
         |> Result.map (Conflict.keptDie >> Expect.equal Nothing)
         |> Result.withDefault (Expect.fail "dice to keep when it should not be")
 
@@ -173,10 +177,10 @@ noSeeNoDiceOnGive () =
 giveRetainsBestDice : () -> Expectation
 giveRetainsBestDice () =
     readiedConflictAfterRaise
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 3))
-        |> Result.andThen (Conflict.see Conflict.opponent)
-        |> Result.andThen (Conflict.give Conflict.opponent)
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D8 7))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D8 3))
+        |> Result.andThen (Conflict.opponent |> Conflict.see)
+        |> Result.andThen (Conflict.opponent |> Conflict.give)
         |> Result.map (Conflict.keptDie >> Expect.equal (Die.cheat D8 7 |> Just))
         |> Result.withDefault (Expect.fail "no dice to keep")
 
@@ -184,37 +188,37 @@ giveRetainsBestDice () =
 cantGiveOnOtherPlayerTurn : () -> Expectation
 cantGiveOnOtherPlayerTurn () =
     readiedConflict
-        |> Result.andThen (Conflict.give Conflict.opponent)
+        |> Result.andThen (Conflict.opponent |> Conflict.give)
         |> Expect.err
 
 
 giveOnOwnTurn : () -> Expectation
 giveOnOwnTurn () =
     readiedConflictAfterRaise
-        |> Result.andThen (Conflict.give Conflict.opponent)
+        |> Result.andThen (Conflict.opponent |> Conflict.give)
         |> Expect.ok
 
 
 cantTakeBlowWithoutFalloutDice : () -> Expectation
 cantTakeBlowWithoutFalloutDice () =
     readiedConflictAfterRaise
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 3))
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D4 4))
-        |> Result.andThen (Conflict.see Conflict.opponent)
-        |> Result.andThen (Conflict.takeDice Conflict.opponent (Dice.empty |> Dice.add (Die.cheat D10 7)))
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D10 7))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D8 7))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D8 3))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D4 4))
+        |> Result.andThen (Conflict.opponent |> Conflict.see)
+        |> Result.andThen (Conflict.opponent |> Conflict.takeDice (Dice.empty |> Dice.add (Die.cheat D10 7)))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D10 7))
         |> Expect.err
 
 
 takeBlowAndFalloutDice : () -> Expectation
 takeBlowAndFalloutDice () =
     readiedConflictAfterRaise
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 3))
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D4 4))
-        |> Result.andThen (Conflict.see Conflict.opponent)
-        |> Result.andThen (Conflict.takeFallout Conflict.opponent D6)
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D8 7))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D8 3))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D4 4))
+        |> Result.andThen (Conflict.opponent |> Conflict.see)
+        |> Result.andThen (Conflict.opponent |> Conflict.takeFallout D6)
         |> Result.map (Conflict.state >> .opponent >> .fallout)
         |> Result.map (Expect.equal (Dice.init D6 Pips.three))
         |> Result.withDefault (Expect.fail "didn't take blow")
@@ -223,153 +227,153 @@ takeBlowAndFalloutDice () =
 seeWithBlockOrDodge : () -> Expectation
 seeWithBlockOrDodge () =
     readiedConflictAfterRaise
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 3))
-        |> Result.andThen (Conflict.see Conflict.opponent)
-        |> Result.andThen (Conflict.takeDice Conflict.opponent (Dice.empty |> Dice.add (Die.cheat D10 9)))
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D10 9))
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D4 4))
-        |> Result.andThen (Conflict.raise Conflict.opponent)
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D8 7))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D8 3))
+        |> Result.andThen (Conflict.opponent |> Conflict.see)
+        |> Result.andThen (Conflict.opponent |> Conflict.takeDice (Dice.empty |> Dice.add (Die.cheat D10 9)))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D10 9))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D4 4))
+        |> Result.andThen (Conflict.opponent |> Conflict.raise)
         |> Expect.ok
 
 
 seeWithSingleDieIsReversingBlow : () -> Expectation
 seeWithSingleDieIsReversingBlow () =
     readiedConflictAfterRaise
-        |> Result.andThen (Conflict.takeDice Conflict.opponent (Dice.empty |> Dice.add (Die.cheat D10 9)))
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D10 9))
-        |> Result.andThen (Conflict.see Conflict.opponent)
+        |> Result.andThen (Conflict.opponent |> Conflict.takeDice (Dice.empty |> Dice.add (Die.cheat D10 9)))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D10 9))
+        |> Result.andThen (Conflict.opponent |> Conflict.see)
         -- can see with just one more die, the single see die is transferred
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D4 4))
-        |> Result.andThen (Conflict.raise Conflict.opponent)
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D4 4))
+        |> Result.andThen (Conflict.opponent |> Conflict.raise)
         |> Expect.ok
 
 
 cantSeeOwnRaise : () -> Expectation
 cantSeeOwnRaise () =
     readiedConflictAfterRaise
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D4 4))
-        |> Result.andThen (Conflict.see Conflict.proponent)
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D8 7))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D4 4))
+        |> Result.andThen (Conflict.proponent |> Conflict.see)
         |> Expect.err
 
 
 seeingPlayerCanSeeIfTotalMeetsRaiseTotal : () -> Expectation
 seeingPlayerCanSeeIfTotalMeetsRaiseTotal () =
     readiedConflictAfterRaise
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D4 4))
-        |> Result.andThen (Conflict.see Conflict.opponent)
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D8 7))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D4 4))
+        |> Result.andThen (Conflict.opponent |> Conflict.see)
         |> Expect.ok
 
 
 cantSeeWithLowTotal : () -> Expectation
 cantSeeWithLowTotal () =
     readiedConflictAfterRaise
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 3))
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D4 4))
-        |> Result.andThen (Conflict.see Conflict.opponent)
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D8 3))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D4 4))
+        |> Result.andThen (Conflict.opponent |> Conflict.see)
         |> Expect.err
 
 
 seeingPlayerCanPlayAnyNumberOfDice : () -> Expectation
 seeingPlayerCanPlayAnyNumberOfDice () =
     readiedConflictAfterRaise
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 3))
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D4 4))
-        |> Result.andThen (Conflict.takeDice Conflict.opponent (Dice.add (Die.cheat D6 1) Dice.empty))
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D6 1))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D8 7))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D8 3))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D4 4))
+        |> Result.andThen (Conflict.opponent |> Conflict.takeDice (Dice.add (Die.cheat D6 1) Dice.empty))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D6 1))
         |> Expect.ok
 
 
 seeingPlayerCanPlayDiceToSee : () -> Expectation
 seeingPlayerCanPlayDiceToSee () =
     readiedConflictAfterRaise
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D8 7))
         |> Expect.ok
 
 
 raiseTwice : () -> Expectation
 raiseTwice () =
     readiedConflict
-        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 3))
-        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 5))
-        |> Result.andThen (Conflict.raise Conflict.proponent)
-        |> Result.andThen (Conflict.raise Conflict.proponent)
+        |> Result.andThen (Conflict.proponent |> Conflict.play (Die.cheat D6 3))
+        |> Result.andThen (Conflict.proponent |> Conflict.play (Die.cheat D6 5))
+        |> Result.andThen (Conflict.proponent |> Conflict.raise)
+        |> Result.andThen (Conflict.proponent |> Conflict.raise)
         |> Expect.err
 
 
 raiseWithMoreThanTwoDice : () -> Expectation
 raiseWithMoreThanTwoDice () =
     readiedConflict
-        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 3))
-        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 5))
-        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 2))
+        |> Result.andThen (Conflict.proponent |> Conflict.play (Die.cheat D6 3))
+        |> Result.andThen (Conflict.proponent |> Conflict.play (Die.cheat D6 5))
+        |> Result.andThen (Conflict.proponent |> Conflict.play (Die.cheat D6 2))
         |> Expect.err
 
 
 otherPlayerCantPlayDice : () -> Expectation
 otherPlayerCantPlayDice () =
     readiedConflict
-        |> Result.andThen (Conflict.play Conflict.opponent (Die.cheat D8 7))
+        |> Result.andThen (Conflict.opponent |> Conflict.play (Die.cheat D8 7))
         |> Expect.err
 
 
 otherPlayerCantRaise : () -> Expectation
 otherPlayerCantRaise () =
     readiedConflict
-        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 3))
-        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 5))
-        |> Result.andThen (Conflict.raise Conflict.opponent)
+        |> Result.andThen (Conflict.proponent |> Conflict.play (Die.cheat D6 3))
+        |> Result.andThen (Conflict.proponent |> Conflict.play (Die.cheat D6 5))
+        |> Result.andThen (Conflict.opponent |> Conflict.raise)
         |> Expect.err
 
 
 raiseAfterNoDice : () -> Expectation
 raiseAfterNoDice () =
     readiedConflict
-        |> Result.andThen (Conflict.raise Conflict.proponent)
+        |> Result.andThen (Conflict.proponent |> Conflict.raise)
         |> Expect.err
 
 
 raiseAfterOneDie : () -> Expectation
 raiseAfterOneDie () =
     readiedConflict
-        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 3))
-        |> Result.andThen (Conflict.raise Conflict.proponent)
+        |> Result.andThen (Conflict.proponent |> Conflict.play (Die.cheat D6 3))
+        |> Result.andThen (Conflict.proponent |> Conflict.raise)
         |> Expect.err
 
 
 raiseAfterTwoDice : () -> Expectation
 raiseAfterTwoDice () =
     readiedConflict
-        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 3))
-        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 5))
-        |> Result.andThen (Conflict.raise Conflict.proponent)
+        |> Result.andThen (Conflict.proponent |> Conflict.play (Die.cheat D6 3))
+        |> Result.andThen (Conflict.proponent |> Conflict.play (Die.cheat D6 5))
+        |> Result.andThen (Conflict.proponent |> Conflict.raise)
         |> Expect.ok
 
 
 playUnrelatedDice : () -> Expectation
 playUnrelatedDice () =
     readiedConflict
-        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 3))
-        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D10 2))
+        |> Result.andThen (Conflict.proponent |> Conflict.play (Die.cheat D6 3))
+        |> Result.andThen (Conflict.proponent |> Conflict.play (Die.cheat D10 2))
         |> Expect.err
 
 
 playWrongSide : () -> Expectation
 playWrongSide () =
     readiedConflict
-        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 3))
-        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D8 7))
+        |> Result.andThen (Conflict.proponent |> Conflict.play (Die.cheat D6 3))
+        |> Result.andThen (Conflict.proponent |> Conflict.play (Die.cheat D8 7))
         |> Expect.err
 
 
 playCorrectSide : () -> Expectation
 playCorrectSide () =
     readiedConflict
-        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 3))
-        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 5))
+        |> Result.andThen (Conflict.proponent |> Conflict.play (Die.cheat D6 3))
+        |> Result.andThen (Conflict.proponent |> Conflict.play (Die.cheat D6 5))
         |> Expect.ok
 
 
@@ -381,7 +385,7 @@ onlyRolledDice () =
                 |> Dice.roll (Random.initialSeed 0)
     in
     Conflict.start
-        |> Conflict.takeDice Conflict.proponent dice
+        |> (Conflict.proponent |> Conflict.takeDice dice)
         |> Expect.ok
 
 
@@ -408,13 +412,13 @@ readiedConflict =
                 |> List.foldl Dice.add Dice.empty
     in
     Ok Conflict.start
-        |> Result.andThen (Conflict.takeDice Conflict.proponent proponentDice)
-        |> Result.andThen (Conflict.takeDice Conflict.opponent opponentDice)
+        |> Result.andThen (Conflict.proponent |> Conflict.takeDice proponentDice)
+        |> Result.andThen (Conflict.opponent |> Conflict.takeDice opponentDice)
 
 
 readiedConflictAfterRaise : Result Error Conflict
 readiedConflictAfterRaise =
     readiedConflict
-        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 3))
-        |> Result.andThen (Conflict.play Conflict.proponent (Die.cheat D6 5))
-        |> Result.andThen (Conflict.raise Conflict.proponent)
+        |> Result.andThen (Conflict.proponent |> Conflict.play (Die.cheat D6 3))
+        |> Result.andThen (Conflict.proponent |> Conflict.play (Die.cheat D6 5))
+        |> Result.andThen (Conflict.proponent |> Conflict.raise)

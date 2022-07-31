@@ -8,12 +8,13 @@ import Expect exposing (Expectation)
 import Pips
 import Random exposing (Seed)
 import Test exposing (Test, describe, test)
+import Tests.Fuzzer as Fuzzer
 import Tests.Helpers as Helpers
 
 
 fuzzRolls : String -> (Seed -> Dice Held -> Expectation) -> Test
 fuzzRolls =
-    Test.fuzz2 Helpers.seedFuzzer Helpers.combinedDiceFuzzer
+    Test.fuzz2 Fuzzer.seed Fuzzer.combinedDice
 
 
 suite : Test

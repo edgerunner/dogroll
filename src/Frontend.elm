@@ -42,9 +42,10 @@ init _ key =
       , setup = Setup.empty
       , conflict = Conflict.initialState
       , mySide = Nothing
-      , page = Setup
+      , sides = ( False, False )
+      , page = Conflict
       }
-    , sendToBackend UserWantsToParticipate
+    , Lamdera.sendToBackend ClientInitialized
     )
 
 
@@ -97,6 +98,9 @@ update msg model =
         UserClickedRestart ->
             ( model, sendToBackend UserWantsToRestart )
 
+        UserClickedParticipate side ->
+            ( model, sendToBackend (UserWantsToParticipate side) )
+
         UserClickedSomethingUnneeded ->
             ( model, Cmd.none )
 
@@ -112,8 +116,15 @@ updateFromBackend msg model =
         ConflictStateUpdated newConflictState ->
             ( { model | conflict = newConflictState }, Cmd.none )
 
-        RegisteredAs maybeSide ->
-            ( { model | mySide = maybeSide }, Cmd.none )
+        RegisteredAs side ->
+            ( { model | mySide = Just side }, Cmd.none )
+
+        ParticipantsUpdated proponent opponent ->
+            ( { model | sides = ( proponent, opponent ) }, Cmd.none )
+
+        ErrorReported _ ->
+            -- TODO: show error
+            ( model, Cmd.none )
 
 
 view : Model -> Browser.Document FrontendMsg
@@ -139,8 +150,10 @@ view model =
                         , fallout = UserClickedFalloutSize
                         , give = UserClickedGive
                         , restart = UserClickedRestart
+                        , participate = UserClickedParticipate
                         , noop = UserClickedSomethingUnneeded
                         , mySide = model.mySide
+                        , sides = model.sides
                         }
         ]
     }

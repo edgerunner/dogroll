@@ -1,6 +1,7 @@
-module Backend exposing (..)
+module Backend exposing (app)
 
-import Conflict exposing (Conflict, Side)
+import Conflict
+import Conflict.Manager as Manager exposing (Effect(..), Manager)
 import Dice
 import Lamdera exposing (ClientId, SessionId)
 import Random
@@ -29,8 +30,7 @@ app =
 init : ( Model, Cmd BackendMsg )
 init =
     ( { seed = Random.initialSeed 0
-      , conflict = Conflict.start
-      , participants = ( "", "" )
+      , conflictManager = Manager.init "the only conflict for now"
       }
     , newSeed
     )
@@ -56,146 +56,132 @@ updateFromFrontend sessionId clientId msg model =
                 rolled =
                     Dice.roll model.seed dice
 
-                conflictUpdate =
-                    identifyParticipant sessionId model.participants
-                        |> Maybe.map Conflict.takeDice
-                        |> Maybe.withDefault (always Ok)
-
                 updatedConflict =
-                    conflictUpdate rolled model.conflict
-                        |> Result.withDefault model.conflict
-
-                updatedModel =
-                    { model | conflict = updatedConflict }
-
-                cmds =
-                    Cmd.batch
-                        [ newSeed
-                        , publishChanges updatedConflict
-                        ]
+                    model.conflictManager
+                        |> Manager.takeAction
+                            (Conflict.takeDice rolled)
+                            sessionId
             in
-            ( updatedModel, cmds )
-
-        UserWantsToParticipate ->
-            case model.participants of
-                ( "", "" ) ->
-                    ( { model | participants = ( sessionId, "" ) }
-                    , Lamdera.sendToFrontend clientId (RegisteredAs (Just Conflict.proponent))
-                    )
-
-                ( proponentId, "" ) ->
-                    if sessionId /= proponentId then
-                        ( { model | participants = ( proponentId, sessionId ) }
-                        , Lamdera.sendToFrontend clientId (RegisteredAs (Just Conflict.opponent))
-                        )
-
-                    else
-                        ( model, Lamdera.sendToFrontend clientId (RegisteredAs (Just Conflict.proponent)) )
-
-                ( proponentId, opponentId ) ->
-                    (if sessionId == proponentId then
-                        Just Conflict.proponent
-
-                     else if sessionId == opponentId then
-                        Just Conflict.opponent
-
-                     else
-                        Nothing
-                    )
-                        |> RegisteredAs
-                        |> Lamdera.sendToFrontend clientId
-                        |> Tuple.pair model
-
-        UserWantsToPlayDie die ->
-            withParticipant sessionId
-                (Conflict.play
-                    >> (|>) die
-                    >> updateAndPublishConflict
-                )
-                model
-
-        UserWantsToRaise ->
-            withParticipant sessionId
-                (Conflict.raise
-                    >> updateAndPublishConflict
-                )
-                model
-
-        UserWantsToSee ->
-            withParticipant sessionId
-                (Conflict.see
-                    >> updateAndPublishConflict
-                )
-                model
-
-        UserWantsToSelectFalloutDice size ->
-            withParticipant sessionId
-                (Conflict.takeFallout
-                    >> (|>) size
-                    >> updateAndPublishConflict
-                )
-                model
-
-        UserWantsToGive ->
-            withParticipant sessionId
-                (Conflict.give
-                    >> updateAndPublishConflict
-                )
-                model
-
-        UserWantsToRestart ->
-            updateAndPublishConflict
-                (Conflict.keptDie
-                    >> Maybe.andThen
-                        (Dice.add
-                            >> (|>) Dice.empty
-                            >> Conflict.takeDice
-                                (model.conflict |> Conflict.state |> .go)
-                            >> (|>) Conflict.start
-                            >> Result.toMaybe
-                        )
-                    >> Maybe.withDefault Conflict.start
-                    >> Ok
-                )
-                model
+            updatedConflict
+                |> handleConflictManagerUpdate
+                |> with model
                 |> Tuple.mapSecond
                     (List.singleton >> (::) newSeed >> Cmd.batch)
 
+        UserWantsToParticipate side ->
+            Manager.register side sessionId model.conflictManager
+                |> handleConflictManagerUpdate
+                |> with model
 
-withParticipant : SessionId -> (Side -> Model -> ( Model, Cmd BackendMsg )) -> Model -> ( Model, Cmd BackendMsg )
-withParticipant sessionId transform model =
-    identifyParticipant sessionId model.participants
-        |> Maybe.map (transform >> (|>) model)
-        |> Maybe.withDefault ( model, Cmd.none )
+        UserWantsToPlayDie die ->
+            Manager.takeAction (Conflict.play die) sessionId model.conflictManager
+                |> handleConflictManagerUpdate
+                |> with model
 
+        UserWantsToRaise ->
+            Manager.takeAction Conflict.raise sessionId model.conflictManager
+                |> handleConflictManagerUpdate
+                |> with model
 
-identifyParticipant : SessionId -> ( SessionId, SessionId ) -> Maybe Side
-identifyParticipant sessionId ( proponentSessionId, opponentSessionId ) =
-    if sessionId == proponentSessionId then
-        Just Conflict.proponent
+        UserWantsToSee ->
+            Manager.takeAction Conflict.see sessionId model.conflictManager
+                |> handleConflictManagerUpdate
+                |> with model
 
-    else if sessionId == opponentSessionId then
-        Just Conflict.opponent
+        UserWantsToSelectFalloutDice size ->
+            Manager.takeAction (Conflict.takeFallout size) sessionId model.conflictManager
+                |> handleConflictManagerUpdate
+                |> with model
 
-    else
-        Nothing
+        UserWantsToGive ->
+            Manager.takeAction Conflict.give sessionId model.conflictManager
+                |> handleConflictManagerUpdate
+                |> with model
 
+        UserWantsToRestart ->
+            Manager.init "restarted conflict"
+                |> Tuple.pair
+                |> with []
+                |> handleConflictManagerUpdate
+                |> with model
+                |> Tuple.mapSecond
+                    (List.singleton >> (::) newSeed >> Cmd.batch)
 
-updateAndPublishConflict : (Conflict -> Result Conflict.Error Conflict) -> Model -> ( Model, Cmd BackendMsg )
-updateAndPublishConflict transform model =
-    case transform model.conflict of
-        Ok conflict ->
-            ( { model | conflict = conflict }
-            , conflict |> publishChanges
+        ClientInitialized ->
+            let
+                conflictState =
+                    model.conflictManager
+                        |> Manager.conflict
+                        |> Conflict.state
+                        |> ConflictStateUpdated
+                        |> Lamdera.sendToFrontend clientId
+
+                sideState side =
+                    model.conflictManager
+                        |> side
+                        |> Maybe.map (always True)
+                        |> Maybe.withDefault False
+
+                paricipantState =
+                    ParticipantsUpdated
+                        (sideState Manager.proponent)
+                        (sideState Manager.opponent)
+                        |> Lamdera.sendToFrontend clientId
+
+                isRegistered side =
+                    model.conflictManager
+                        |> side
+                        |> Maybe.map (.id >> (==) sessionId)
+                        |> Maybe.withDefault False
+
+                registration =
+                    if isRegistered Manager.proponent then
+                        RegisteredAs Conflict.proponent |> Lamdera.sendToFrontend clientId
+
+                    else if isRegistered Manager.opponent then
+                        RegisteredAs Conflict.opponent |> Lamdera.sendToFrontend clientId
+
+                    else
+                        Cmd.none
+
+                newConflict =
+                    model.conflictManager
+                        |> Manager.addSpectator sessionId
+                        |> Tuple.first
+            in
+            ( { model | conflictManager = newConflict }
+            , Cmd.batch [ conflictState, paricipantState, registration ]
             )
 
-        Err _ ->
-            ( model, Cmd.none )
+
+handleConflictManagerUpdate : ( Manager, List Effect ) -> Model -> ( Model, Cmd BackendMsg )
+handleConflictManagerUpdate ( manager, effects ) model =
+    effects
+        |> List.map
+            (\effect ->
+                case effect of
+                    StateUpdate ids state ->
+                        ConflictStateUpdated state |> sendAllToFrontends ids
+
+                    ParticipantUpdate ids proponent opponent ->
+                        ParticipantsUpdated proponent opponent |> sendAllToFrontends ids
+
+                    RegistrationNotice id side ->
+                        RegisteredAs side |> Lamdera.sendToFrontend id
+
+                    ErrorResponse id error ->
+                        ErrorReported error |> Lamdera.sendToFrontend id
+            )
+        |> Cmd.batch
+        |> Tuple.pair { model | conflictManager = manager }
 
 
-publishChanges : Conflict -> Cmd BackendMsg
-publishChanges conflict =
-    conflict
-        |> Conflict.state
-        |> ConflictStateUpdated
-        |> Lamdera.broadcast
+sendAllToFrontends : List SessionId -> ToFrontend -> Cmd BackendMsg
+sendAllToFrontends ids msg =
+    List.map (Lamdera.sendToFrontend >> with msg) ids
+        |> Cmd.batch
+
+
+with : a -> (a -> b) -> b
+with =
+    (|>)

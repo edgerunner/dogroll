@@ -20,14 +20,32 @@ type alias Config msg =
     , fallout : Size -> msg
     , give : msg
     , restart : msg
+    , participate : Side -> msg
     , noop : msg
     , mySide : Maybe Side
+    , sides : ( Bool, Bool )
     }
 
 
 view : Config msg -> State -> Html msg
 view config state =
-    [ Html.button [ Attr.class "give", Event.onClick config.give ] [ Html.text "Give" ]
+    [ if config.mySide == Nothing then
+        Html.div [ Attr.id "join-buttons" ]
+            [ Html.h4 [] [ Html.text "Participate as…" ]
+            , if not <| Tuple.first config.sides then
+                Html.button [ Event.onClick (config.participate Conflict.proponent) ] [ Html.text "Proponent" ]
+
+              else
+                Html.text ""
+            , if not <| Tuple.second config.sides then
+                Html.button [ Event.onClick (config.participate Conflict.opponent) ] [ Html.text "Opponent" ]
+
+              else
+                Html.text ""
+            ]
+
+      else
+        Html.button [ Attr.class "give", Event.onClick config.give ] [ Html.text "Give" ]
     , takeMoreDiceButton
         |> Html.map (always config.takeMoreDice)
     , config.mySide

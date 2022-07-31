@@ -5,6 +5,7 @@ import Die.Size exposing (Size(..))
 import Expect
 import Random exposing (Seed)
 import Test exposing (Test, describe, fuzz, test)
+import Tests.Fuzzer as Fuzzer
 import Tests.Helpers as Helpers
 
 
@@ -22,7 +23,7 @@ suite =
                     |> List.map (\size -> Die.init size |> Die.size)
                     |> Expect.equal [ D10, D8, D6, D4 ]
             )
-        , fuzz Helpers.dieFuzzer
+        , fuzz Fuzzer.die
             "rolling"
             (Die.roll seed
                 >> (\die ->
