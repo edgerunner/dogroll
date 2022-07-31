@@ -44,7 +44,7 @@ init _ key =
       , mySide = Nothing
       , page = Conflict
       }
-    , Cmd.none
+    , Lamdera.sendToBackend ClientInitialized
     )
 
 

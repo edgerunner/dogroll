@@ -58,6 +58,7 @@ type ToBackend
     | UserWantsToSelectFalloutDice Size
     | UserWantsToGive
     | UserWantsToRestart
+    | ClientInitialized
 
 
 type BackendMsg

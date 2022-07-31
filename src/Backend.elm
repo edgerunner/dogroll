@@ -49,7 +49,7 @@ update msg model =
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
-updateFromFrontend sessionId _ msg model =
+updateFromFrontend sessionId clientId msg model =
     case msg of
         UserWantsToRollDice dice ->
             let
@@ -106,6 +106,45 @@ updateFromFrontend sessionId _ msg model =
                 |> with model
                 |> Tuple.mapSecond
                     (List.singleton >> (::) newSeed >> Cmd.batch)
+
+        ClientInitialized ->
+            let
+                conflictState =
+                    model.conflict
+                        |> Manager.conflict
+                        |> Conflict.state
+                        |> ConflictStateUpdated
+                        |> Lamdera.sendToFrontend clientId
+
+                sideState side =
+                    model.conflict
+                        |> side
+                        |> Maybe.map (always True)
+                        |> Maybe.withDefault False
+
+                paricipantState =
+                    ParticipantsUpdated
+                        (sideState Manager.proponent)
+                        (sideState Manager.opponent)
+                        |> Lamdera.sendToFrontend clientId
+
+                isRegistered side =
+                    model.conflict
+                        |> side
+                        |> Maybe.map (.id >> (==) sessionId)
+                        |> Maybe.withDefault False
+
+                registration =
+                    if isRegistered Manager.proponent then
+                        RegisteredAs Conflict.proponent |> Lamdera.sendToFrontend clientId
+
+                    else if isRegistered Manager.opponent then
+                        RegisteredAs Conflict.opponent |> Lamdera.sendToFrontend clientId
+
+                    else
+                        Cmd.none
+            in
+            ( model, Cmd.batch [ conflictState, paricipantState, registration ] )
 
 
 handleConflictManagerUpdate : ( Manager, List Effect ) -> Model -> ( Model, Cmd BackendMsg )
