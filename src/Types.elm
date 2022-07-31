@@ -67,3 +67,5 @@ type BackendMsg
 type ToFrontend
     = ConflictStateUpdated Conflict.State
     | RegisteredAs Side
+    | ParticipantsUpdated Bool Bool
+    | ErrorReported Conflict.Manager.Error

@@ -1,9 +1,9 @@
 module Backend exposing (app)
 
 import Conflict
-import Conflict.Manager as Manager exposing (Manager)
+import Conflict.Manager as Manager exposing (Effect(..), Manager)
 import Dice
-import Lamdera exposing (ClientId, SessionId, sendToFrontend)
+import Lamdera exposing (ClientId, SessionId)
 import Random
 import Types exposing (..)
 
@@ -49,7 +49,7 @@ update msg model =
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
-updateFromFrontend sessionId clientId msg model =
+updateFromFrontend sessionId _ msg model =
     case msg of
         UserWantsToRollDice dice ->
             let
@@ -61,77 +61,73 @@ updateFromFrontend sessionId clientId msg model =
                         |> Manager.takeAction
                             (Conflict.takeDice rolled)
                             sessionId
-
-                updatedModel =
-                    { model | conflict = updatedConflict }
-
-                cmds =
-                    Cmd.batch
-                        [ newSeed
-                        , publishChanges updatedConflict
-                        ]
             in
-            ( updatedModel, cmds )
+            updatedConflict
+                |> handleConflictManagerUpdate
+                |> with model
+                |> Tuple.mapSecond
+                    (List.singleton >> (::) newSeed >> Cmd.batch)
 
         UserWantsToParticipate side ->
-            Manager.register side sessionId
-                |> updateAndPublishConflict
-                |> (|>) model
-                |> (\( newModel, cmds ) ->
-                        newModel.conflict
-                            |> Manager.error
-                            |> Maybe.map (always Cmd.none)
-                            |> Maybe.withDefault
-                                (Cmd.batch [ cmds, sendToFrontend clientId <| RegisteredAs side ])
-                            |> Tuple.pair newModel
-                   )
+            Manager.register side sessionId model.conflict
+                |> handleConflictManagerUpdate
+                |> with model
 
         UserWantsToPlayDie die ->
-            Manager.takeAction (Conflict.play die) sessionId
-                |> updateAndPublishConflict
-                |> (|>) model
+            Manager.takeAction (Conflict.play die) sessionId model.conflict
+                |> handleConflictManagerUpdate
+                |> with model
 
         UserWantsToRaise ->
-            Manager.takeAction Conflict.raise sessionId
-                |> updateAndPublishConflict
-                |> (|>) model
+            Manager.takeAction Conflict.raise sessionId model.conflict
+                |> handleConflictManagerUpdate
+                |> with model
 
         UserWantsToSee ->
-            Manager.takeAction Conflict.see sessionId
-                |> updateAndPublishConflict
-                |> (|>) model
+            Manager.takeAction Conflict.see sessionId model.conflict
+                |> handleConflictManagerUpdate
+                |> with model
 
         UserWantsToSelectFalloutDice size ->
-            Manager.takeAction (Conflict.takeFallout size) sessionId
-                |> updateAndPublishConflict
-                |> (|>) model
+            Manager.takeAction (Conflict.takeFallout size) sessionId model.conflict
+                |> handleConflictManagerUpdate
+                |> with model
 
         UserWantsToGive ->
-            Manager.takeAction Conflict.give sessionId
-                |> updateAndPublishConflict
-                |> (|>) model
+            Manager.takeAction Conflict.give sessionId model.conflict
+                |> handleConflictManagerUpdate
+                |> with model
 
         UserWantsToRestart ->
             Manager.init "restarted conflict"
-                |> always
-                |> updateAndPublishConflict
-                |> (|>) model
+                |> Tuple.pair
+                |> with []
+                |> handleConflictManagerUpdate
+                |> with model
                 |> Tuple.mapSecond
                     (List.singleton >> (::) newSeed >> Cmd.batch)
 
 
-updateAndPublishConflict : (Manager -> Manager) -> Model -> ( Model, Cmd BackendMsg )
-updateAndPublishConflict transform model =
-    case transform model.conflict of
-        conflict ->
-            ( { model | conflict = conflict }
-            , conflict |> publishChanges
+handleConflictManagerUpdate : ( Manager, List Effect ) -> Model -> ( Model, Cmd BackendMsg )
+handleConflictManagerUpdate ( manager, effects ) model =
+    effects
+        |> List.map
+            (\effect ->
+                -- tentative until we sort out the session/client id question
+                case effect of
+                    StateUpdate _ state ->
+                        ConflictStateUpdated state |> Lamdera.broadcast
+
+                    ParticipantUpdate _ proponent opponent ->
+                        ParticipantsUpdated proponent opponent |> Lamdera.broadcast
+
+                    ErrorResponse _ error ->
+                        ErrorReported error |> Lamdera.broadcast
             )
+        |> Cmd.batch
+        |> Tuple.pair { model | conflict = manager }
 
 
-publishChanges : Manager -> Cmd BackendMsg
-publishChanges =
-    Manager.conflict
-        >> Conflict.state
-        >> ConflictStateUpdated
-        >> Lamdera.broadcast
+with : a -> (a -> b) -> b
+with =
+    (|>)

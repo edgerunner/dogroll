@@ -118,6 +118,14 @@ updateFromBackend msg model =
         RegisteredAs side ->
             ( { model | mySide = Just side }, Cmd.none )
 
+        ParticipantsUpdated _ _ ->
+            -- TODO: keep track of participant status
+            ( model, Cmd.none )
+
+        ErrorReported _ ->
+            -- TODO: show error
+            ( model, Cmd.none )
+
 
 view : Model -> Browser.Document FrontendMsg
 view model =
