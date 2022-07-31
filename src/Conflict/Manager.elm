@@ -29,6 +29,7 @@ type alias Participant =
 type Effect
     = StateUpdate (List Id) Conflict.State
     | ParticipantUpdate (List Id) Bool Bool
+    | RegistrationNotice Id Side
     | ErrorResponse Id Error
 
 
@@ -79,10 +80,13 @@ register side participantId =
                             (getSubscribers newModel)
                             (sideFilled newModel.proponent)
                             (sideFilled newModel.opponent)
+
+                    registrationNotice =
+                        RegistrationNotice participantId side
                 in
                 getSide side model
                     |> Maybe.map (always ( model, [ ErrorResponse participantId SideAlreadyRegistered ] ))
-                    |> Maybe.withDefault ( newModel, [ participantUpdate ] )
+                    |> Maybe.withDefault ( newModel, [ registrationNotice, participantUpdate ] )
 
             else
                 ( model, [ ErrorResponse participantId CanNotParticipateAsBothSides ] )

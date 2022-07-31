@@ -121,6 +121,9 @@ handleConflictManagerUpdate ( manager, effects ) model =
                     ParticipantUpdate _ proponent opponent ->
                         ParticipantsUpdated proponent opponent |> Lamdera.broadcast
 
+                    RegistrationNotice id side ->
+                        RegisteredAs side |> Lamdera.sendToFrontend id
+
                     ErrorResponse _ error ->
                         ErrorReported error |> Lamdera.broadcast
             )
