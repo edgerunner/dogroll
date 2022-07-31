@@ -124,8 +124,8 @@ handleConflictManagerUpdate ( manager, effects ) model =
                     RegistrationNotice id side ->
                         RegisteredAs side |> Lamdera.sendToFrontend id
 
-                    ErrorResponse _ error ->
-                        ErrorReported error |> Lamdera.broadcast
+                    ErrorResponse id error ->
+                        ErrorReported error |> Lamdera.sendToFrontend id
             )
         |> Cmd.batch
         |> Tuple.pair { model | conflict = manager }
