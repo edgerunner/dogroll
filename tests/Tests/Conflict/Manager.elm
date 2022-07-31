@@ -84,11 +84,17 @@ sendsConflictUpdateEffectAfterSuccessfulActions dice =
         |> List.filterMap
             (\effect ->
                 case effect of
-                    StateUpdate recipents state ->
+                    StateUpdate [ "proponent" ] (Manager.InProgress state) ->
                         Helpers.allPass
-                            [ recipents |> List.member "proponent" |> Expect.true "proponent is not in recipents"
-                            , recipents |> List.member "opponent" |> Expect.true "opponent is not in recipents"
-                            , state.proponent.pool |> Expect.equal dice
+                            [ state.you |> Expect.equal (Just Conflict.proponent)
+                            , state.conflict.proponent.pool |> Expect.equal dice
+                            ]
+                            |> Just
+
+                    StateUpdate [ "opponent" ] (Manager.InProgress state) ->
+                        Helpers.allPass
+                            [ state.you |> Expect.equal (Just Conflict.opponent)
+                            , state.conflict.proponent.pool |> Expect.equal dice
                             ]
                             |> Just
 
