@@ -29,7 +29,7 @@ type Page
 
 type alias BackendModel =
     { seed : Seed
-    , conflict : Conflict.Manager.Manager
+    , conflictManager : Conflict.Manager.Manager
     }
 
 

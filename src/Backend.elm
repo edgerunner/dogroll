@@ -30,7 +30,7 @@ app =
 init : ( Model, Cmd BackendMsg )
 init =
     ( { seed = Random.initialSeed 0
-      , conflict = Manager.init "the only conflict for now"
+      , conflictManager = Manager.init "the only conflict for now"
       }
     , newSeed
     )
@@ -57,7 +57,7 @@ updateFromFrontend sessionId clientId msg model =
                     Dice.roll model.seed dice
 
                 updatedConflict =
-                    model.conflict
+                    model.conflictManager
                         |> Manager.takeAction
                             (Conflict.takeDice rolled)
                             sessionId
@@ -69,32 +69,32 @@ updateFromFrontend sessionId clientId msg model =
                     (List.singleton >> (::) newSeed >> Cmd.batch)
 
         UserWantsToParticipate side ->
-            Manager.register side sessionId model.conflict
+            Manager.register side sessionId model.conflictManager
                 |> handleConflictManagerUpdate
                 |> with model
 
         UserWantsToPlayDie die ->
-            Manager.takeAction (Conflict.play die) sessionId model.conflict
+            Manager.takeAction (Conflict.play die) sessionId model.conflictManager
                 |> handleConflictManagerUpdate
                 |> with model
 
         UserWantsToRaise ->
-            Manager.takeAction Conflict.raise sessionId model.conflict
+            Manager.takeAction Conflict.raise sessionId model.conflictManager
                 |> handleConflictManagerUpdate
                 |> with model
 
         UserWantsToSee ->
-            Manager.takeAction Conflict.see sessionId model.conflict
+            Manager.takeAction Conflict.see sessionId model.conflictManager
                 |> handleConflictManagerUpdate
                 |> with model
 
         UserWantsToSelectFalloutDice size ->
-            Manager.takeAction (Conflict.takeFallout size) sessionId model.conflict
+            Manager.takeAction (Conflict.takeFallout size) sessionId model.conflictManager
                 |> handleConflictManagerUpdate
                 |> with model
 
         UserWantsToGive ->
-            Manager.takeAction Conflict.give sessionId model.conflict
+            Manager.takeAction Conflict.give sessionId model.conflictManager
                 |> handleConflictManagerUpdate
                 |> with model
 
@@ -110,14 +110,14 @@ updateFromFrontend sessionId clientId msg model =
         ClientInitialized ->
             let
                 conflictState =
-                    model.conflict
+                    model.conflictManager
                         |> Manager.conflict
                         |> Conflict.state
                         |> ConflictStateUpdated
                         |> Lamdera.sendToFrontend clientId
 
                 sideState side =
-                    model.conflict
+                    model.conflictManager
                         |> side
                         |> Maybe.map (always True)
                         |> Maybe.withDefault False
@@ -129,7 +129,7 @@ updateFromFrontend sessionId clientId msg model =
                         |> Lamdera.sendToFrontend clientId
 
                 isRegistered side =
-                    model.conflict
+                    model.conflictManager
                         |> side
                         |> Maybe.map (.id >> (==) sessionId)
                         |> Maybe.withDefault False
@@ -145,11 +145,11 @@ updateFromFrontend sessionId clientId msg model =
                         Cmd.none
 
                 newConflict =
-                    model.conflict
+                    model.conflictManager
                         |> Manager.addSpectator sessionId
                         |> Tuple.first
             in
-            ( { model | conflict = newConflict }
+            ( { model | conflictManager = newConflict }
             , Cmd.batch [ conflictState, paricipantState, registration ]
             )
 
@@ -173,7 +173,7 @@ handleConflictManagerUpdate ( manager, effects ) model =
                         ErrorReported error |> Lamdera.sendToFrontend id
             )
         |> Cmd.batch
-        |> Tuple.pair { model | conflict = manager }
+        |> Tuple.pair { model | conflictManager = manager }
 
 
 sendAllToFrontends : List SessionId -> ToFrontend -> Cmd BackendMsg
