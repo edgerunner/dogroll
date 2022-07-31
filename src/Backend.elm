@@ -143,8 +143,15 @@ updateFromFrontend sessionId clientId msg model =
 
                     else
                         Cmd.none
+
+                newConflict =
+                    model.conflict
+                        |> Manager.addSpectator sessionId
+                        |> Tuple.first
             in
-            ( model, Cmd.batch [ conflictState, paricipantState, registration ] )
+            ( { model | conflict = newConflict }
+            , Cmd.batch [ conflictState, paricipantState, registration ]
+            )
 
 
 handleConflictManagerUpdate : ( Manager, List Effect ) -> Model -> ( Model, Cmd BackendMsg )
