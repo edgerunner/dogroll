@@ -2,7 +2,7 @@ module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
-import Conflict
+import Conflict.Manager
 import Conflict.View
 import Die.Size exposing (Size(..))
 import Lamdera exposing (Key, sendToBackend)
@@ -40,9 +40,7 @@ init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init _ key =
     ( { key = key
       , setup = Setup.empty
-      , conflict = Conflict.initialState
-      , mySide = Nothing
-      , sides = ( False, False )
+      , conflict = Conflict.Manager.initialState
       , page = Conflict
       }
     , Lamdera.sendToBackend ClientInitialized
@@ -113,14 +111,8 @@ noCmd model =
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
-        ConflictStateUpdated newConflictState ->
+        StateUpdated newConflictState ->
             ( { model | conflict = newConflictState }, Cmd.none )
-
-        RegisteredAs side ->
-            ( { model | mySide = Just side }, Cmd.none )
-
-        ParticipantsUpdated proponent opponent ->
-            ( { model | sides = ( proponent, opponent ) }, Cmd.none )
 
         ErrorReported _ ->
             -- TODO: show error
@@ -152,8 +144,6 @@ view model =
                         , restart = UserClickedRestart
                         , participate = UserClickedParticipate
                         , noop = UserClickedSomethingUnneeded
-                        , mySide = model.mySide
-                        , sides = model.sides
                         }
         ]
     }

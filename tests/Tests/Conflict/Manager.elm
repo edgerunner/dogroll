@@ -40,7 +40,6 @@ suite =
             ]
         , describe "spectators"
             [ test "adds a spectator" addsASpectator
-            , test "presents a subscriber list of participants and spectators" presentsNotificationList
             ]
         , describe "effects"
             [ Test.fuzz (Fuzzer.rolledDice Fuzzer.combinedDice)
@@ -84,11 +83,17 @@ sendsConflictUpdateEffectAfterSuccessfulActions dice =
         |> List.filterMap
             (\effect ->
                 case effect of
-                    StateUpdate recipents state ->
+                    StateUpdate [ "proponent" ] (Manager.InProgress state) ->
                         Helpers.allPass
-                            [ recipents |> List.member "proponent" |> Expect.true "proponent is not in recipents"
-                            , recipents |> List.member "opponent" |> Expect.true "opponent is not in recipents"
-                            , state.proponent.pool |> Expect.equal dice
+                            [ state.you |> Expect.equal (Just Conflict.proponent)
+                            , state.conflict.proponent.pool |> Expect.equal dice
+                            ]
+                            |> Just
+
+                    StateUpdate [ "opponent" ] (Manager.InProgress state) ->
+                        Helpers.allPass
+                            [ state.you |> Expect.equal (Just Conflict.opponent)
+                            , state.conflict.proponent.pool |> Expect.equal dice
                             ]
                             |> Just
 
@@ -96,22 +101,6 @@ sendsConflictUpdateEffectAfterSuccessfulActions dice =
                         Nothing
             )
         |> Helpers.allPass
-
-
-presentsNotificationList : () -> Expectation
-presentsNotificationList () =
-    run (Manager.init "testingId")
-        [ Manager.register Conflict.proponent "proponent"
-        , Manager.register Conflict.opponent "opponent"
-        , Manager.addSpectator "spectator a"
-        , Manager.addSpectator "spectator b"
-        ]
-        |> Tuple.first
-        |> Manager.subscribers
-        |> Expect.all
-            ([ "proponent", "opponent", "spectator a", "spectator b" ]
-                |> List.map (\id -> List.member id >> Expect.true (id ++ " not in list"))
-            )
 
 
 addsASpectator : () -> Expectation

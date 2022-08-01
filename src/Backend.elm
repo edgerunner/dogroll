@@ -49,7 +49,7 @@ update msg model =
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
-updateFromFrontend sessionId clientId msg model =
+updateFromFrontend sessionId _ msg model =
     case msg of
         UserWantsToRollDice dice ->
             let
@@ -108,50 +108,10 @@ updateFromFrontend sessionId clientId msg model =
                     (List.singleton >> (::) newSeed >> Cmd.batch)
 
         ClientInitialized ->
-            let
-                conflictState =
-                    model.conflictManager
-                        |> Manager.conflict
-                        |> Conflict.state
-                        |> ConflictStateUpdated
-                        |> Lamdera.sendToFrontend clientId
-
-                sideState side =
-                    model.conflictManager
-                        |> side
-                        |> Maybe.map (always True)
-                        |> Maybe.withDefault False
-
-                paricipantState =
-                    ParticipantsUpdated
-                        (sideState Manager.proponent)
-                        (sideState Manager.opponent)
-                        |> Lamdera.sendToFrontend clientId
-
-                isRegistered side =
-                    model.conflictManager
-                        |> side
-                        |> Maybe.map (.id >> (==) sessionId)
-                        |> Maybe.withDefault False
-
-                registration =
-                    if isRegistered Manager.proponent then
-                        RegisteredAs Conflict.proponent |> Lamdera.sendToFrontend clientId
-
-                    else if isRegistered Manager.opponent then
-                        RegisteredAs Conflict.opponent |> Lamdera.sendToFrontend clientId
-
-                    else
-                        Cmd.none
-
-                newConflict =
-                    model.conflictManager
-                        |> Manager.addSpectator sessionId
-                        |> Tuple.first
-            in
-            ( { model | conflictManager = newConflict }
-            , Cmd.batch [ conflictState, paricipantState, registration ]
-            )
+            model.conflictManager
+                |> Manager.addSpectator sessionId
+                |> handleConflictManagerUpdate
+                |> with model
 
 
 handleConflictManagerUpdate : ( Manager, List Effect ) -> Model -> ( Model, Cmd BackendMsg )
@@ -161,13 +121,7 @@ handleConflictManagerUpdate ( manager, effects ) model =
             (\effect ->
                 case effect of
                     StateUpdate ids state ->
-                        ConflictStateUpdated state |> sendAllToFrontends ids
-
-                    ParticipantUpdate ids proponent opponent ->
-                        ParticipantsUpdated proponent opponent |> sendAllToFrontends ids
-
-                    RegistrationNotice id side ->
-                        RegisteredAs side |> Lamdera.sendToFrontend id
+                        StateUpdated state |> sendAllToFrontends ids
 
                     ErrorResponse id error ->
                         ErrorReported error |> Lamdera.sendToFrontend id
