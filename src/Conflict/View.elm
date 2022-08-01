@@ -1,13 +1,13 @@
 module Conflict.View exposing (Config, view)
 
-import Conflict exposing (Raise(..), See(..), Side(..), State)
+import Conflict exposing (Raise(..), See(..), Side(..))
+import Conflict.Manager as Manager
 import Dice exposing (Dice)
 import Die exposing (Die, Rolled)
 import Die.Size exposing (Size)
 import Die.View
 import Html exposing (Attribute, Html)
 import Html.Attributes as Attr
-import Html.Events as Event
 import Pips
 import UI
 
@@ -22,58 +22,94 @@ type alias Config msg =
     , restart : msg
     , participate : Side -> msg
     , noop : msg
-    , mySide : Maybe Side
-    , sides : ( Bool, Bool )
     }
 
 
-view : Config msg -> State -> Html msg
+view : Config msg -> Manager.State -> Html msg
 view config state =
-    [ if config.mySide == Nothing then
-        Html.div [ Attr.id "join-buttons" ]
-            [ Html.h4 [] [ Html.text "Participate as…" ]
-            , if not <| Tuple.first config.sides then
-                Html.button [ Event.onClick (config.participate Conflict.proponent) ] [ Html.text "Proponent" ]
+    case state of
+        Manager.InProgress progressState ->
+            progressView config progressState
 
-              else
-                Html.text ""
-            , if not <| Tuple.second config.sides then
-                Html.button [ Event.onClick (config.participate Conflict.opponent) ] [ Html.text "Opponent" ]
+        Manager.PendingParticipants pendingState ->
+            pendingView config pendingState
 
-              else
-                Html.text ""
-            ]
+        Manager.Finished finishedState ->
+            finishedView config finishedState
 
-      else
-        Html.button [ Attr.class "give", Event.onClick config.give ] [ Html.text "Give" ]
-    , takeMoreDiceButton
+        Manager.NotConnected ->
+            notConnectedView
+
+
+notConnectedView : Html msg
+notConnectedView =
+    Html.main_ [ Attr.id "not-connected" ]
+        [ UI.pool [ UI.poolCaption "Not connected" ] ]
+
+
+finishedView : Config msg -> Manager.FinishedState -> Html msg
+finishedView config state =
+    case state.followUp of
+        Nothing ->
+            Html.main_ [ Attr.id "finished" ]
+                [ UI.pool [ UI.poolCaption "This conflict is over" ]
+                , UI.button "Start a new conflict"
+                    |> Html.map (always config.restart)
+                ]
+
+        Just ( side, die ) ->
+            case state.you |> Maybe.map ((==) side) of
+                Just True ->
+                    Html.main_ [ Attr.id "finished", Attr.class "follow-up" ]
+                        [ UI.pool
+                            [ UI.poolCaption "You can keep this die"
+                            , Die.View.rolled Die.View.regular die
+                                |> Html.map (always config.restart)
+                            ]
+                        , UI.button "Start follow-up conflict"
+                            |> Html.map (always config.restart)
+                        ]
+
+                _ ->
+                    Html.main_ [ Attr.id "finished" ]
+                        [ UI.pool [ UI.poolCaption "This conflict is over" ]
+                        , UI.button "Start a new conflict"
+                            |> Html.map (always config.restart)
+                        ]
+
+
+progressView : Config msg -> Manager.InProgressState -> Html msg
+progressView config state =
+    [ UI.button "Give"
+        |> Html.map (always config.give)
+    , UI.button "Take some dice"
         |> Html.map (always config.takeMoreDice)
-    , config.mySide
+    , state.you
         |> Maybe.withDefault Conflict.proponent
         |> Conflict.player
-        |> (|>) state
+        |> with state.conflict
         |> .pool
         |> diceSet "my-dice"
         |> Html.map config.playDie
     , playArea config state
-    , if config.mySide == Just state.go then
-        actionButton config state.raise
+    , if state.you == Just state.conflict.go then
+        actionButton config state.conflict.raise
 
       else
         Html.text ""
-    , config.mySide
+    , state.you
         |> Maybe.withDefault Conflict.proponent
         |> Conflict.otherSide
         |> Conflict.player
-        |> (|>) state
+        |> with state.conflict
         |> .pool
         |> diceSet "their-dice"
         |> Html.map (always config.noop)
     ]
         |> Html.main_
             [ Attr.id "conflict"
-            , sideClass config.mySide
-            , turnClass config.mySide state.go
+            , sideClass state.you
+            , turnClass state.you state.conflict.go
             ]
 
 
@@ -145,17 +181,8 @@ actionButton config raise =
                     )
                 |> Html.div [ Attr.id "fallout-selector" ]
 
-        GivenUp _ ->
-            UI.button "Start another conflict"
-                |> Html.map (always config.restart)
-
         _ ->
             Html.text ""
-
-
-takeMoreDiceButton : Html ()
-takeMoreDiceButton =
-    UI.button "Take More Dice"
 
 
 diceSet : String -> Dice Rolled -> Html (Die Rolled)
@@ -196,15 +223,15 @@ textGetter mySide go =
                    )
 
 
-playArea : Config msg -> State -> Html msg
+playArea : Config msg -> Manager.InProgressState -> Html msg
 playArea config state =
     let
         caption =
-            textGetter config.mySide state.go
+            textGetter state.you state.conflict.go
                 >> UI.poolCaption
 
         raiseRecommendations =
-            Conflict.player state.go state
+            Conflict.player state.conflict.go state.conflict
                 |> .pool
                 |> Dice.best 2
                 |> Dice.toList
@@ -217,7 +244,7 @@ playArea config state =
             Html.map (always config.noop)
     in
     UI.pool <|
-        case state.raise of
+        case state.conflict.raise of
             PendingTwoDice ->
                 ({ myTurn = "Play two dice to raise"
                  , notMyTurn = ( "Waiting for the ", " to raise" )
@@ -270,7 +297,7 @@ playArea config state =
                                     raiseValue
                                     seen
                         in
-                        Conflict.player state.go state
+                        Conflict.player state.conflict.go state.conflict
                             |> .pool
                             |> Dice.match seeValue
                             |> Dice.toList
@@ -315,14 +342,50 @@ playArea config state =
                 , UI.poolCaption (Pips.repeat "✖︎" pips |> String.join " ")
                 ]
 
-            GivenUp Nothing ->
+            GivenUp _ ->
                 [ UI.poolCaption "This conflict is over" ]
 
-            GivenUp (Just die) ->
-                [ { myTurn = "You can take your best die to a follow-up conflict"
-                  , notMyTurn = ( "The ", " can take their best die to a follow-up conflict" )
-                  }
-                    |> caption
-                , Die.View.rolled Die.View.regular die
-                    |> Html.map (always config.restart)
+
+pendingView : Config msg -> Manager.PendingParticipantsState -> Html msg
+pendingView config state =
+    [ joinButtons config state ]
+        |> Html.main_ [ Attr.id "pending" ]
+
+
+joinButtons : Config msg -> Manager.PendingParticipantsState -> Html msg
+joinButtons config state =
+    Html.div [ Attr.id "join-buttons" ]
+        (case state.side of
+            Nothing ->
+                [ Html.h4 [] [ Html.text "Participate as…" ]
+                , UI.button "Proponent"
+                    |> Html.map (always <| config.participate Conflict.proponent)
+                , UI.button "Opponent"
+                    |> Html.map (always <| config.participate Conflict.opponent)
                 ]
+
+            Just (Err Proponent) ->
+                [ Html.h4 [] [ Html.text "Participate as…" ]
+                , UI.button "Opponent"
+                    |> Html.map (always <| config.participate Conflict.opponent)
+                ]
+
+            Just (Err Opponent) ->
+                [ Html.h4 [] [ Html.text "Participate as…" ]
+                , UI.button "Proponent"
+                    |> Html.map (always <| config.participate Conflict.proponent)
+                ]
+
+            Just (Ok Proponent) ->
+                [ Html.h4 [] [ Html.text "Waiting for the opponent…" ]
+                ]
+
+            Just (Ok Opponent) ->
+                [ Html.h4 [] [ Html.text "Waiting for the proponent…" ]
+                ]
+        )
+
+
+with : a -> (a -> b) -> b
+with =
+    (|>)

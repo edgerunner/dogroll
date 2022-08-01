@@ -15,9 +15,7 @@ import Url exposing (Url)
 type alias FrontendModel =
     { key : Key
     , setup : Setup.Model
-    , conflict : Conflict.State
-    , mySide : Maybe Side
-    , sides : ( Bool, Bool )
+    , conflict : Conflict.Manager.State
     , page : Page
     }
 
@@ -67,7 +65,5 @@ type BackendMsg
 
 
 type ToFrontend
-    = ConflictStateUpdated Conflict.State
-    | RegisteredAs Side
-    | ParticipantsUpdated Bool Bool
+    = StateUpdated Conflict.Manager.State
     | ErrorReported Conflict.Manager.Error

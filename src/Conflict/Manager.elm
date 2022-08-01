@@ -1,4 +1,4 @@
-module Conflict.Manager exposing (Effect(..), Error(..), Manager, State(..), addSpectator, conflict, id, init, opponent, proponent, register, spectators, takeAction)
+module Conflict.Manager exposing (Effect(..), Error(..), FinishedState, InProgressState, Manager, PendingParticipantsState, State(..), addSpectator, conflict, id, init, initialState, opponent, proponent, register, spectators, takeAction)
 
 import Conflict exposing (Conflict, Side)
 import Die exposing (Die, Rolled)
@@ -40,12 +40,13 @@ type Error
 
 
 type State
-    = PendingParticipants PendingParticipantsModel
-    | InProgress InProgressModel
-    | Finished FinishedModel
+    = NotConnected
+    | PendingParticipants PendingParticipantsState
+    | InProgress InProgressState
+    | Finished FinishedState
 
 
-type alias PendingParticipantsModel =
+type alias PendingParticipantsState =
     { id : Id
 
     {- side is the tentative state of the pickings
@@ -60,14 +61,14 @@ type alias PendingParticipantsModel =
     }
 
 
-type alias InProgressModel =
+type alias InProgressState =
     { id : Id
     , conflict : Conflict.State
     , you : Maybe Conflict.Side
     }
 
 
-type alias FinishedModel =
+type alias FinishedState =
     { id : Id
     , you : Maybe Conflict.Side
     , followUp : Maybe ( Conflict.Side, Die Rolled )
@@ -83,6 +84,11 @@ init id_ =
         , opponent = Nothing
         , spectators = Set.empty
         }
+
+
+initialState : State
+initialState =
+    NotConnected
 
 
 
