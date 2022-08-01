@@ -1,4 +1,4 @@
-module Conflict.Manager exposing (Effect(..), Error(..), Manager, State(..), addSpectator, conflict, id, init, opponent, proponent, register, spectators, subscribers, takeAction)
+module Conflict.Manager exposing (Effect(..), Error(..), Manager, State(..), addSpectator, conflict, id, init, opponent, proponent, register, spectators, takeAction)
 
 import Conflict exposing (Conflict, Side)
 import Die exposing (Die, Rolled)
@@ -162,11 +162,6 @@ spectators (Manager model) =
     model.spectators
 
 
-subscribers : Manager -> List Id
-subscribers (Manager model) =
-    getSubscribers model
-
-
 
 -- HELPERS
 
@@ -208,14 +203,6 @@ identifySide participantId model =
 
     else
         Err NotAParticipant
-
-
-getSubscribers : Model -> List Id
-getSubscribers model =
-    model.spectators
-        |> (model.proponent |> Maybe.map (.id >> Set.insert) |> Maybe.withDefault identity)
-        |> (model.opponent |> Maybe.map (.id >> Set.insert) |> Maybe.withDefault identity)
-        |> Set.toList
 
 
 collapseResult : Result a a -> a

@@ -40,7 +40,6 @@ suite =
             ]
         , describe "spectators"
             [ test "adds a spectator" addsASpectator
-            , test "presents a subscriber list of participants and spectators" presentsNotificationList
             ]
         , describe "effects"
             [ Test.fuzz (Fuzzer.rolledDice Fuzzer.combinedDice)
@@ -102,22 +101,6 @@ sendsConflictUpdateEffectAfterSuccessfulActions dice =
                         Nothing
             )
         |> Helpers.allPass
-
-
-presentsNotificationList : () -> Expectation
-presentsNotificationList () =
-    run (Manager.init "testingId")
-        [ Manager.register Conflict.proponent "proponent"
-        , Manager.register Conflict.opponent "opponent"
-        , Manager.addSpectator "spectator a"
-        , Manager.addSpectator "spectator b"
-        ]
-        |> Tuple.first
-        |> Manager.subscribers
-        |> Expect.all
-            ([ "proponent", "opponent", "spectator a", "spectator b" ]
-                |> List.map (\id -> List.member id >> Expect.true (id ++ " not in list"))
-            )
 
 
 addsASpectator : () -> Expectation
