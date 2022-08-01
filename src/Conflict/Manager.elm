@@ -130,7 +130,13 @@ takeAction action participantId =
 addSpectator : Id -> Manager -> ( Manager, List Effect )
 addSpectator spectatorId =
     updateModel
-        (\model -> ( { model | spectators = Set.insert spectatorId model.spectators }, [] ))
+        (\model ->
+            let
+                newModel =
+                    { model | spectators = Set.insert spectatorId model.spectators }
+            in
+            ( newModel, getStateUpdates newModel )
+        )
 
 
 
