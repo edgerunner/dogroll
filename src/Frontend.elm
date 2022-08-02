@@ -6,6 +6,7 @@ import Conflict.Manager
 import Conflict.View
 import Die.Size exposing (Size(..))
 import Lamdera exposing (Key, sendToBackend)
+import Root
 import Setup
 import Types exposing (..)
 import Url exposing (Url)
@@ -42,12 +43,18 @@ init url key =
     ( { key = key
       , setup = Setup.empty
       , conflict = Conflict.Manager.initialState
-      , page = Conflict
+      , page =
+            Url.Parser.string
+                |> Url.Parser.map Conflict
+                |> Url.Parser.parse
+                |> (|>) url
+                |> Maybe.withDefault (Root Nothing)
       }
     , url
         |> Url.Parser.parse Url.Parser.string
         |> Maybe.map (ClientInitialized >> Lamdera.sendToBackend)
-        |> Maybe.withDefault Cmd.none
+        |> Maybe.withDefault
+            (Lamdera.sendToBackend ClientRequestedRandomConflictId)
     )
 
 
@@ -73,7 +80,7 @@ update msg model =
             case urlRequest of
                 Internal url ->
                     ( model
-                    , Nav.pushUrl model.key (Url.toString url)
+                    , Nav.load (Url.toString url)
                     )
 
                 External url ->
@@ -92,10 +99,10 @@ update msg model =
 
         UserClickedRollDice ->
             sendToBackend (ForConflict conflictId <| UserWantsToRollDice model.setup)
-                |> Tuple.pair { model | setup = Setup.empty, page = Conflict }
+                |> Tuple.pair { model | setup = Setup.empty, page = Conflict conflictId }
 
         UserClickedTakeMoreDice ->
-            { model | page = Setup } |> noCmd
+            { model | page = Setup conflictId } |> noCmd
 
         UserClickedPlayDie die ->
             ( model, sendToBackend (ForConflict conflictId <| UserWantsToPlayDie die) )
@@ -141,13 +148,16 @@ updateFromBackend msg model =
             -- TODO: show error
             ( model, Cmd.none )
 
+        RandomConflictIdGenerated conflictId ->
+            ( { model | page = Root <| Just conflictId }, Cmd.none )
+
 
 view : Model -> Browser.Document FrontendMsg
 view model =
     { title = "Dogroll"
     , body =
         [ case model.page of
-            Setup ->
+            Setup _ ->
                 Setup.view
                     { increment = UserClickedIncrementDie
                     , decrement = UserClickedDecrementDie
@@ -155,7 +165,7 @@ view model =
                     }
                     model.setup
 
-            Conflict ->
+            Conflict _ ->
                 model.conflict
                     |> Conflict.View.view
                         { takeMoreDice = UserClickedTakeMoreDice
@@ -168,5 +178,8 @@ view model =
                         , participate = UserClickedParticipate
                         , noop = UserClickedSomethingUnneeded
                         }
+
+            Root maybeConflictId ->
+                Root.view maybeConflictId
         ]
     }

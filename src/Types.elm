@@ -22,8 +22,9 @@ type alias FrontendModel =
 
 
 type Page
-    = Setup
-    | Conflict
+    = Root (Maybe Id)
+    | Setup Id
+    | Conflict Id
 
 
 type alias BackendModel =
@@ -56,6 +57,7 @@ type FrontendMsg
 type ToBackend
     = ForConflict Id UserWantsTo
     | ClientInitialized Id
+    | ClientRequestedRandomConflictId
 
 
 type UserWantsTo
@@ -77,3 +79,4 @@ type ToFrontend
     = StateUpdated Conflict.Manager.State
     | ErrorReported Conflict.Manager.Error
     | ConflictNotFound Id
+    | RandomConflictIdGenerated Id
