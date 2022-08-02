@@ -8,7 +8,8 @@ import Die.Size exposing (Size(..))
 import Lamdera exposing (Key, sendToBackend)
 import Setup
 import Types exposing (..)
-import Url
+import Url exposing (Url)
+import Url.Parser
 
 
 type alias Model =
@@ -36,19 +37,37 @@ app =
         }
 
 
-init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
-init _ key =
+init : Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
+init url key =
     ( { key = key
       , setup = Setup.empty
       , conflict = Conflict.Manager.initialState
       , page = Conflict
       }
-    , Lamdera.sendToBackend ClientInitialized
+    , url
+        |> Url.Parser.parse Url.Parser.string
+        |> Maybe.map (ClientInitialized >> Lamdera.sendToBackend)
+        |> Maybe.withDefault Cmd.none
     )
 
 
 update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
 update msg model =
+    let
+        conflictId =
+            case model.conflict of
+                Conflict.Manager.NotConnected ->
+                    ""
+
+                Conflict.Manager.PendingParticipants pp ->
+                    pp.id
+
+                Conflict.Manager.InProgress ip ->
+                    ip.id
+
+                Conflict.Manager.Finished f ->
+                    f.id
+    in
     case msg of
         UrlClicked urlRequest ->
             case urlRequest of
@@ -72,32 +91,32 @@ update msg model =
             { model | setup = Setup.decrement size model.setup } |> noCmd
 
         UserClickedRollDice ->
-            sendToBackend (UserWantsToRollDice model.setup)
+            sendToBackend (ForConflict conflictId <| UserWantsToRollDice model.setup)
                 |> Tuple.pair { model | setup = Setup.empty, page = Conflict }
 
         UserClickedTakeMoreDice ->
             { model | page = Setup } |> noCmd
 
         UserClickedPlayDie die ->
-            ( model, sendToBackend (UserWantsToPlayDie die) )
+            ( model, sendToBackend (ForConflict conflictId <| UserWantsToPlayDie die) )
 
         UserClickedRaise ->
-            ( model, sendToBackend UserWantsToRaise )
+            ( model, sendToBackend (ForConflict conflictId <| UserWantsToRaise) )
 
         UserClickedSee ->
-            ( model, sendToBackend UserWantsToSee )
+            ( model, sendToBackend (ForConflict conflictId <| UserWantsToSee) )
 
         UserClickedFalloutSize size ->
-            ( model, sendToBackend (UserWantsToSelectFalloutDice size) )
+            ( model, sendToBackend (ForConflict conflictId <| UserWantsToSelectFalloutDice size) )
 
         UserClickedGive ->
-            ( model, sendToBackend UserWantsToGive )
+            ( model, sendToBackend (ForConflict conflictId <| UserWantsToGive) )
 
         UserClickedRestart ->
-            ( model, sendToBackend UserWantsToRestart )
+            ( model, sendToBackend (ForConflict conflictId <| UserWantsToRestart) )
 
         UserClickedParticipate side ->
-            ( model, sendToBackend (UserWantsToParticipate side) )
+            ( model, sendToBackend (ForConflict conflictId <| UserWantsToParticipate side) )
 
         UserClickedSomethingUnneeded ->
             ( model, Cmd.none )
@@ -115,6 +134,10 @@ updateFromBackend msg model =
             ( { model | conflict = newConflictState }, Cmd.none )
 
         ErrorReported _ ->
+            -- TODO: show error
+            ( model, Cmd.none )
+
+        ConflictNotFound _ ->
             -- TODO: show error
             ( model, Cmd.none )
 
