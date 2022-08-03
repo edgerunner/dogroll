@@ -3,8 +3,9 @@ module Types exposing (..)
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Conflict exposing (Side)
-import Conflict.Manager
+import Conflict.Manager exposing (Manager, State)
 import Dice exposing (Dice)
+import Dict exposing (Dict)
 import Die exposing (Die, Held, Rolled)
 import Die.Size exposing (Size)
 import Random exposing (Seed)
@@ -15,20 +16,25 @@ import Url exposing (Url)
 type alias FrontendModel =
     { key : Key
     , setup : Setup.Model
-    , conflict : Conflict.Manager.State
+    , conflict : State
     , page : Page
     }
 
 
 type Page
-    = Setup
-    | Conflict
+    = Root (Maybe Id)
+    | Setup Id
+    | Conflict Id
 
 
 type alias BackendModel =
     { seed : Seed
-    , conflictManager : Conflict.Manager.Manager
+    , conflicts : Dict Id Manager
     }
+
+
+type alias Id =
+    String
 
 
 type FrontendMsg
@@ -49,6 +55,12 @@ type FrontendMsg
 
 
 type ToBackend
+    = ForConflict Id UserWantsTo
+    | ClientInitialized Id
+    | ClientRequestedRandomConflictId
+
+
+type UserWantsTo
     = UserWantsToParticipate Side
     | UserWantsToRollDice (Dice Held)
     | UserWantsToPlayDie (Die Rolled)
@@ -56,8 +68,7 @@ type ToBackend
     | UserWantsToSee
     | UserWantsToSelectFalloutDice Size
     | UserWantsToGive
-    | UserWantsToRestart
-    | ClientInitialized
+    | UserWantsToFollowUp
 
 
 type BackendMsg
@@ -67,3 +78,5 @@ type BackendMsg
 type ToFrontend
     = StateUpdated Conflict.Manager.State
     | ErrorReported Conflict.Manager.Error
+    | ConflictNotFound Id
+    | RandomConflictIdGenerated Id

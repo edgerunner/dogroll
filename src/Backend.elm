@@ -3,8 +3,10 @@ module Backend exposing (app)
 import Conflict
 import Conflict.Manager as Manager exposing (Effect(..), Manager)
 import Dice
+import Dict
 import Lamdera exposing (ClientId, SessionId)
 import Random
+import Random.Words
 import Types exposing (..)
 
 
@@ -30,7 +32,7 @@ app =
 init : ( Model, Cmd BackendMsg )
 init =
     ( { seed = Random.initialSeed 0
-      , conflictManager = Manager.init "the only conflict for now"
+      , conflicts = Dict.empty
       }
     , newSeed
     )
@@ -41,6 +43,13 @@ newSeed =
     Random.generate RandomGeneratedSeed Random.independentSeed
 
 
+conflictNotFound : ClientId -> Id -> Cmd BackendMsg
+conflictNotFound clientId conflictId =
+    Lamdera.sendToFrontend
+        clientId
+        (ConflictNotFound conflictId)
+
+
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
 update msg model =
     case msg of
@@ -49,69 +58,91 @@ update msg model =
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
-updateFromFrontend sessionId _ msg model =
+updateFromFrontend sessionId clientId msg model =
     case msg of
-        UserWantsToRollDice dice ->
-            let
-                rolled =
-                    Dice.roll model.seed dice
+        ClientRequestedRandomConflictId ->
+            Random.step Random.Words.generator model.seed
+                |> Tuple.first
+                |> RandomConflictIdGenerated
+                |> Lamdera.sendToFrontend clientId
+                |> List.singleton
+                |> (::) newSeed
+                |> Cmd.batch
+                |> Tuple.pair model
 
-                updatedConflict =
-                    model.conflictManager
-                        |> Manager.takeAction
-                            (Conflict.takeDice rolled)
-                            sessionId
-            in
-            updatedConflict
-                |> handleConflictManagerUpdate
-                |> with model
-                |> Tuple.mapSecond
-                    (List.singleton >> (::) newSeed >> Cmd.batch)
-
-        UserWantsToParticipate side ->
-            Manager.register side sessionId model.conflictManager
-                |> handleConflictManagerUpdate
-                |> with model
-
-        UserWantsToPlayDie die ->
-            Manager.takeAction (Conflict.play die) sessionId model.conflictManager
-                |> handleConflictManagerUpdate
-                |> with model
-
-        UserWantsToRaise ->
-            Manager.takeAction Conflict.raise sessionId model.conflictManager
-                |> handleConflictManagerUpdate
-                |> with model
-
-        UserWantsToSee ->
-            Manager.takeAction Conflict.see sessionId model.conflictManager
-                |> handleConflictManagerUpdate
-                |> with model
-
-        UserWantsToSelectFalloutDice size ->
-            Manager.takeAction (Conflict.takeFallout size) sessionId model.conflictManager
-                |> handleConflictManagerUpdate
-                |> with model
-
-        UserWantsToGive ->
-            Manager.takeAction Conflict.give sessionId model.conflictManager
-                |> handleConflictManagerUpdate
-                |> with model
-
-        UserWantsToRestart ->
-            Manager.init "restarted conflict"
-                |> Tuple.pair
-                |> with []
-                |> handleConflictManagerUpdate
-                |> with model
-                |> Tuple.mapSecond
-                    (List.singleton >> (::) newSeed >> Cmd.batch)
-
-        ClientInitialized ->
-            model.conflictManager
+        ClientInitialized conflictId ->
+            model.conflicts
+                |> Dict.get conflictId
+                |> Maybe.withDefault (Manager.init conflictId)
                 |> Manager.addSpectator sessionId
                 |> handleConflictManagerUpdate
                 |> with model
+
+        ForConflict conflictId userWants ->
+            let
+                currentConflict =
+                    model.conflicts
+                        |> Dict.get conflictId
+
+                defaultToConflictNotFound =
+                    Maybe.withDefault
+                        ( model
+                        , conflictNotFound clientId conflictId
+                        )
+
+                withCurrentConflict transform =
+                    currentConflict
+                        |> Maybe.map
+                            (transform
+                                >> handleConflictManagerUpdate
+                                >> with model
+                            )
+                        |> defaultToConflictNotFound
+
+                refreshSeed =
+                    Tuple.mapSecond
+                        (List.singleton >> (::) newSeed >> Cmd.batch)
+            in
+            case userWants of
+                UserWantsToRollDice dice ->
+                    let
+                        rolled =
+                            Dice.roll model.seed dice
+                    in
+                    withCurrentConflict
+                        (Manager.takeAction
+                            (Conflict.takeDice rolled)
+                            sessionId
+                        )
+                        |> refreshSeed
+
+                UserWantsToParticipate side ->
+                    withCurrentConflict
+                        (Manager.register side sessionId)
+
+                UserWantsToPlayDie die ->
+                    withCurrentConflict
+                        (Manager.takeAction (Conflict.play die) sessionId)
+
+                UserWantsToRaise ->
+                    withCurrentConflict
+                        (Manager.takeAction Conflict.raise sessionId)
+
+                UserWantsToSee ->
+                    withCurrentConflict
+                        (Manager.takeAction Conflict.see sessionId)
+
+                UserWantsToSelectFalloutDice size ->
+                    withCurrentConflict
+                        (Manager.takeAction (Conflict.takeFallout size) sessionId)
+
+                UserWantsToGive ->
+                    withCurrentConflict
+                        (Manager.takeAction Conflict.give sessionId)
+
+                UserWantsToFollowUp ->
+                    withCurrentConflict
+                        (Manager.followUp sessionId)
 
 
 handleConflictManagerUpdate : ( Manager, List Effect ) -> Model -> ( Model, Cmd BackendMsg )
@@ -127,7 +158,14 @@ handleConflictManagerUpdate ( manager, effects ) model =
                         ErrorReported error |> Lamdera.sendToFrontend id
             )
         |> Cmd.batch
-        |> Tuple.pair { model | conflictManager = manager }
+        |> Tuple.pair
+            { model
+                | conflicts =
+                    model.conflicts
+                        |> Dict.insert
+                            (Manager.id manager)
+                            manager
+            }
 
 
 sendAllToFrontends : List SessionId -> ToFrontend -> Cmd BackendMsg

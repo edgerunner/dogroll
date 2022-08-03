@@ -6,9 +6,11 @@ import Conflict.Manager
 import Conflict.View
 import Die.Size exposing (Size(..))
 import Lamdera exposing (Key, sendToBackend)
+import Root
 import Setup
 import Types exposing (..)
-import Url
+import Url exposing (Url)
+import Url.Parser
 
 
 type alias Model =
@@ -36,25 +38,38 @@ app =
         }
 
 
-init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
-init _ key =
+init : Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
+init url key =
     ( { key = key
       , setup = Setup.empty
       , conflict = Conflict.Manager.initialState
-      , page = Conflict
+      , page =
+            Url.Parser.string
+                |> Url.Parser.map Conflict
+                |> Url.Parser.parse
+                |> (|>) url
+                |> Maybe.withDefault (Root Nothing)
       }
-    , Lamdera.sendToBackend ClientInitialized
+    , url
+        |> Url.Parser.parse Url.Parser.string
+        |> Maybe.map (ClientInitialized >> Lamdera.sendToBackend)
+        |> Maybe.withDefault
+            (Lamdera.sendToBackend ClientRequestedRandomConflictId)
     )
 
 
 update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
 update msg model =
+    let
+        conflictId =
+            Conflict.Manager.stateId model.conflict
+    in
     case msg of
         UrlClicked urlRequest ->
             case urlRequest of
                 Internal url ->
                     ( model
-                    , Nav.pushUrl model.key (Url.toString url)
+                    , Nav.load (Url.toString url)
                     )
 
                 External url ->
@@ -72,32 +87,32 @@ update msg model =
             { model | setup = Setup.decrement size model.setup } |> noCmd
 
         UserClickedRollDice ->
-            sendToBackend (UserWantsToRollDice model.setup)
-                |> Tuple.pair { model | setup = Setup.empty, page = Conflict }
+            sendToBackend (ForConflict conflictId <| UserWantsToRollDice model.setup)
+                |> Tuple.pair { model | setup = Setup.empty, page = Conflict conflictId }
 
         UserClickedTakeMoreDice ->
-            { model | page = Setup } |> noCmd
+            { model | page = Setup conflictId } |> noCmd
 
         UserClickedPlayDie die ->
-            ( model, sendToBackend (UserWantsToPlayDie die) )
+            ( model, sendToBackend (ForConflict conflictId <| UserWantsToPlayDie die) )
 
         UserClickedRaise ->
-            ( model, sendToBackend UserWantsToRaise )
+            ( model, sendToBackend (ForConflict conflictId <| UserWantsToRaise) )
 
         UserClickedSee ->
-            ( model, sendToBackend UserWantsToSee )
+            ( model, sendToBackend (ForConflict conflictId <| UserWantsToSee) )
 
         UserClickedFalloutSize size ->
-            ( model, sendToBackend (UserWantsToSelectFalloutDice size) )
+            ( model, sendToBackend (ForConflict conflictId <| UserWantsToSelectFalloutDice size) )
 
         UserClickedGive ->
-            ( model, sendToBackend UserWantsToGive )
+            ( model, sendToBackend (ForConflict conflictId <| UserWantsToGive) )
 
         UserClickedRestart ->
-            ( model, sendToBackend UserWantsToRestart )
+            ( model, sendToBackend (ForConflict conflictId <| UserWantsToFollowUp) )
 
         UserClickedParticipate side ->
-            ( model, sendToBackend (UserWantsToParticipate side) )
+            ( model, sendToBackend (ForConflict conflictId <| UserWantsToParticipate side) )
 
         UserClickedSomethingUnneeded ->
             ( model, Cmd.none )
@@ -110,12 +125,33 @@ noCmd model =
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
-    case msg of
-        StateUpdated newConflictState ->
-            ( { model | conflict = newConflictState }, Cmd.none )
+    case ( msg, model.page ) of
+        ( StateUpdated newConflictState, Conflict conflictId ) ->
+            if Conflict.Manager.stateId newConflictState == conflictId then
+                ( { model | conflict = newConflictState }, Cmd.none )
 
-        ErrorReported _ ->
+            else
+                ( model, Cmd.none )
+
+        ( StateUpdated newConflictState, Setup conflictId ) ->
+            if Conflict.Manager.stateId newConflictState == conflictId then
+                ( { model | conflict = newConflictState }, Cmd.none )
+
+            else
+                ( model, Cmd.none )
+
+        ( ErrorReported _, _ ) ->
             -- TODO: show error
+            ( model, Cmd.none )
+
+        ( ConflictNotFound _, _ ) ->
+            -- TODO: show error
+            ( model, Cmd.none )
+
+        ( RandomConflictIdGenerated conflictId, Root Nothing ) ->
+            ( { model | page = Root <| Just conflictId }, Cmd.none )
+
+        _ ->
             ( model, Cmd.none )
 
 
@@ -124,7 +160,7 @@ view model =
     { title = "Dogroll"
     , body =
         [ case model.page of
-            Setup ->
+            Setup _ ->
                 Setup.view
                     { increment = UserClickedIncrementDie
                     , decrement = UserClickedDecrementDie
@@ -132,7 +168,7 @@ view model =
                     }
                     model.setup
 
-            Conflict ->
+            Conflict _ ->
                 model.conflict
                     |> Conflict.View.view
                         { takeMoreDice = UserClickedTakeMoreDice
@@ -145,5 +181,8 @@ view model =
                         , participate = UserClickedParticipate
                         , noop = UserClickedSomethingUnneeded
                         }
+
+            Root maybeConflictId ->
+                Root.view maybeConflictId
         ]
     }

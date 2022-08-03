@@ -1,6 +1,7 @@
-module Conflict.Manager exposing (Effect(..), Error(..), FinishedState, InProgressState, Manager, PendingParticipantsState, State(..), addSpectator, conflict, id, init, initialState, opponent, proponent, register, spectators, takeAction)
+module Conflict.Manager exposing (Effect(..), Error(..), FinishedState, InProgressState, Manager, PendingParticipantsState, State(..), addSpectator, conflict, followUp, id, init, initialState, opponent, proponent, register, spectators, stateId, takeAction)
 
 import Conflict exposing (Conflict, Side)
+import Dice
 import Die exposing (Die, Rolled)
 import Set exposing (Set)
 
@@ -145,6 +146,27 @@ addSpectator spectatorId =
         )
 
 
+followUp : Id -> Manager -> ( Manager, List Effect )
+followUp participantId =
+    updateModel
+        (\model ->
+            Conflict.start
+                |> Conflict.takeDice
+                    (model.conflict
+                        |> Conflict.keptDie
+                        |> Maybe.map Dice.add
+                        |> Maybe.withDefault identity
+                        |> (|>) Dice.empty
+                    )
+                    (model.conflict |> Conflict.state |> .go)
+                |> Result.mapError ConflictError
+                |> Result.map (\conflict_ -> { model | conflict = conflict_ })
+                |> Result.map (\newModel -> ( newModel, getStateUpdates newModel ))
+                |> Result.mapError (ErrorResponse participantId >> List.singleton >> Tuple.pair model)
+                |> collapseResult
+        )
+
+
 
 -- GETTERS: Manager -> x
 
@@ -172,6 +194,26 @@ opponent (Manager model) =
 spectators : Manager -> Set Id
 spectators (Manager model) =
     model.spectators
+
+
+
+-- STATE GETTERS : State -> x
+
+
+stateId : State -> Id
+stateId conflictState =
+    case conflictState of
+        NotConnected ->
+            ""
+
+        PendingParticipants state ->
+            state.id
+
+        InProgress state ->
+            state.id
+
+        Finished state ->
+            state.id
 
 
 
@@ -251,13 +293,13 @@ getStateUpdates model =
 
 
 getFinishedStateUpdates : Participant -> Participant -> Maybe (Die Rolled) -> Model -> List Effect
-getFinishedStateUpdates pro opp followUp model =
+getFinishedStateUpdates pro opp followUp_ model =
     let
         common =
             { id = model.id
             , you = Nothing
             , followUp =
-                followUp
+                followUp_
                     |> Maybe.map
                         (model.conflict
                             |> Conflict.state
