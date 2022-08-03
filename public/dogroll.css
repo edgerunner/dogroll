@@ -190,6 +190,7 @@ div#join-buttons h4 {
 #join-buttons button {
     border-radius: 0;
     padding-inline: 24px;
+    width: auto;
 }
 
 #join-buttons button+button {
