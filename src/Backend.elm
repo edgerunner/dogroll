@@ -83,121 +83,66 @@ updateFromFrontend sessionId clientId msg model =
                 currentConflict =
                     model.conflicts
                         |> Dict.get conflictId
+
+                defaultToConflictNotFound =
+                    Maybe.withDefault
+                        ( model
+                        , conflictNotFound clientId conflictId
+                        )
+
+                withCurrentConflict transform =
+                    currentConflict
+                        |> Maybe.map
+                            (transform
+                                >> handleConflictManagerUpdate
+                                >> with model
+                            )
+                        |> defaultToConflictNotFound
+
+                refreshSeed =
+                    Tuple.mapSecond
+                        (List.singleton >> (::) newSeed >> Cmd.batch)
             in
             case userWants of
                 UserWantsToRollDice dice ->
                     let
                         rolled =
                             Dice.roll model.seed dice
-
-                        updatedConflict =
-                            currentConflict
-                                |> Maybe.map
-                                    (Manager.takeAction
-                                        (Conflict.takeDice rolled)
-                                        sessionId
-                                    )
                     in
-                    updatedConflict
-                        |> Maybe.map
-                            (handleConflictManagerUpdate
-                                >> with model
-                                >> Tuple.mapSecond
-                                    (List.singleton
-                                        >> (::) newSeed
-                                        >> Cmd.batch
-                                    )
-                            )
-                        |> Maybe.withDefault
-                            ( model
-                            , conflictNotFound clientId conflictId
-                            )
+                    withCurrentConflict
+                        (Manager.takeAction
+                            (Conflict.takeDice rolled)
+                            sessionId
+                        )
+                        |> refreshSeed
 
                 UserWantsToParticipate side ->
-                    currentConflict
-                        |> Maybe.map
-                            (Manager.register side sessionId
-                                >> handleConflictManagerUpdate
-                                >> with model
-                            )
-                        |> Maybe.withDefault
-                            ( model
-                            , conflictNotFound clientId conflictId
-                            )
+                    withCurrentConflict
+                        (Manager.register side sessionId)
 
                 UserWantsToPlayDie die ->
-                    currentConflict
-                        |> Maybe.map
-                            (Manager.takeAction (Conflict.play die) sessionId
-                                >> handleConflictManagerUpdate
-                                >> with model
-                            )
-                        |> Maybe.withDefault
-                            ( model
-                            , conflictNotFound clientId conflictId
-                            )
+                    withCurrentConflict
+                        (Manager.takeAction (Conflict.play die) sessionId)
 
                 UserWantsToRaise ->
-                    currentConflict
-                        |> Maybe.map
-                            (Manager.takeAction Conflict.raise sessionId
-                                >> handleConflictManagerUpdate
-                                >> with model
-                            )
-                        |> Maybe.withDefault
-                            ( model
-                            , conflictNotFound clientId conflictId
-                            )
+                    withCurrentConflict
+                        (Manager.takeAction Conflict.raise sessionId)
 
                 UserWantsToSee ->
-                    currentConflict
-                        |> Maybe.map
-                            (Manager.takeAction Conflict.see sessionId
-                                >> handleConflictManagerUpdate
-                                >> with model
-                            )
-                        |> Maybe.withDefault
-                            ( model
-                            , conflictNotFound clientId conflictId
-                            )
+                    withCurrentConflict
+                        (Manager.takeAction Conflict.see sessionId)
 
                 UserWantsToSelectFalloutDice size ->
-                    currentConflict
-                        |> Maybe.map
-                            (Manager.takeAction (Conflict.takeFallout size) sessionId
-                                >> handleConflictManagerUpdate
-                                >> with model
-                            )
-                        |> Maybe.withDefault
-                            ( model
-                            , conflictNotFound clientId conflictId
-                            )
+                    withCurrentConflict
+                        (Manager.takeAction (Conflict.takeFallout size) sessionId)
 
                 UserWantsToGive ->
-                    currentConflict
-                        |> Maybe.map
-                            (Manager.takeAction Conflict.give sessionId
-                                >> handleConflictManagerUpdate
-                                >> with model
-                            )
-                        |> Maybe.withDefault
-                            ( model
-                            , conflictNotFound clientId conflictId
-                            )
+                    withCurrentConflict
+                        (Manager.takeAction Conflict.give sessionId)
 
                 UserWantsToFollowUp ->
-                    currentConflict
-                        |> Maybe.map
-                            (Manager.followUp sessionId
-                                >> handleConflictManagerUpdate
-                                >> with model
-                                >> Tuple.mapSecond
-                                    (List.singleton >> (::) newSeed >> Cmd.batch)
-                            )
-                        |> Maybe.withDefault
-                            ( model
-                            , conflictNotFound clientId conflictId
-                            )
+                    withCurrentConflict
+                        (Manager.followUp sessionId)
 
 
 handleConflictManagerUpdate : ( Manager, List Effect ) -> Model -> ( Model, Cmd BackendMsg )
