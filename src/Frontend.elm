@@ -120,7 +120,7 @@ update msg model =
             ( model, sendToBackend (ForConflict conflictId <| UserWantsToGive) )
 
         UserClickedRestart ->
-            ( model, sendToBackend (ForConflict conflictId <| UserWantsToRestart) )
+            ( model, sendToBackend (ForConflict conflictId <| UserWantsToFollowUp) )
 
         UserClickedParticipate side ->
             ( model, sendToBackend (ForConflict conflictId <| UserWantsToParticipate side) )

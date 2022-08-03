@@ -68,7 +68,7 @@ type UserWantsTo
     | UserWantsToSee
     | UserWantsToSelectFalloutDice Size
     | UserWantsToGive
-    | UserWantsToRestart
+    | UserWantsToFollowUp
 
 
 type BackendMsg

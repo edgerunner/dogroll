@@ -185,15 +185,19 @@ updateFromFrontend sessionId clientId msg model =
                             , conflictNotFound clientId conflictId
                             )
 
-                UserWantsToRestart ->
-                    Random.step Random.Words.generator model.seed
-                        |> Tuple.first
-                        |> Manager.init
-                        |> Manager.addSpectator sessionId
-                        |> handleConflictManagerUpdate
-                        |> with model
-                        |> Tuple.mapSecond
-                            (List.singleton >> (::) newSeed >> Cmd.batch)
+                UserWantsToFollowUp ->
+                    currentConflict
+                        |> Maybe.map
+                            (Manager.followUp sessionId
+                                >> handleConflictManagerUpdate
+                                >> with model
+                                >> Tuple.mapSecond
+                                    (List.singleton >> (::) newSeed >> Cmd.batch)
+                            )
+                        |> Maybe.withDefault
+                            ( model
+                            , conflictNotFound clientId conflictId
+                            )
 
 
 handleConflictManagerUpdate : ( Manager, List Effect ) -> Model -> ( Model, Cmd BackendMsg )
