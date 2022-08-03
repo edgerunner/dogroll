@@ -2,13 +2,14 @@ module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
-import Conflict.Manager
+import Conflict.Manager exposing (State(..))
 import Conflict.View
 import Die.Size exposing (Size(..))
 import Lamdera exposing (Key, sendToBackend)
 import Root
 import TakeDice
 import Types exposing (..)
+import UI
 import Url exposing (Url)
 import Url.Parser
 
@@ -40,18 +41,17 @@ app =
 
 init : Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init url key =
+    let
+        conflictId =
+            Url.Parser.parse Url.Parser.string url
+    in
     ( { key = key
-      , takeDice = TakeDice.empty
-      , conflict = Conflict.Manager.initialState
       , page =
-            Url.Parser.string
-                |> Url.Parser.map Conflict
-                |> Url.Parser.parse
-                |> (|>) url
+            conflictId
+                |> Maybe.map LoadingConflict
                 |> Maybe.withDefault (Root Nothing)
       }
-    , url
-        |> Url.Parser.parse Url.Parser.string
+    , conflictId
         |> Maybe.map (ClientInitialized >> Lamdera.sendToBackend)
         |> Maybe.withDefault
             (Lamdera.sendToBackend ClientRequestedRandomConflictId)
@@ -60,61 +60,50 @@ init url key =
 
 update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
 update msg model =
-    let
-        conflictId =
-            Conflict.Manager.stateId model.conflict
-    in
-    case msg of
-        UrlClicked urlRequest ->
+    case ( msg, model.page ) of
+        ( UrlClicked urlRequest, _ ) ->
             case urlRequest of
                 Internal url ->
-                    ( model
-                    , Nav.load (Url.toString url)
-                    )
+                    ( model, Nav.load (Url.toString url) )
 
                 External url ->
-                    ( model
-                    , Nav.load url
-                    )
+                    ( model, Nav.load url )
 
-        UrlChanged _ ->
-            ( model, Cmd.none )
+        ( UserClickedIncrementDie size, Conflict conflict (Just takeDice) ) ->
+            { model | page = TakeDice.increment size takeDice |> Just |> Conflict conflict } |> noCmd
 
-        UserClickedIncrementDie size ->
-            { model | takeDice = TakeDice.increment size model.takeDice } |> noCmd
+        ( UserClickedDecrementDie size, Conflict conflict (Just takeDice) ) ->
+            { model | page = TakeDice.decrement size takeDice |> Just |> Conflict conflict } |> noCmd
 
-        UserClickedDecrementDie size ->
-            { model | takeDice = TakeDice.decrement size model.takeDice } |> noCmd
+        ( UserClickedRollDice, Conflict (InProgress conflict) (Just takeDice) ) ->
+            sendToBackend (ForConflict conflict.id <| UserWantsToRollDice takeDice)
+                |> Tuple.pair { model | page = Conflict (InProgress conflict) Nothing }
 
-        UserClickedRollDice ->
-            sendToBackend (ForConflict conflictId <| UserWantsToRollDice model.takeDice)
-                |> Tuple.pair { model | takeDice = TakeDice.empty, page = Conflict conflictId }
+        ( UserClickedTakeMoreDice, Conflict conflict Nothing ) ->
+            { model | page = Conflict conflict <| Just TakeDice.empty } |> noCmd
 
-        UserClickedTakeMoreDice ->
-            { model | page = TakeDice conflictId } |> noCmd
+        ( UserClickedPlayDie die, Conflict (InProgress conflict) Nothing ) ->
+            ( model, sendToBackend (ForConflict conflict.id <| UserWantsToPlayDie die) )
 
-        UserClickedPlayDie die ->
-            ( model, sendToBackend (ForConflict conflictId <| UserWantsToPlayDie die) )
+        ( UserClickedRaise, Conflict (InProgress conflict) Nothing ) ->
+            ( model, sendToBackend (ForConflict conflict.id <| UserWantsToRaise) )
 
-        UserClickedRaise ->
-            ( model, sendToBackend (ForConflict conflictId <| UserWantsToRaise) )
+        ( UserClickedSee, Conflict (InProgress conflict) Nothing ) ->
+            ( model, sendToBackend (ForConflict conflict.id <| UserWantsToSee) )
 
-        UserClickedSee ->
-            ( model, sendToBackend (ForConflict conflictId <| UserWantsToSee) )
+        ( UserClickedFalloutSize size, Conflict (InProgress conflict) Nothing ) ->
+            ( model, sendToBackend (ForConflict conflict.id <| UserWantsToSelectFalloutDice size) )
 
-        UserClickedFalloutSize size ->
-            ( model, sendToBackend (ForConflict conflictId <| UserWantsToSelectFalloutDice size) )
+        ( UserClickedGive, Conflict (InProgress conflict) Nothing ) ->
+            ( model, sendToBackend (ForConflict conflict.id <| UserWantsToGive) )
 
-        UserClickedGive ->
-            ( model, sendToBackend (ForConflict conflictId <| UserWantsToGive) )
+        ( UserClickedRestart, Conflict (Finished conflict) Nothing ) ->
+            ( model, sendToBackend (ForConflict conflict.id <| UserWantsToFollowUp) )
 
-        UserClickedRestart ->
-            ( model, sendToBackend (ForConflict conflictId <| UserWantsToFollowUp) )
+        ( UserClickedParticipate side, Conflict (PendingParticipants conflict) Nothing ) ->
+            ( model, sendToBackend (ForConflict conflict.id <| UserWantsToParticipate side) )
 
-        UserClickedParticipate side ->
-            ( model, sendToBackend (ForConflict conflictId <| UserWantsToParticipate side) )
-
-        UserClickedSomethingUnneeded ->
+        _ ->
             ( model, Cmd.none )
 
 
@@ -126,16 +115,16 @@ noCmd model =
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case ( msg, model.page ) of
-        ( StateUpdated newConflictState, Conflict conflictId ) ->
-            if Conflict.Manager.stateId newConflictState == conflictId then
-                ( { model | conflict = newConflictState }, Cmd.none )
+        ( StateUpdated newConflictState, Conflict conflict maybeTakeDice ) ->
+            if Conflict.Manager.stateId newConflictState == Conflict.Manager.stateId conflict then
+                ( { model | page = Conflict newConflictState maybeTakeDice }, Cmd.none )
 
             else
                 ( model, Cmd.none )
 
-        ( StateUpdated newConflictState, TakeDice conflictId ) ->
+        ( StateUpdated newConflictState, LoadingConflict conflictId ) ->
             if Conflict.Manager.stateId newConflictState == conflictId then
-                ( { model | conflict = newConflictState }, Cmd.none )
+                ( { model | page = Conflict newConflictState Nothing }, Cmd.none )
 
             else
                 ( model, Cmd.none )
@@ -160,16 +149,16 @@ view model =
     { title = "Dogroll"
     , body =
         [ case model.page of
-            TakeDice _ ->
+            Conflict _ (Just takeDice) ->
                 TakeDice.view
                     { increment = UserClickedIncrementDie
                     , decrement = UserClickedDecrementDie
                     , roll = UserClickedRollDice
                     }
-                    model.takeDice
+                    takeDice
 
-            Conflict _ ->
-                model.conflict
+            Conflict conflict Nothing ->
+                conflict
                     |> Conflict.View.view
                         { takeMoreDice = UserClickedTakeMoreDice
                         , playDie = UserClickedPlayDie
@@ -184,5 +173,8 @@ view model =
 
             Root maybeConflictId ->
                 Root.view maybeConflictId
+
+            LoadingConflict _ ->
+                UI.pool [ UI.poolCaption "Loading…" ]
         ]
     }

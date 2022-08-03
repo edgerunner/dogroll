@@ -15,16 +15,14 @@ import Url exposing (Url)
 
 type alias FrontendModel =
     { key : Key
-    , takeDice : TakeDice.Model
-    , conflict : State
     , page : Page
     }
 
 
 type Page
     = Root (Maybe Id)
-    | TakeDice Id
-    | Conflict Id
+    | LoadingConflict Id
+    | Conflict State (Maybe TakeDice.Model)
 
 
 type alias BackendModel =
