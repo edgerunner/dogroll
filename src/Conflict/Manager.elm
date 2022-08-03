@@ -1,4 +1,4 @@
-module Conflict.Manager exposing (Effect(..), Error(..), FinishedState, InProgressState, Manager, PendingParticipantsState, State(..), addSpectator, conflict, followUp, id, init, initialState, opponent, proponent, register, spectators, takeAction)
+module Conflict.Manager exposing (Effect(..), Error(..), FinishedState, InProgressState, Manager, PendingParticipantsState, State(..), addSpectator, conflict, followUp, id, init, initialState, opponent, proponent, register, spectators, stateId, takeAction)
 
 import Conflict exposing (Conflict, Side)
 import Dice
@@ -194,6 +194,26 @@ opponent (Manager model) =
 spectators : Manager -> Set Id
 spectators (Manager model) =
     model.spectators
+
+
+
+-- STATE GETTERS : State -> x
+
+
+stateId : State -> Id
+stateId conflictState =
+    case conflictState of
+        NotConnected ->
+            ""
+
+        PendingParticipants state ->
+            state.id
+
+        InProgress state ->
+            state.id
+
+        Finished state ->
+            state.id
 
 
 

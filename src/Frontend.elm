@@ -62,18 +62,7 @@ update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
 update msg model =
     let
         conflictId =
-            case model.conflict of
-                Conflict.Manager.NotConnected ->
-                    ""
-
-                Conflict.Manager.PendingParticipants pp ->
-                    pp.id
-
-                Conflict.Manager.InProgress ip ->
-                    ip.id
-
-                Conflict.Manager.Finished f ->
-                    f.id
+            Conflict.Manager.stateId model.conflict
     in
     case msg of
         UrlClicked urlRequest ->
