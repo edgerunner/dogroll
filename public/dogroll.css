@@ -146,13 +146,13 @@ main {
     padding: 32px 0;
 }
 
-#setup section.pool:first-child div {
+#take-dice section.pool:first-child div {
     display: flex;
     width: 100%;
     justify-content: space-around;
 }
 
-#setup section.dice {
+#take-dice section.dice {
     display: flex;
     flex-direction: row;
     justify-content: space-around;
@@ -161,7 +161,7 @@ main {
     flex-grow: 1;
 }
 
-#setup section.dice>div {
+#take-dice section.dice>div {
     display: flex;
     flex-direction: column-reverse;
     justify-content: flex-start;

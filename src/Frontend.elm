@@ -7,7 +7,7 @@ import Conflict.View
 import Die.Size exposing (Size(..))
 import Lamdera exposing (Key, sendToBackend)
 import Root
-import Setup
+import TakeDice
 import Types exposing (..)
 import Url exposing (Url)
 import Url.Parser
@@ -41,7 +41,7 @@ app =
 init : Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init url key =
     ( { key = key
-      , setup = Setup.empty
+      , takeDice = TakeDice.empty
       , conflict = Conflict.Manager.initialState
       , page =
             Url.Parser.string
@@ -81,17 +81,17 @@ update msg model =
             ( model, Cmd.none )
 
         UserClickedIncrementDie size ->
-            { model | setup = Setup.increment size model.setup } |> noCmd
+            { model | takeDice = TakeDice.increment size model.takeDice } |> noCmd
 
         UserClickedDecrementDie size ->
-            { model | setup = Setup.decrement size model.setup } |> noCmd
+            { model | takeDice = TakeDice.decrement size model.takeDice } |> noCmd
 
         UserClickedRollDice ->
-            sendToBackend (ForConflict conflictId <| UserWantsToRollDice model.setup)
-                |> Tuple.pair { model | setup = Setup.empty, page = Conflict conflictId }
+            sendToBackend (ForConflict conflictId <| UserWantsToRollDice model.takeDice)
+                |> Tuple.pair { model | takeDice = TakeDice.empty, page = Conflict conflictId }
 
         UserClickedTakeMoreDice ->
-            { model | page = Setup conflictId } |> noCmd
+            { model | page = TakeDice conflictId } |> noCmd
 
         UserClickedPlayDie die ->
             ( model, sendToBackend (ForConflict conflictId <| UserWantsToPlayDie die) )
@@ -133,7 +133,7 @@ updateFromBackend msg model =
             else
                 ( model, Cmd.none )
 
-        ( StateUpdated newConflictState, Setup conflictId ) ->
+        ( StateUpdated newConflictState, TakeDice conflictId ) ->
             if Conflict.Manager.stateId newConflictState == conflictId then
                 ( { model | conflict = newConflictState }, Cmd.none )
 
@@ -160,13 +160,13 @@ view model =
     { title = "Dogroll"
     , body =
         [ case model.page of
-            Setup _ ->
-                Setup.view
+            TakeDice _ ->
+                TakeDice.view
                     { increment = UserClickedIncrementDie
                     , decrement = UserClickedDecrementDie
                     , roll = UserClickedRollDice
                     }
-                    model.setup
+                    model.takeDice
 
             Conflict _ ->
                 model.conflict

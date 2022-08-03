@@ -9,13 +9,13 @@ import Dict exposing (Dict)
 import Die exposing (Die, Held, Rolled)
 import Die.Size exposing (Size)
 import Random exposing (Seed)
-import Setup
+import TakeDice
 import Url exposing (Url)
 
 
 type alias FrontendModel =
     { key : Key
-    , setup : Setup.Model
+    , takeDice : TakeDice.Model
     , conflict : State
     , page : Page
     }
@@ -23,7 +23,7 @@ type alias FrontendModel =
 
 type Page
     = Root (Maybe Id)
-    | Setup Id
+    | TakeDice Id
     | Conflict Id
 
 

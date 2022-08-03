@@ -1,4 +1,4 @@
-module Setup exposing (Config, Model, decrement, empty, increment, toDice, view)
+module TakeDice exposing (Config, Model, decrement, empty, increment, toDice, view)
 
 import Dice exposing (Dice)
 import Die exposing (Held)
@@ -27,7 +27,7 @@ empty =
 
 view : Config msg -> Model -> Html msg
 view config model =
-    Html.main_ [ Attr.id "setup" ]
+    Html.main_ [ Attr.id "take-dice" ]
         [ UI.pool
             [ UI.poolCaption "Take some dice"
             , freshDiceView
