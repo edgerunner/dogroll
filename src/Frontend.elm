@@ -125,20 +125,34 @@ noCmd model =
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
-    case msg of
-        StateUpdated newConflictState ->
-            ( { model | conflict = newConflictState }, Cmd.none )
+    case ( msg, model.page ) of
+        ( StateUpdated newConflictState, Conflict conflictId ) ->
+            if Conflict.Manager.stateId newConflictState == conflictId then
+                ( { model | conflict = newConflictState }, Cmd.none )
 
-        ErrorReported _ ->
+            else
+                ( model, Cmd.none )
+
+        ( StateUpdated newConflictState, Setup conflictId ) ->
+            if Conflict.Manager.stateId newConflictState == conflictId then
+                ( { model | conflict = newConflictState }, Cmd.none )
+
+            else
+                ( model, Cmd.none )
+
+        ( ErrorReported _, _ ) ->
             -- TODO: show error
             ( model, Cmd.none )
 
-        ConflictNotFound _ ->
+        ( ConflictNotFound _, _ ) ->
             -- TODO: show error
             ( model, Cmd.none )
 
-        RandomConflictIdGenerated conflictId ->
+        ( RandomConflictIdGenerated conflictId, Root Nothing ) ->
             ( { model | page = Root <| Just conflictId }, Cmd.none )
+
+        _ ->
+            ( model, Cmd.none )
 
 
 view : Model -> Browser.Document FrontendMsg
