@@ -160,18 +160,6 @@ actionButton config raise =
                     TakeTheBlow _ _ _ _ ->
                         UI.button "Take the Blow"
 
-        PendingFallout pips ->
-            Die.Size.all
-                |> List.map
-                    (\size ->
-                        Die.View.generic
-                            Die.View.faded
-                            size
-                            (Pips.toInt pips |> String.fromInt)
-                            |> Html.map (always <| config.fallout size)
-                    )
-                |> Html.div [ Attr.id "fallout-selector" ]
-
         _ ->
             Html.text ""
 
@@ -330,7 +318,16 @@ playArea config state =
                   , notMyTurn = ( "Waiting for the ", " to take fallout dice" )
                   }
                     |> caption
-                , UI.poolCaption (Pips.repeat "✖︎" pips |> String.join " ")
+                , Die.Size.all
+                    |> List.map
+                        (\size ->
+                            Die.View.generic
+                                Die.View.regular
+                                size
+                                (Pips.toInt pips |> String.fromInt)
+                                |> Html.map (always <| config.fallout size)
+                        )
+                    |> Html.div [ Attr.id "fallout-selector" ]
                 ]
 
             GivenUp _ ->

@@ -234,3 +234,13 @@ a {
     border-radius: 32px;
     font-weight: 700;
 }
+
+#fallout-selector {
+    display: flex;
+    flex-direction: row;
+}
+
+.their-turn #fallout-selector data.die {
+    background-color: var(--faded-bg);
+    color: var(--faded-fg);
+}
