@@ -37,15 +37,6 @@ view config state =
         Manager.Finished finishedState ->
             finishedView config finishedState
 
-        Manager.NotConnected ->
-            notConnectedView
-
-
-notConnectedView : Html msg
-notConnectedView =
-    Html.main_ [ Attr.id "not-connected" ]
-        [ UI.pool [ UI.poolCaption "Not connected" ] ]
-
 
 finishedView : Config msg -> Manager.FinishedState -> Html msg
 finishedView config state =
