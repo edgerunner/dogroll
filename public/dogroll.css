@@ -244,3 +244,14 @@ a {
     background-color: var(--faded-bg);
     color: var(--faded-fg);
 }
+
+section:is(#my-fallout, #their-fallout) {
+    width: 200vw;
+    transform: scale(0.5);
+    transform-origin: left;
+    margin: -16px 0;
+}
+
+section:is(#my-fallout, #their-fallout) data.die {
+    background-color: var(--faded-bg);
+}

@@ -1,4 +1,4 @@
-module Die.View exposing (Click, faded, generic, held, regular, rolled)
+module Die.View exposing (Click, any, faded, generic, held, regular, rolled)
 
 import Die exposing (Die, Held, Rolled)
 import Die.Size exposing (Size)
@@ -24,20 +24,31 @@ generic style_ size face =
 
 
 held : Style -> Die Held -> Html (Die Held)
-held (Style style_) die =
-    generic
-        ([ "held", style_ ] |> String.join " " |> Style)
-        (die |> Die.size)
-        " "
-        |> Html.map (always die)
+held =
+    any
 
 
 rolled : Style -> Die Rolled -> Html (Die Rolled)
-rolled (Style style_) die =
-    generic
-        ([ "rolled", style_ ] |> String.join " " |> Style)
-        (die |> Die.size)
-        (die |> Die.face |> String.fromInt)
+rolled =
+    any
+
+
+any : Style -> Die any -> Html (Die any)
+any (Style style_) die =
+    Die.fold
+        (\size ->
+            generic
+                ([ "held", style_ ] |> String.join " " |> Style)
+                size
+                " "
+        )
+        (\size face ->
+            generic
+                ([ "rolled", style_ ] |> String.join " " |> Style)
+                size
+                (face |> String.fromInt)
+        )
+        die
         |> Html.map (always die)
 
 

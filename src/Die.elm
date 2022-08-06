@@ -1,4 +1,4 @@
-module Die exposing (Die, Held, Rolled, cheat, face, generator, init, roll, size, sortValue, toString)
+module Die exposing (Die, Held, Rolled, cheat, face, fold, generator, init, roll, size, sortValue, toString)
 
 import Die.Size as Size exposing (Size(..))
 import Random exposing (Generator, Seed)
@@ -81,3 +81,13 @@ sortValue die =
 
         RolledDie size_ value_ ->
             ( negate value_, Size.toInt size_ |> negate )
+
+
+fold : (Size -> a) -> (Size -> Int -> a) -> Die x -> a
+fold mapHeld mapRolled die =
+    case die of
+        HeldDie size_ ->
+            mapHeld size_
+
+        RolledDie size_ face_ ->
+            mapRolled size_ face_

@@ -79,6 +79,13 @@ progressView config state =
         |> Maybe.withDefault Conflict.proponent
         |> Conflict.player
         |> with state.conflict
+        |> .fallout
+        |> diceSet "my-fallout"
+        |> Html.map (always config.noop)
+    , state.you
+        |> Maybe.withDefault Conflict.proponent
+        |> Conflict.player
+        |> with state.conflict
         |> .pool
         |> diceSet "my-dice"
         |> Html.map config.playDie
@@ -95,6 +102,14 @@ progressView config state =
         |> with state.conflict
         |> .pool
         |> diceSet "their-dice"
+        |> Html.map (always config.noop)
+    , state.you
+        |> Maybe.withDefault Conflict.proponent
+        |> Conflict.otherSide
+        |> Conflict.player
+        |> with state.conflict
+        |> .fallout
+        |> diceSet "my-fallout"
         |> Html.map (always config.noop)
     ]
         |> Html.main_
@@ -164,10 +179,10 @@ actionButton config raise =
             Html.text ""
 
 
-diceSet : String -> Dice Rolled -> Html (Die Rolled)
+diceSet : String -> Dice x -> Html (Die x)
 diceSet id =
     Dice.toList
-        >> List.map (Die.View.rolled Die.View.regular)
+        >> List.map (Die.View.any Die.View.regular)
         >> UI.pile id identity
 
 
