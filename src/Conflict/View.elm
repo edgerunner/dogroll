@@ -71,21 +71,23 @@ finishedView config state =
 
 progressView : Config msg -> Manager.InProgressState -> Html msg
 progressView config state =
+    let
+        player side =
+            state.you
+                |> Maybe.withDefault Conflict.proponent
+                |> side
+                |> Conflict.player
+                |> with state.conflict
+    in
     [ UI.button "Give"
         |> Html.map (always config.give)
     , UI.button "Take some dice"
         |> Html.map (always config.takeMoreDice)
-    , state.you
-        |> Maybe.withDefault Conflict.proponent
-        |> Conflict.player
-        |> with state.conflict
+    , player identity
         |> .fallout
         |> diceSet "my-fallout"
         |> Html.map (always config.noop)
-    , state.you
-        |> Maybe.withDefault Conflict.proponent
-        |> Conflict.player
-        |> with state.conflict
+    , player identity
         |> .pool
         |> diceSet "my-dice"
         |> Html.map config.playDie
@@ -95,19 +97,11 @@ progressView config state =
 
       else
         Html.text ""
-    , state.you
-        |> Maybe.withDefault Conflict.proponent
-        |> Conflict.otherSide
-        |> Conflict.player
-        |> with state.conflict
+    , player Conflict.otherSide
         |> .pool
         |> diceSet "their-dice"
         |> Html.map (always config.noop)
-    , state.you
-        |> Maybe.withDefault Conflict.proponent
-        |> Conflict.otherSide
-        |> Conflict.player
-        |> with state.conflict
+    , player Conflict.otherSide
         |> .fallout
         |> diceSet "my-fallout"
         |> Html.map (always config.noop)
