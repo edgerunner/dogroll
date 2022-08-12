@@ -1,4 +1,4 @@
-module Fallout exposing (Fallout, Outcome(..), State(..))
+module Fallout exposing (Fallout, Outcome(..), State(..), init, state, takeDice)
 
 import Conflict exposing (Conflict)
 import Dice exposing (Dice)
@@ -37,3 +37,40 @@ type Outcome
     | LongTerm
     | DoubleLongTerm
     | Dying
+
+
+init : Fallout
+init =
+    Fallout []
+
+
+takeDice : Dice Held -> Fallout -> Result error Fallout
+takeDice dice =
+    push (TookDice dice) >> Ok
+
+
+state : Fallout -> State
+state (Fallout events) =
+    List.foldl handleEvents initialState events
+
+
+handleEvents : Event -> State -> State
+handleEvents event currentState =
+    case ( event, currentState ) of
+        ( TookDice takenDice, Pending existingDice ) ->
+            [ takenDice, existingDice ]
+                |> Dice.combine
+                |> Pending
+
+        _ ->
+            currentState
+
+
+initialState : State
+initialState =
+    Pending Dice.empty
+
+
+push : Event -> Fallout -> Fallout
+push event (Fallout events) =
+    Fallout (event :: events)
