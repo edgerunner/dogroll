@@ -1,6 +1,7 @@
 module Tests.Fallout exposing (suite)
 
 import Dice
+import Die
 import Die.Size exposing (Size(..))
 import Expect exposing (Expectation)
 import Fallout exposing (State(..))
@@ -12,8 +13,22 @@ suite : Test
 suite =
     describe "Fallout"
         [ describe "taking dice"
-            [ test "dice should be piled together" diceShouldBePiledTogether ]
+            [ test "dice should be piled together" diceShouldBePiledTogether
+            , test "pending dice can be rolled" pendingDiceCanBeRolled
+            ]
         ]
+
+
+pendingDiceCanBeRolled : () -> Expectation
+pendingDiceCanBeRolled () =
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice (Dice.init D4 Pips.three))
+        |> Result.andThen
+            ([ Die.cheat D4 1, Die.cheat D4 3, Die.cheat D4 4 ]
+                |> List.foldl Dice.add Dice.empty
+                |> Fallout.roll
+            )
+        |> Expect.ok
 
 
 diceShouldBePiledTogether : () -> Expectation

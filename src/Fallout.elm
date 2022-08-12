@@ -1,4 +1,4 @@
-module Fallout exposing (Fallout, Outcome(..), State(..), init, state, takeDice)
+module Fallout exposing (Fallout, Outcome(..), State(..), init, roll, state, takeDice)
 
 import Conflict exposing (Conflict)
 import Dice exposing (Dice)
@@ -47,6 +47,11 @@ init =
 takeDice : Dice Held -> Fallout -> Result error Fallout
 takeDice dice =
     push (TookDice dice) >> Ok
+
+
+roll : Dice Rolled -> Fallout -> Result error Fallout
+roll dice =
+    push (RolledFallout dice) >> Ok
 
 
 state : Fallout -> State
