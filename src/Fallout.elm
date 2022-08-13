@@ -44,9 +44,17 @@ init =
     Fallout []
 
 
-takeDice : Dice Held -> Fallout -> Result error Fallout
-takeDice dice =
-    push (TookDice dice) >> Ok
+takeDice : Dice Held -> Fallout -> Result () Fallout
+takeDice dice fallout =
+    state fallout
+        |> (\current ->
+                case current of
+                    Pending _ ->
+                        fallout |> push (TookDice dice) |> Ok
+
+                    _ ->
+                        Err ()
+           )
 
 
 roll : Dice Rolled -> Fallout -> Result error Fallout
@@ -66,6 +74,9 @@ handleEvents event currentState =
             [ takenDice, existingDice ]
                 |> Dice.combine
                 |> Pending
+
+        ( RolledFallout falloutDice, Pending _ ) ->
+            ExpectingPatientBody falloutDice
 
         _ ->
             currentState

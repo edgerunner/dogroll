@@ -15,8 +15,22 @@ suite =
         [ describe "taking dice"
             [ test "dice should be piled together" diceShouldBePiledTogether
             , test "pending dice can be rolled" pendingDiceCanBeRolled
+            , test "dice can't be taken after a roll" diceCantBeTakenAfterRoll
             ]
         ]
+
+
+diceCantBeTakenAfterRoll : () -> Expectation
+diceCantBeTakenAfterRoll () =
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice (Dice.init D4 Pips.three))
+        |> Result.andThen
+            ([ Die.cheat D4 1, Die.cheat D4 3, Die.cheat D4 4 ]
+                |> List.foldl Dice.add Dice.empty
+                |> Fallout.roll
+            )
+        |> Result.andThen (Fallout.takeDice (Dice.init D6 Pips.three))
+        |> Expect.err
 
 
 pendingDiceCanBeRolled : () -> Expectation
