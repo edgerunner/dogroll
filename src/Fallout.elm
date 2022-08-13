@@ -39,12 +39,18 @@ type Outcome
     | Dying
 
 
+type Error
+    = CanNotTakeFalloutDiceAfterRolling
+    | CannotRollFalloutMoreThanOnce
+    | MustRollTheFalloutDice (Dice Held)
+
+
 init : Fallout
 init =
     Fallout []
 
 
-takeDice : Dice Held -> Fallout -> Result () Fallout
+takeDice : Dice Held -> Fallout -> Result Error Fallout
 takeDice dice fallout =
     state fallout
         |> (\current ->
@@ -53,13 +59,31 @@ takeDice dice fallout =
                         fallout |> push (TookDice dice) |> Ok
 
                     _ ->
-                        Err ()
+                        Err CanNotTakeFalloutDiceAfterRolling
            )
 
 
-roll : Dice Rolled -> Fallout -> Result error Fallout
-roll dice =
-    push (RolledFallout dice) >> Ok
+roll : Dice Rolled -> Fallout -> Result Error Fallout
+roll rolledDice fallout =
+    state fallout
+        |> (\current ->
+                case current of
+                    Pending pendingDice ->
+                        if
+                            (rolledDice
+                                |> Dice.sizes
+                                |> List.foldl (Die.init >> Dice.add) Dice.empty
+                            )
+                                == pendingDice
+                        then
+                            fallout |> push (RolledFallout rolledDice) |> Ok
+
+                        else
+                            Err <| MustRollTheFalloutDice pendingDice
+
+                    _ ->
+                        Err CannotRollFalloutMoreThanOnce
+           )
 
 
 state : Fallout -> State
