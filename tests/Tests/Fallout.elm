@@ -19,8 +19,26 @@ suite =
         , describe "rolling dice"
             [ test "pending dice can be rolled" pendingDiceCanBeRolled
             , test "only pending dice can be rolled" onlyPendingDiceCanBeRolled
+            , test "dice can not be rolled twice" diceCantBeRolledTwice
             ]
         ]
+
+
+diceCantBeRolledTwice : () -> Expectation
+diceCantBeRolledTwice () =
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice (Dice.init D4 Pips.three))
+        |> Result.andThen
+            ([ Die.cheat D4 1, Die.cheat D4 3, Die.cheat D4 4 ]
+                |> List.foldl Dice.add Dice.empty
+                |> Fallout.roll
+            )
+        |> Result.andThen
+            ([ Die.cheat D4 2, Die.cheat D4 2, Die.cheat D4 4 ]
+                |> List.foldl Dice.add Dice.empty
+                |> Fallout.roll
+            )
+        |> Expect.err
 
 
 onlyPendingDiceCanBeRolled : () -> Expectation
