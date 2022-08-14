@@ -1,4 +1,4 @@
-module Fallout exposing (Fallout, Outcome(..), State(..), init, roll, rollPatientBody, state, takeDice)
+module Fallout exposing (Fallout, Outcome(..), State(..), init, roll, rollPatientBody, state, takeDice, takePatientBodyDice)
 
 import Conflict exposing (Conflict)
 import Dice exposing (Dice)
@@ -13,8 +13,7 @@ type Event
     = TookDice (Dice Held)
     | RolledFallout (Dice Rolled)
     | RolledPatientBody (Dice Rolled)
-    | RolledHealerAcuity (Dice Rolled)
-    | RolledDemonicInfluence (Dice Rolled)
+    | TookPatientBodyDice (Dice Held)
     | StartedConflict
     | EndedConflict Conflict
 
@@ -91,6 +90,11 @@ rollPatientBody dice fallout =
     fallout |> push (RolledPatientBody dice) |> Ok
 
 
+takePatientBodyDice : Dice Held -> Fallout -> Result error Fallout
+takePatientBodyDice dice =
+    push (TookPatientBodyDice dice) >> Ok
+
+
 state : Fallout -> State
 state (Fallout events) =
     List.foldr handleEvents initialState events
@@ -159,6 +163,9 @@ handleEvents event currentState =
                     , healerAcuity = Nothing
                     , demonicInfluence = Nothing
                     }
+
+        ( TookPatientBodyDice patientBodyDice, ExpectingDice dice ) ->
+            ExpectingDice { dice | patientBody = Just patientBodyDice }
 
         _ ->
             currentState

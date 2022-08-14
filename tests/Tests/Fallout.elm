@@ -41,8 +41,36 @@ suite =
                 upToNineteenIsRequiredMedicalAttention
             , test "failed avoid roll is required medical attention"
                 failedAvoidRollIsRequiredMedicalAttention
+            , test "can take body dice if not taken previously"
+                canTakeBodyDiceIfNotTakenPreviously
             ]
         ]
+
+
+canTakeBodyDiceIfNotTakenPreviously : () -> Expectation
+canTakeBodyDiceIfNotTakenPreviously () =
+    let
+        rolledFalloutDice =
+            [ Die.cheat D10 10, Die.cheat D10 7, Die.cheat D10 6 ]
+                |> Dice.fromList
+    in
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
+        |> Result.andThen (Fallout.roll rolledFalloutDice)
+        |> Result.andThen (Fallout.takePatientBodyDice <| Dice.init D6 Pips.two)
+        |> expectStateWith
+            (\state ->
+                case state of
+                    ExpectingDice dice ->
+                        dice
+                            |> Expect.all
+                                [ .fallout >> Expect.equal (Dice.init D10 Pips.three)
+                                , .patientBody >> Expect.equal (Dice.init D6 Pips.two |> Just)
+                                ]
+
+                    _ ->
+                        Expect.fail "expected state to be expecting dice"
+            )
 
 
 failedAvoidRollIsRequiredMedicalAttention : () -> Expectation
