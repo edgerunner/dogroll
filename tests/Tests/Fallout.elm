@@ -4,7 +4,7 @@ import Dice
 import Die
 import Die.Size exposing (Size(..))
 import Expect exposing (Expectation)
-import Fallout exposing (State(..))
+import Fallout exposing (Outcome(..), State(..))
 import Pips
 import Test exposing (Test, describe, test)
 
@@ -21,7 +21,23 @@ suite =
             , test "only pending dice can be rolled" onlyPendingDiceCanBeRolled
             , test "dice can not be rolled twice" diceCantBeRolledTwice
             ]
+        , describe "direct outcomes"
+            [ test "up to 7 is short-term fallout" upToSevenIsShortTermFallout ]
         ]
+
+
+upToSevenIsShortTermFallout : () -> Expectation
+upToSevenIsShortTermFallout () =
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice (Dice.init D4 Pips.three))
+        |> Result.andThen
+            ([ Die.cheat D4 3, Die.cheat D4 3, Die.cheat D4 3 ]
+                |> List.foldl Dice.add Dice.empty
+                |> Fallout.roll
+            )
+        |> Result.map Fallout.state
+        |> Result.map (Expect.equal (Concluded False ShortTerm))
+        |> Result.withDefault (Expect.fail "should be ok")
 
 
 diceCantBeRolledTwice : () -> Expectation

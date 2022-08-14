@@ -100,7 +100,15 @@ handleEvents event currentState =
                 |> Pending
 
         ( RolledFallout falloutDice, Pending _ ) ->
-            ExpectingPatientBody falloutDice
+            let
+                falloutSum =
+                    falloutDice |> Dice.best 2 |> Dice.total
+            in
+            if falloutSum <= 7 then
+                Concluded False ShortTerm
+
+            else
+                ExpectingPatientBody falloutDice
 
         _ ->
             currentState
