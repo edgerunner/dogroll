@@ -36,7 +36,33 @@ suite =
             , test "medical attention is required if the patient can not see"
                 medicalAttentionIsRequiredIfThePatientCanNotSee
             ]
+        , describe "required medical attention"
+            [ test "up to 19 is required medical attention"
+                upToNineteenIsRequiredMedicalAttention
+            ]
         ]
+
+
+upToNineteenIsRequiredMedicalAttention : () -> Expectation
+upToNineteenIsRequiredMedicalAttention () =
+    let
+        rolledFalloutDice =
+            [ Die.cheat D10 10, Die.cheat D10 7, Die.cheat D10 6 ]
+                |> Dice.fromList
+    in
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
+        |> Result.andThen (Fallout.roll rolledFalloutDice)
+        |> expectStateWith
+            (\state ->
+                case state of
+                    ExpectingDice dice ->
+                        dice.fallout
+                            |> Expect.equal (Dice.init D10 Pips.three)
+
+                    _ ->
+                        Expect.fail "expected required medical attention"
+            )
 
 
 medicalAttentionIsRequiredIfThePatientCanNotSee : () -> Expectation

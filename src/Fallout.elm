@@ -118,6 +118,17 @@ handleEvents event currentState =
             else if falloutSum <= 15 then
                 ExpectingPatientBody falloutDice
 
+            else if falloutSum <= 19 then
+                ExpectingDice
+                    { fallout =
+                        falloutDice
+                            |> Dice.sizes
+                            |> List.foldl (Die.init >> Dice.add) Dice.empty
+                    , patientBody = Nothing
+                    , healerAcuity = Nothing
+                    , demonicInfluence = Nothing
+                    }
+
             else
                 Concluded False Dying
 
