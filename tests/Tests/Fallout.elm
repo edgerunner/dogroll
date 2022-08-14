@@ -24,8 +24,23 @@ suite =
         , describe "direct outcomes"
             [ test "up to 7 is short-term fallout" upToSevenIsShortTermFallout
             , test "up to 11 is long-term fallout" upToElevenIsLongTermFallout
+            , test "20 is imminent death" twentyIsImminentDeath
             ]
         ]
+
+
+twentyIsImminentDeath : () -> Expectation
+twentyIsImminentDeath () =
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
+        |> Result.andThen
+            ([ Die.cheat D10 10, Die.cheat D10 10, Die.cheat D10 6 ]
+                |> List.foldl Dice.add Dice.empty
+                |> Fallout.roll
+            )
+        |> Result.map Fallout.state
+        |> Result.map (Expect.equal (Concluded False Dying))
+        |> Result.withDefault (Expect.fail "should be ok")
 
 
 upToElevenIsLongTermFallout : () -> Expectation

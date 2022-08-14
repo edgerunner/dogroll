@@ -111,7 +111,7 @@ handleEvents event currentState =
                 Concluded False LongTerm
 
             else
-                ExpectingPatientBody falloutDice
+                Concluded False Dying
 
         _ ->
             currentState
