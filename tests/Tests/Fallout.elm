@@ -39,8 +39,42 @@ suite =
         , describe "required medical attention"
             [ test "up to 19 is required medical attention"
                 upToNineteenIsRequiredMedicalAttention
+            , test "failed avoid roll is required medical attention"
+                failedAvoidRollIsRequiredMedicalAttention
             ]
         ]
+
+
+failedAvoidRollIsRequiredMedicalAttention : () -> Expectation
+failedAvoidRollIsRequiredMedicalAttention () =
+    let
+        rolledFalloutDice =
+            [ Die.cheat D10 7, Die.cheat D10 8, Die.cheat D10 6, Die.cheat D10 3 ]
+                |> Dice.fromList
+
+        rolledBodyDice =
+            [ Die.cheat D6 4, Die.cheat D6 4, Die.cheat D6 2 ]
+                |> Dice.fromList
+    in
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.four))
+        |> Result.andThen (Fallout.roll rolledFalloutDice)
+        |> Result.andThen (Fallout.rollPatientBody rolledBodyDice)
+        |> expectStateWith
+            (\state ->
+                case state of
+                    ExpectingDice dice ->
+                        dice
+                            |> Expect.all
+                                [ .fallout >> Expect.equal (Dice.init D10 Pips.four)
+                                , .patientBody >> Expect.equal (Dice.init D6 Pips.three |> Just)
+                                , .healerAcuity >> Expect.equal Nothing
+                                , .demonicInfluence >> Expect.equal Nothing
+                                ]
+
+                    _ ->
+                        Expect.fail "expected to be expecting conflict dice"
+            )
 
 
 upToNineteenIsRequiredMedicalAttention : () -> Expectation

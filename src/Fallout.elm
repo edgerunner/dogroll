@@ -147,8 +147,15 @@ handleEvents event currentState =
 
             else
                 ExpectingDice
-                    { fallout = Dice.empty
-                    , patientBody = Nothing
+                    { fallout =
+                        falloutDice
+                            |> Dice.sizes
+                            |> List.foldl (Die.init >> Dice.add) Dice.empty
+                    , patientBody =
+                        patientBodyDice
+                            |> Dice.sizes
+                            |> List.foldl (Die.init >> Dice.add) Dice.empty
+                            |> Just
                     , healerAcuity = Nothing
                     , demonicInfluence = Nothing
                     }
