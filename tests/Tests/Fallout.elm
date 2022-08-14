@@ -30,8 +30,37 @@ suite =
             [ test "up to 15 is avoidable medical attention" upToFifteenIsAvoidableMedicalAttention
             , test "seeing with 3 dice is avoided medical attention" seeingWithThreeDiceIsAvoidedMedicalAttention
             , test "seeing with 4 dice is required medical attention" seeingWithFourDiceIsRequiredMedicalAttention
+            , test "medical attention is required if the patient can not see" medicalAttentionIsRequiredIfThePatientCanNotSee
             ]
         ]
+
+
+medicalAttentionIsRequiredIfThePatientCanNotSee : () -> Expectation
+medicalAttentionIsRequiredIfThePatientCanNotSee () =
+    let
+        rolledFalloutDice =
+            [ Die.cheat D10 7, Die.cheat D10 8, Die.cheat D10 6 ]
+                |> List.foldl Dice.add Dice.empty
+
+        rolledBodyDice =
+            [ Die.cheat D6 4, Die.cheat D6 4, Die.cheat D6 2 ]
+                |> List.foldl Dice.add Dice.empty
+    in
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
+        |> Result.andThen (Fallout.roll rolledFalloutDice)
+        |> Result.andThen (Fallout.rollPatientBody rolledBodyDice)
+        |> Result.map Fallout.state
+        |> Result.map
+            (\state ->
+                case state of
+                    ExpectingDice _ ->
+                        Expect.pass
+
+                    _ ->
+                        Expect.fail "expected to be expecting conflict dice"
+            )
+        |> Result.withDefault (Expect.fail "should be ok")
 
 
 seeingWithFourDiceIsRequiredMedicalAttention : () -> Expectation
