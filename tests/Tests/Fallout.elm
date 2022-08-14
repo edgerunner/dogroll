@@ -54,8 +54,7 @@ medicalAttentionIsRequiredIfThePatientCanNotSee () =
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
         |> Result.andThen (Fallout.roll rolledFalloutDice)
         |> Result.andThen (Fallout.rollPatientBody rolledBodyDice)
-        |> Result.map Fallout.state
-        |> Result.map
+        |> expectStateWith
             (\state ->
                 case state of
                     ExpectingDice _ ->
@@ -64,7 +63,6 @@ medicalAttentionIsRequiredIfThePatientCanNotSee () =
                     _ ->
                         Expect.fail "expected to be expecting conflict dice"
             )
-        |> Result.withDefault (Expect.fail "should be ok")
 
 
 seeingWithFourDiceIsRequiredMedicalAttention : () -> Expectation
@@ -82,8 +80,7 @@ seeingWithFourDiceIsRequiredMedicalAttention () =
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
         |> Result.andThen (Fallout.roll rolledFalloutDice)
         |> Result.andThen (Fallout.rollPatientBody rolledBodyDice)
-        |> Result.map Fallout.state
-        |> Result.map
+        |> expectStateWith
             (\state ->
                 case state of
                     ExpectingDice _ ->
@@ -92,7 +89,6 @@ seeingWithFourDiceIsRequiredMedicalAttention () =
                     _ ->
                         Expect.fail "expected to be expecting conflict dice"
             )
-        |> Result.withDefault (Expect.fail "should be ok")
 
 
 seeingWithThreeDiceIsAvoidedMedicalAttention : () -> Expectation
@@ -221,8 +217,7 @@ diceShouldBePiledTogether () =
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D4 Pips.three))
         |> Result.andThen (Fallout.takeDice (Dice.init D6 Pips.four))
-        |> Result.map Fallout.state
-        |> Result.map
+        |> expectStateWith
             (\state ->
                 case state of
                     Pending dice ->
@@ -233,7 +228,6 @@ diceShouldBePiledTogether () =
                     _ ->
                         Expect.fail "expected Pending"
             )
-        |> Result.withDefault (Expect.fail "expected Ok")
 
 
 
@@ -242,6 +236,11 @@ diceShouldBePiledTogether () =
 
 expectState : State -> Result error Fallout -> Expectation
 expectState expectedState =
+    Expect.equal expectedState |> expectStateWith
+
+
+expectStateWith : (State -> Expectation) -> Result error Fallout -> Expectation
+expectStateWith stateToExpectation =
     Result.map Fallout.state
-        >> Result.map (Expect.equal expectedState)
+        >> Result.map stateToExpectation
         >> Result.withDefault (Expect.fail "expected Ok")
