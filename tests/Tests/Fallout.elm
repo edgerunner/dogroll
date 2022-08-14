@@ -4,7 +4,7 @@ import Dice
 import Die
 import Die.Size exposing (Size(..))
 import Expect exposing (Expectation)
-import Fallout exposing (Outcome(..), State(..))
+import Fallout exposing (Fallout, Outcome(..), State(..))
 import Pips
 import Test exposing (Test, describe, test)
 
@@ -27,10 +27,14 @@ suite =
             , test "20 is imminent death" twentyIsImminentDeath
             ]
         , describe "avoiding medical attention"
-            [ test "up to 15 is avoidable medical attention" upToFifteenIsAvoidableMedicalAttention
-            , test "seeing with 3 dice is avoided medical attention" seeingWithThreeDiceIsAvoidedMedicalAttention
-            , test "seeing with 4 dice is required medical attention" seeingWithFourDiceIsRequiredMedicalAttention
-            , test "medical attention is required if the patient can not see" medicalAttentionIsRequiredIfThePatientCanNotSee
+            [ test "up to 15 is avoidable medical attention"
+                upToFifteenIsAvoidableMedicalAttention
+            , test "seeing with 3 dice is avoided medical attention"
+                seeingWithThreeDiceIsAvoidedMedicalAttention
+            , test "seeing with 4 dice is required medical attention"
+                seeingWithFourDiceIsRequiredMedicalAttention
+            , test "medical attention is required if the patient can not see"
+                medicalAttentionIsRequiredIfThePatientCanNotSee
             ]
         ]
 
@@ -106,9 +110,7 @@ seeingWithThreeDiceIsAvoidedMedicalAttention () =
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
         |> Result.andThen (Fallout.roll rolledFalloutDice)
         |> Result.andThen (Fallout.rollPatientBody rolledBodyDice)
-        |> Result.map Fallout.state
-        |> Result.map (Expect.equal (Concluded False DoubleLongTerm))
-        |> Result.withDefault (Expect.fail "should be ok")
+        |> expectState (Concluded False DoubleLongTerm)
 
 
 upToFifteenIsAvoidableMedicalAttention : () -> Expectation
@@ -121,9 +123,7 @@ upToFifteenIsAvoidableMedicalAttention () =
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
         |> Result.andThen (Fallout.roll rolledFalloutDice)
-        |> Result.map Fallout.state
-        |> Result.map (Expect.equal (ExpectingPatientBody rolledFalloutDice))
-        |> Result.withDefault (Expect.fail "should be ok")
+        |> expectState (ExpectingPatientBody rolledFalloutDice)
 
 
 twentyIsImminentDeath : () -> Expectation
@@ -135,9 +135,7 @@ twentyIsImminentDeath () =
                 |> List.foldl Dice.add Dice.empty
                 |> Fallout.roll
             )
-        |> Result.map Fallout.state
-        |> Result.map (Expect.equal (Concluded False Dying))
-        |> Result.withDefault (Expect.fail "should be ok")
+        |> expectState (Concluded False Dying)
 
 
 upToElevenIsLongTermFallout : () -> Expectation
@@ -149,9 +147,7 @@ upToElevenIsLongTermFallout () =
                 |> List.foldl Dice.add Dice.empty
                 |> Fallout.roll
             )
-        |> Result.map Fallout.state
-        |> Result.map (Expect.equal (Concluded False LongTerm))
-        |> Result.withDefault (Expect.fail "should be ok")
+        |> expectState (Concluded False LongTerm)
 
 
 upToSevenIsShortTermFallout : () -> Expectation
@@ -163,9 +159,7 @@ upToSevenIsShortTermFallout () =
                 |> List.foldl Dice.add Dice.empty
                 |> Fallout.roll
             )
-        |> Result.map Fallout.state
-        |> Result.map (Expect.equal (Concluded False ShortTerm))
-        |> Result.withDefault (Expect.fail "should be ok")
+        |> expectState (Concluded False ShortTerm)
 
 
 diceCantBeRolledTwice : () -> Expectation
@@ -240,3 +234,14 @@ diceShouldBePiledTogether () =
                         Expect.fail "expected Pending"
             )
         |> Result.withDefault (Expect.fail "expected Ok")
+
+
+
+-- HELPERS
+
+
+expectState : State -> Result error Fallout -> Expectation
+expectState expectedState =
+    Result.map Fallout.state
+        >> Result.map (Expect.equal expectedState)
+        >> Result.withDefault (Expect.fail "expected Ok")
