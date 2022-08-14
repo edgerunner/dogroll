@@ -121,8 +121,26 @@ handleEvents event currentState =
             else
                 Concluded False Dying
 
-        ( RolledPatientBody _, ExpectingPatientBody _ ) ->
-            Concluded False DoubleLongTerm
+        ( RolledPatientBody patientBodyDice, ExpectingPatientBody falloutDice ) ->
+            if
+                (patientBodyDice
+                    |> Dice.best 3
+                    |> Dice.total
+                )
+                    >= (falloutDice
+                            |> Dice.best 2
+                            |> Dice.total
+                       )
+            then
+                Concluded False DoubleLongTerm
+
+            else
+                ExpectingDice
+                    { fallout = Dice.empty
+                    , patientBody = Nothing
+                    , healerAcuity = Nothing
+                    , demonicInfluence = Nothing
+                    }
 
         _ ->
             currentState
