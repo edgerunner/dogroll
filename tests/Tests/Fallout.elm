@@ -44,11 +44,11 @@ medicalAttentionIsRequiredIfThePatientCanNotSee () =
     let
         rolledFalloutDice =
             [ Die.cheat D10 7, Die.cheat D10 8, Die.cheat D10 6 ]
-                |> List.foldl Dice.add Dice.empty
+                |> Dice.fromList
 
         rolledBodyDice =
             [ Die.cheat D6 4, Die.cheat D6 4, Die.cheat D6 2 ]
-                |> List.foldl Dice.add Dice.empty
+                |> Dice.fromList
     in
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
@@ -70,11 +70,11 @@ seeingWithFourDiceIsRequiredMedicalAttention () =
     let
         rolledFalloutDice =
             [ Die.cheat D10 7, Die.cheat D10 8, Die.cheat D10 6 ]
-                |> List.foldl Dice.add Dice.empty
+                |> Dice.fromList
 
         rolledBodyDice =
             [ Die.cheat D6 5, Die.cheat D6 4, Die.cheat D6 4, Die.cheat D6 2 ]
-                |> List.foldl Dice.add Dice.empty
+                |> Dice.fromList
     in
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
@@ -96,11 +96,11 @@ seeingWithThreeDiceIsAvoidedMedicalAttention () =
     let
         rolledFalloutDice =
             [ Die.cheat D10 7, Die.cheat D10 3, Die.cheat D10 6 ]
-                |> List.foldl Dice.add Dice.empty
+                |> Dice.fromList
 
         rolledBodyDice =
             [ Die.cheat D6 5, Die.cheat D6 4, Die.cheat D6 4, Die.cheat D6 2 ]
-                |> List.foldl Dice.add Dice.empty
+                |> Dice.fromList
     in
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
@@ -114,7 +114,7 @@ upToFifteenIsAvoidableMedicalAttention () =
     let
         rolledFalloutDice =
             [ Die.cheat D10 7, Die.cheat D10 3, Die.cheat D10 6 ]
-                |> List.foldl Dice.add Dice.empty
+                |> Dice.fromList
     in
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
@@ -128,7 +128,7 @@ twentyIsImminentDeath () =
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
         |> Result.andThen
             ([ Die.cheat D10 10, Die.cheat D10 10, Die.cheat D10 6 ]
-                |> List.foldl Dice.add Dice.empty
+                |> Dice.fromList
                 |> Fallout.roll
             )
         |> expectState (Concluded False Dying)
@@ -140,7 +140,7 @@ upToElevenIsLongTermFallout () =
         |> Result.andThen (Fallout.takeDice (Dice.init D6 Pips.three))
         |> Result.andThen
             ([ Die.cheat D6 6, Die.cheat D6 3, Die.cheat D6 2 ]
-                |> List.foldl Dice.add Dice.empty
+                |> Dice.fromList
                 |> Fallout.roll
             )
         |> expectState (Concluded False LongTerm)
@@ -152,7 +152,7 @@ upToSevenIsShortTermFallout () =
         |> Result.andThen (Fallout.takeDice (Dice.init D4 Pips.three))
         |> Result.andThen
             ([ Die.cheat D4 3, Die.cheat D4 3, Die.cheat D4 3 ]
-                |> List.foldl Dice.add Dice.empty
+                |> Dice.fromList
                 |> Fallout.roll
             )
         |> expectState (Concluded False ShortTerm)
@@ -164,12 +164,12 @@ diceCantBeRolledTwice () =
         |> Result.andThen (Fallout.takeDice (Dice.init D4 Pips.three))
         |> Result.andThen
             ([ Die.cheat D4 1, Die.cheat D4 3, Die.cheat D4 4 ]
-                |> List.foldl Dice.add Dice.empty
+                |> Dice.fromList
                 |> Fallout.roll
             )
         |> Result.andThen
             ([ Die.cheat D4 2, Die.cheat D4 2, Die.cheat D4 4 ]
-                |> List.foldl Dice.add Dice.empty
+                |> Dice.fromList
                 |> Fallout.roll
             )
         |> Expect.err
@@ -181,7 +181,7 @@ onlyPendingDiceCanBeRolled () =
         |> Result.andThen (Fallout.takeDice (Dice.init D4 Pips.three))
         |> Result.andThen
             ([ Die.cheat D6 1, Die.cheat D8 3, Die.cheat D4 4 ]
-                |> List.foldl Dice.add Dice.empty
+                |> Dice.fromList
                 |> Fallout.roll
             )
         |> Expect.err
@@ -193,7 +193,7 @@ diceCantBeTakenAfterRoll () =
         |> Result.andThen (Fallout.takeDice (Dice.init D4 Pips.three))
         |> Result.andThen
             ([ Die.cheat D4 1, Die.cheat D4 3, Die.cheat D4 4 ]
-                |> List.foldl Dice.add Dice.empty
+                |> Dice.fromList
                 |> Fallout.roll
             )
         |> Result.andThen (Fallout.takeDice (Dice.init D6 Pips.three))
@@ -206,7 +206,7 @@ pendingDiceCanBeRolled () =
         |> Result.andThen (Fallout.takeDice (Dice.init D4 Pips.three))
         |> Result.andThen
             ([ Die.cheat D4 1, Die.cheat D4 3, Die.cheat D4 4 ]
-                |> List.foldl Dice.add Dice.empty
+                |> Dice.fromList
                 |> Fallout.roll
             )
         |> Expect.ok

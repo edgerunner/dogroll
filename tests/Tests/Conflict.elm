@@ -402,14 +402,14 @@ readiedConflict =
             , Die.cheat D6 2
             , Die.cheat D6 3
             ]
-                |> List.foldl Dice.add Dice.empty
+                |> Dice.fromList
 
         opponentDice =
             [ Die.cheat D8 7
             , Die.cheat D8 3
             , Die.cheat D4 4
             ]
-                |> List.foldl Dice.add Dice.empty
+                |> Dice.fromList
     in
     Ok Conflict.start
         |> Result.andThen (Conflict.proponent |> Conflict.takeDice proponentDice)

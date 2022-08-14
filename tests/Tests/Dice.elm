@@ -132,7 +132,7 @@ suite =
                     , Die.cheat Die.Size.D6 5
                     , Die.cheat Die.Size.D6 1
                     ]
-                        |> List.foldl Dice.add Dice.empty
+                        |> Dice.fromList
                         |> Dice.best 2
                         |> Dice.toList
                         |> Expect.equalLists
@@ -147,7 +147,7 @@ suite =
                     , Die.init Die.Size.D6
                     , Die.init Die.Size.D6
                     ]
-                        |> List.foldl Dice.add Dice.empty
+                        |> Dice.fromList
                         |> Dice.best 2
                         |> Dice.toList
                         |> Expect.equalLists
@@ -162,7 +162,7 @@ suite =
                     , Die.cheat Die.Size.D6 5
                     , Die.cheat Die.Size.D6 2
                     ]
-                        |> List.foldl Dice.add Dice.empty
+                        |> Dice.fromList
                         |> Dice.match 12
                         |> Dice.toList
                         |> Expect.equalLists
@@ -177,7 +177,7 @@ suite =
                     , Die.cheat Die.Size.D6 5
                     , Die.cheat Die.Size.D6 2
                     ]
-                        |> List.foldl Dice.add Dice.empty
+                        |> Dice.fromList
                         |> Dice.match 4
                         |> Dice.toList
                         |> Expect.equalLists

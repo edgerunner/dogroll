@@ -140,7 +140,7 @@ canSee raise_ =
                     total [ raise1, raise2 ]
 
                 total =
-                    List.foldl Dice.add Dice.empty
+                    Dice.fromList
                         >> Dice.total
             in
             case see_ of
