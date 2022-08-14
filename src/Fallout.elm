@@ -110,6 +110,9 @@ handleEvents event currentState =
             else if falloutSum <= 11 then
                 Concluded False LongTerm
 
+            else if falloutSum <= 15 then
+                ExpectingPatientBody falloutDice
+
             else
                 Concluded False Dying
 

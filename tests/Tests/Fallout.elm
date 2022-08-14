@@ -26,7 +26,24 @@ suite =
             , test "up to 11 is long-term fallout" upToElevenIsLongTermFallout
             , test "20 is imminent death" twentyIsImminentDeath
             ]
+        , describe "avoiding medical attention"
+            [ test "up to 15 is avoidable medical attention" upToFifteenIsAvoidableMedicalAttention ]
         ]
+
+
+upToFifteenIsAvoidableMedicalAttention : () -> Expectation
+upToFifteenIsAvoidableMedicalAttention () =
+    let
+        rolledFalloutDice =
+            [ Die.cheat D10 7, Die.cheat D10 3, Die.cheat D10 6 ]
+                |> List.foldl Dice.add Dice.empty
+    in
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
+        |> Result.andThen (Fallout.roll rolledFalloutDice)
+        |> Result.map Fallout.state
+        |> Result.map (Expect.equal (ExpectingPatientBody rolledFalloutDice))
+        |> Result.withDefault (Expect.fail "should be ok")
 
 
 twentyIsImminentDeath : () -> Expectation
