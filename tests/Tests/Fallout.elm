@@ -22,8 +22,24 @@ suite =
             , test "dice can not be rolled twice" diceCantBeRolledTwice
             ]
         , describe "direct outcomes"
-            [ test "up to 7 is short-term fallout" upToSevenIsShortTermFallout ]
+            [ test "up to 7 is short-term fallout" upToSevenIsShortTermFallout
+            , test "up to 11 is long-term fallout" upToElevenIsLongTermFallout
+            ]
         ]
+
+
+upToElevenIsLongTermFallout : () -> Expectation
+upToElevenIsLongTermFallout () =
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice (Dice.init D6 Pips.three))
+        |> Result.andThen
+            ([ Die.cheat D6 6, Die.cheat D6 3, Die.cheat D6 2 ]
+                |> List.foldl Dice.add Dice.empty
+                |> Fallout.roll
+            )
+        |> Result.map Fallout.state
+        |> Result.map (Expect.equal (Concluded False LongTerm))
+        |> Result.withDefault (Expect.fail "should be ok")
 
 
 upToSevenIsShortTermFallout : () -> Expectation
