@@ -1,4 +1,4 @@
-module Fallout exposing (Fallout, Outcome(..), State(..), init, roll, state, takeDice)
+module Fallout exposing (Fallout, Outcome(..), State(..), init, roll, rollPatientBody, state, takeDice)
 
 import Conflict exposing (Conflict)
 import Dice exposing (Dice)
@@ -86,9 +86,14 @@ roll rolledDice fallout =
            )
 
 
+rollPatientBody : Dice Rolled -> Fallout -> Result Error Fallout
+rollPatientBody dice fallout =
+    fallout |> push (RolledPatientBody dice) |> Ok
+
+
 state : Fallout -> State
 state (Fallout events) =
-    List.foldl handleEvents initialState events
+    List.foldr handleEvents initialState events
 
 
 handleEvents : Event -> State -> State
@@ -115,6 +120,9 @@ handleEvents event currentState =
 
             else
                 Concluded False Dying
+
+        ( RolledPatientBody _, ExpectingPatientBody _ ) ->
+            Concluded False DoubleLongTerm
 
         _ ->
             currentState
