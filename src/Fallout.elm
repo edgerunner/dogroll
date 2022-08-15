@@ -50,39 +50,41 @@ init =
 
 
 takeDice : Dice Held -> Fallout -> Result Error Fallout
-takeDice dice fallout =
-    state fallout
-        |> (\current ->
-                case current of
-                    Pending _ ->
-                        fallout |> push (TookDice dice) |> Ok
+takeDice dice =
+    check
+        (\current ->
+            case current of
+                Pending _ ->
+                    Ok ()
 
-                    _ ->
-                        Err CanNotTakeFalloutDiceAfterRolling
-           )
+                _ ->
+                    Err CanNotTakeFalloutDiceAfterRolling
+        )
+        >> Result.map (push (TookDice dice))
 
 
 roll : Dice Rolled -> Fallout -> Result Error Fallout
-roll rolledDice fallout =
-    state fallout
-        |> (\current ->
-                case current of
-                    Pending pendingDice ->
-                        if
-                            (rolledDice
-                                |> Dice.sizes
-                                |> List.foldl (Die.init >> Dice.add) Dice.empty
-                            )
-                                == pendingDice
-                        then
-                            fallout |> push (RolledFallout rolledDice) |> Ok
+roll rolledDice =
+    check
+        (\current ->
+            case current of
+                Pending pendingDice ->
+                    if
+                        (rolledDice
+                            |> Dice.sizes
+                            |> List.foldl (Die.init >> Dice.add) Dice.empty
+                        )
+                            == pendingDice
+                    then
+                        Ok ()
 
-                        else
-                            Err <| MustRollTheFalloutDice pendingDice
+                    else
+                        Err <| MustRollTheFalloutDice pendingDice
 
-                    _ ->
-                        Err CannotRollFalloutMoreThanOnce
-           )
+                _ ->
+                    Err CannotRollFalloutMoreThanOnce
+        )
+        >> Result.map (push (RolledFallout rolledDice))
 
 
 rollPatientBody : Dice Rolled -> Fallout -> Result Error Fallout
@@ -176,6 +178,15 @@ initialState =
     Pending Dice.empty
 
 
+
+-- HELPERS
+
+
 push : Event -> Fallout -> Fallout
 push event (Fallout events) =
     Fallout (event :: events)
+
+
+check : (State -> Result Error any) -> Fallout -> Result Error Fallout
+check predicate fallout =
+    fallout |> state |> predicate |> Result.map (always fallout)
