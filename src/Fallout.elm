@@ -69,17 +69,12 @@ roll rolledDice =
         (\current ->
             case current of
                 Pending pendingDice ->
-                    if
-                        (rolledDice
-                            |> Dice.sizes
-                            |> List.foldl (Die.init >> Dice.add) Dice.empty
-                        )
-                            == pendingDice
-                    then
-                        Ok ()
-
-                    else
-                        Err <| MustRollTheFalloutDice pendingDice
+                    (rolledDice
+                        |> Dice.sizes
+                        |> List.foldl (Die.init >> Dice.add) Dice.empty
+                    )
+                        == pendingDice
+                        |> toError (MustRollTheFalloutDice pendingDice)
 
                 _ ->
                     Err CannotRollFalloutMoreThanOnce
@@ -190,3 +185,12 @@ push event (Fallout events) =
 check : (State -> Result Error any) -> Fallout -> Result Error Fallout
 check predicate fallout =
     fallout |> state |> predicate |> Result.map (always fallout)
+
+
+toError : Error -> Bool -> Result Error ()
+toError error bool =
+    if bool then
+        Ok ()
+
+    else
+        Err error
