@@ -1,4 +1,4 @@
-module Fallout exposing (ConflictDice, Fallout, Outcome(..), State(..), init, roll, rollPatientBody, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice)
+module Fallout exposing (ConflictDice, Fallout, Outcome(..), State(..), init, roll, rollPatientBody, startConflict, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice)
 
 import Conflict exposing (Conflict)
 import Dice exposing (Dice)
@@ -49,6 +49,8 @@ type Error
     | MustRollTheFalloutDice (Dice Held)
     | CannotTakePatientBodyDiceAfterRolling
     | NotExpectingDice
+    | UnableToStartConflict
+    | MismatchedConflict
 
 
 init : Fallout
@@ -114,6 +116,37 @@ takeDemonicInfluenceDice : Dice Held -> Fallout -> Result Error Fallout
 takeDemonicInfluenceDice demonicInfluenceDice =
     checkExpectingDice Ok
         >> Result.map (push (TookDemonicInfluenceDice demonicInfluenceDice))
+
+
+startConflict : Conflict -> Fallout -> Result Error Fallout
+startConflict conflict =
+    check (conflictMatchesDice conflict)
+        >> Result.map (push StartedConflict)
+
+
+conflictMatchesDice : Conflict -> State -> Result Error ()
+conflictMatchesDice conflict current =
+    case ( current, Conflict.state conflict ) of
+        ( ExpectingDice dice, conflictState ) ->
+            [ ([ dice.patientBody, dice.healerAcuity ]
+                |> List.map (Maybe.withDefault Dice.empty)
+                |> Dice.combine
+              )
+                == (conflictState.proponent.pool |> Dice.hold)
+            , ([ dice.fallout, dice.demonicInfluence |> Maybe.withDefault Dice.empty ]
+                |> Dice.combine
+              )
+                == (conflictState.opponent.pool |> Dice.hold)
+            ]
+                |> List.foldl (&&) True
+                |> toError MismatchedConflict
+
+        _ ->
+            Err UnableToStartConflict
+
+
+
+-- STATE
 
 
 state : Fallout -> State
