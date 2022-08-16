@@ -1,4 +1,4 @@
-module Fallout exposing (Fallout, Outcome(..), State(..), init, roll, rollPatientBody, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice)
+module Fallout exposing (ConflictDice, Fallout, Outcome(..), State(..), init, roll, rollPatientBody, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice)
 
 import Conflict exposing (Conflict)
 import Dice exposing (Dice)
@@ -23,14 +23,17 @@ type Event
 type State
     = Pending (Dice Held)
     | ExpectingPatientBody (Dice Rolled)
-    | ExpectingDice
-        { fallout : Dice Held
-        , patientBody : Maybe (Dice Held)
-        , healerAcuity : Maybe (Dice Held)
-        , demonicInfluence : Maybe (Dice Held)
-        }
+    | ExpectingDice ConflictDice
     | InConflict Conflict
     | Concluded Bool Outcome
+
+
+type alias ConflictDice =
+    { fallout : Dice Held
+    , patientBody : Maybe (Dice Held)
+    , healerAcuity : Maybe (Dice Held)
+    , demonicInfluence : Maybe (Dice Held)
+    }
 
 
 type Outcome
@@ -93,44 +96,23 @@ rollPatientBody dice fallout =
 
 takePatientBodyDice : Dice Held -> Fallout -> Result Error Fallout
 takePatientBodyDice patientBodyDice =
-    check
-        (\current ->
-            case current of
-                ExpectingDice dice ->
-                    (dice.patientBody == Nothing)
-                        |> toError CannotTakePatientBodyDiceAfterRolling
-
-                _ ->
-                    Err NotExpectingDice
+    checkExpectingDice
+        (.patientBody
+            >> (==) Nothing
+            >> toError CannotTakePatientBodyDiceAfterRolling
         )
         >> Result.map (push (TookPatientBodyDice patientBodyDice))
 
 
 takeHealerAcuityDice : Dice Held -> Fallout -> Result Error Fallout
 takeHealerAcuityDice healerAcuityDice =
-    check
-        (\current ->
-            case current of
-                ExpectingDice _ ->
-                    Ok ()
-
-                _ ->
-                    Err NotExpectingDice
-        )
+    checkExpectingDice Ok
         >> Result.map (push (TookHealerAcuityDice healerAcuityDice))
 
 
 takeDemonicInfluenceDice : Dice Held -> Fallout -> Result Error Fallout
 takeDemonicInfluenceDice demonicInfluenceDice =
-    check
-        (\current ->
-            case current of
-                ExpectingDice _ ->
-                    Ok ()
-
-                _ ->
-                    Err NotExpectingDice
-        )
+    checkExpectingDice Ok
         >> Result.map (push (TookDemonicInfluenceDice demonicInfluenceDice))
 
 
@@ -242,3 +224,20 @@ toError error bool =
 
     else
         Err error
+
+
+
+-- CHECKS
+
+
+checkExpectingDice : (ConflictDice -> Result Error any) -> Fallout -> Result Error Fallout
+checkExpectingDice predicate =
+    check
+        (\current ->
+            case current of
+                ExpectingDice dice ->
+                    predicate dice
+
+                _ ->
+                    Err NotExpectingDice
+        )
