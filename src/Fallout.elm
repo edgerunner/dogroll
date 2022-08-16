@@ -108,12 +108,30 @@ takePatientBodyDice patientBodyDice =
 
 takeHealerAcuityDice : Dice Held -> Fallout -> Result Error Fallout
 takeHealerAcuityDice healerAcuityDice =
-    push (TookHealerAcuityDice healerAcuityDice) >> Ok
+    check
+        (\current ->
+            case current of
+                ExpectingDice _ ->
+                    Ok ()
+
+                _ ->
+                    Err NotExpectingDice
+        )
+        >> Result.map (push (TookHealerAcuityDice healerAcuityDice))
 
 
 takeDemonicInfluenceDice : Dice Held -> Fallout -> Result Error Fallout
 takeDemonicInfluenceDice demonicInfluenceDice =
-    push (TookDemonicInfluenceDice demonicInfluenceDice) >> Ok
+    check
+        (\current ->
+            case current of
+                ExpectingDice _ ->
+                    Ok ()
+
+                _ ->
+                    Err NotExpectingDice
+        )
+        >> Result.map (push (TookDemonicInfluenceDice demonicInfluenceDice))
 
 
 state : Fallout -> State

@@ -48,8 +48,20 @@ suite =
             , test "body dice can not be manually taken after a previous body roll"
                 bodyDiceCanNotBeManuallyTakenAfterAPreviousBodyRoll
             , test "dice can be taken" diceCanBeTaken
+            , test "dice can't be taken unless expected" diceCantBeTakenUnlessExpected
             ]
         ]
+
+
+diceCantBeTakenUnlessExpected : () -> Expectation
+diceCantBeTakenUnlessExpected () =
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
+        |> Expect.all
+            [ Result.andThen (Fallout.takePatientBodyDice <| Dice.init D6 Pips.three) >> Expect.err
+            , Result.andThen (Fallout.takeHealerAcuityDice <| Dice.init D6 Pips.three) >> Expect.err
+            , Result.andThen (Fallout.takeDemonicInfluenceDice <| Dice.init D10 Pips.three) >> Expect.err
+            ]
 
 
 diceCanBeTaken : () -> Expectation
