@@ -1,4 +1,4 @@
-module Fallout exposing (Fallout, Outcome(..), State(..), init, roll, rollPatientBody, state, takeDice, takePatientBodyDice)
+module Fallout exposing (Fallout, Outcome(..), State(..), init, roll, rollPatientBody, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice)
 
 import Conflict exposing (Conflict)
 import Dice exposing (Dice)
@@ -14,6 +14,8 @@ type Event
     | RolledFallout (Dice Rolled)
     | RolledPatientBody (Dice Rolled)
     | TookPatientBodyDice (Dice Held)
+    | TookHealerAcuityDice (Dice Held)
+    | TookDemonicInfluenceDice (Dice Held)
     | StartedConflict
     | EndedConflict Conflict
 
@@ -104,6 +106,16 @@ takePatientBodyDice patientBodyDice =
         >> Result.map (push (TookPatientBodyDice patientBodyDice))
 
 
+takeHealerAcuityDice : Dice Held -> Fallout -> Result Error Fallout
+takeHealerAcuityDice healerAcuityDice =
+    push (TookHealerAcuityDice healerAcuityDice) >> Ok
+
+
+takeDemonicInfluenceDice : Dice Held -> Fallout -> Result Error Fallout
+takeDemonicInfluenceDice demonicInfluenceDice =
+    push (TookDemonicInfluenceDice demonicInfluenceDice) >> Ok
+
+
 state : Fallout -> State
 state (Fallout events) =
     List.foldr handleEvents initialState events
@@ -175,6 +187,12 @@ handleEvents event currentState =
 
         ( TookPatientBodyDice patientBodyDice, ExpectingDice dice ) ->
             ExpectingDice { dice | patientBody = Just patientBodyDice }
+
+        ( TookHealerAcuityDice healerAcuityDice, ExpectingDice dice ) ->
+            ExpectingDice { dice | healerAcuity = Just healerAcuityDice }
+
+        ( TookDemonicInfluenceDice demonicInfluenceDice, ExpectingDice dice ) ->
+            ExpectingDice { dice | demonicInfluence = Just demonicInfluenceDice }
 
         _ ->
             currentState

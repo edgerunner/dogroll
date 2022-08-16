@@ -47,8 +47,39 @@ suite =
                 bodyDiceAreAutomaticallyTakenAfterAFailedAvoidRoll
             , test "body dice can not be manually taken after a previous body roll"
                 bodyDiceCanNotBeManuallyTakenAfterAPreviousBodyRoll
+            , test "dice can be taken" diceCanBeTaken
             ]
         ]
+
+
+diceCanBeTaken : () -> Expectation
+diceCanBeTaken () =
+    let
+        rolledFalloutDice =
+            [ Die.cheat D10 10, Die.cheat D10 7, Die.cheat D10 6 ]
+                |> Dice.fromList
+    in
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
+        |> Result.andThen (Fallout.roll rolledFalloutDice)
+        |> Result.andThen (Fallout.takePatientBodyDice <| Dice.init D6 Pips.two)
+        |> Result.andThen (Fallout.takeHealerAcuityDice <| Dice.init D6 Pips.three)
+        |> Result.andThen (Fallout.takeDemonicInfluenceDice <| Dice.init D10 Pips.one)
+        |> expectStateWith
+            (\state ->
+                case state of
+                    ExpectingDice dice ->
+                        dice
+                            |> Expect.all
+                                [ .fallout >> Expect.equal (Dice.init D10 Pips.three)
+                                , .patientBody >> Expect.equal (Dice.init D6 Pips.two |> Just)
+                                , .healerAcuity >> Expect.equal (Dice.init D6 Pips.three |> Just)
+                                , .demonicInfluence >> Expect.equal (Dice.init D10 Pips.one |> Just)
+                                ]
+
+                    _ ->
+                        Expect.fail "expected state to be expecting dice"
+            )
 
 
 bodyDiceCanNotBeManuallyTakenAfterAPreviousBodyRoll : () -> Expectation
