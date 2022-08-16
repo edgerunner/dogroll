@@ -42,6 +42,8 @@ type Error
     = CanNotTakeFalloutDiceAfterRolling
     | CannotRollFalloutMoreThanOnce
     | MustRollTheFalloutDice (Dice Held)
+    | CannotTakePatientBodyDiceAfterRolling
+    | NotExpectingDice
 
 
 init : Fallout
@@ -87,9 +89,19 @@ rollPatientBody dice fallout =
     fallout |> push (RolledPatientBody dice) |> Ok
 
 
-takePatientBodyDice : Dice Held -> Fallout -> Result error Fallout
-takePatientBodyDice dice =
-    push (TookPatientBodyDice dice) >> Ok
+takePatientBodyDice : Dice Held -> Fallout -> Result Error Fallout
+takePatientBodyDice patientBodyDice =
+    check
+        (\current ->
+            case current of
+                ExpectingDice dice ->
+                    (dice.patientBody == Nothing)
+                        |> toError CannotTakePatientBodyDiceAfterRolling
+
+                _ ->
+                    Err NotExpectingDice
+        )
+        >> Result.map (push (TookPatientBodyDice patientBodyDice))
 
 
 state : Fallout -> State

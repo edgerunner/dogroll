@@ -45,8 +45,29 @@ suite =
                 canTakeBodyDiceIfNotTakenPreviously
             , test "body dice are automatically taken after a failed avoid roll"
                 bodyDiceAreAutomaticallyTakenAfterAFailedAvoidRoll
+            , test "body dice can not be manually taken after a previous body roll"
+                bodyDiceCanNotBeManuallyTakenAfterAPreviousBodyRoll
             ]
         ]
+
+
+bodyDiceCanNotBeManuallyTakenAfterAPreviousBodyRoll : () -> Expectation
+bodyDiceCanNotBeManuallyTakenAfterAPreviousBodyRoll () =
+    let
+        rolledFalloutDice =
+            [ Die.cheat D10 7, Die.cheat D10 8, Die.cheat D10 6, Die.cheat D10 3 ]
+                |> Dice.fromList
+
+        rolledBodyDice =
+            [ Die.cheat D6 4, Die.cheat D6 4, Die.cheat D6 2 ]
+                |> Dice.fromList
+    in
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.four))
+        |> Result.andThen (Fallout.roll rolledFalloutDice)
+        |> Result.andThen (Fallout.rollPatientBody rolledBodyDice)
+        |> Result.andThen (Fallout.takePatientBodyDice <| Dice.init D6 Pips.two)
+        |> Expect.err
 
 
 bodyDiceAreAutomaticallyTakenAfterAFailedAvoidRoll : () -> Expectation
