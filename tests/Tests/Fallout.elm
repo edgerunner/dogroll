@@ -1,6 +1,5 @@
 module Tests.Fallout exposing (suite)
 
-import Conflict
 import Dice
 import Die
 import Die.Size exposing (Size(..))
@@ -62,25 +61,6 @@ allConflictDiceMustBeTaken () =
         rolledFalloutDice =
             [ Die.cheat D10 10, Die.cheat D10 7, Die.cheat D10 6 ]
                 |> Dice.fromList
-
-        rolledBodyDice =
-            [ Die.cheat D6 6, Die.cheat D6 1 ]
-                |> Dice.fromList
-
-        rolledAcuityDice =
-            [ Die.cheat D6 6, Die.cheat D6 3, Die.cheat D6 2 ]
-                |> Dice.fromList
-
-        rolledDemonicDice =
-            [ Die.cheat D10 4 ] |> Dice.fromList
-
-        conflict =
-            Ok Conflict.start
-                |> Result.andThen (Conflict.takeDice rolledFalloutDice Conflict.opponent)
-                |> Result.andThen (Conflict.takeDice rolledDemonicDice Conflict.opponent)
-                |> Result.andThen (Conflict.takeDice rolledBodyDice Conflict.proponent)
-                |> Result.andThen (Conflict.takeDice rolledAcuityDice Conflict.proponent)
-                |> Result.withDefault Conflict.start
     in
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
@@ -88,9 +68,9 @@ allConflictDiceMustBeTaken () =
         |> Result.andThen (Fallout.takePatientBodyDice <| Dice.init D6 Pips.two)
         |> Result.andThen (Fallout.takeHealerAcuityDice <| Dice.init D6 Pips.three)
         |> Expect.all
-            [ Result.andThen (Fallout.startConflict conflict) >> Expect.err
+            [ Result.andThen Fallout.startConflict >> Expect.err
             , Result.andThen (Fallout.takeDemonicInfluenceDice <| Dice.init D10 Pips.one)
-                >> Result.andThen (Fallout.startConflict conflict)
+                >> Result.andThen Fallout.startConflict
                 >> Expect.ok
             ]
 

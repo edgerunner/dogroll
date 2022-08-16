@@ -3,6 +3,7 @@ module Fallout exposing (ConflictDice, Fallout, Outcome(..), State(..), init, ro
 import Conflict exposing (Conflict)
 import Dice exposing (Dice)
 import Die exposing (Held, Rolled)
+import Random exposing (Generator)
 
 
 type Fallout
@@ -16,7 +17,7 @@ type Event
     | TookPatientBodyDice (Dice Held)
     | TookHealerAcuityDice (Dice Held)
     | TookDemonicInfluenceDice (Dice Held)
-    | StartedConflict
+    | StartedConflict Conflict
     | EndedConflict Conflict
 
 
@@ -50,7 +51,6 @@ type Error
     | CannotTakePatientBodyDiceAfterRolling
     | NotExpectingDice
     | UnableToStartConflict
-    | MismatchedConflict
 
 
 init : Fallout
@@ -118,31 +118,19 @@ takeDemonicInfluenceDice demonicInfluenceDice =
         >> Result.map (push (TookDemonicInfluenceDice demonicInfluenceDice))
 
 
-startConflict : Conflict -> Fallout -> Result Error Fallout
-startConflict conflict =
-    check (conflictMatchesDice conflict)
-        >> Result.map (push StartedConflict)
+startConflict : Fallout -> Result Error (Generator Fallout)
+startConflict fallout =
+    state fallout
+        |> (\current ->
+                case current of
+                    ExpectingDice dice ->
+                        conflictGenerator dice
+                            |> Result.map
+                                (Random.map (StartedConflict >> push >> (|>) fallout))
 
-
-conflictMatchesDice : Conflict -> State -> Result Error ()
-conflictMatchesDice conflict current =
-    case ( current, Conflict.state conflict ) of
-        ( ExpectingDice dice, conflictState ) ->
-            [ ([ dice.patientBody, dice.healerAcuity ]
-                |> List.map (Maybe.withDefault Dice.empty)
-                |> Dice.combine
-              )
-                == (conflictState.proponent.pool |> Dice.hold)
-            , ([ dice.fallout, dice.demonicInfluence |> Maybe.withDefault Dice.empty ]
-                |> Dice.combine
-              )
-                == (conflictState.opponent.pool |> Dice.hold)
-            ]
-                |> List.foldl (&&) True
-                |> toError MismatchedConflict
-
-        _ ->
-            Err UnableToStartConflict
+                    _ ->
+                        Err UnableToStartConflict
+           )
 
 
 
@@ -274,3 +262,34 @@ checkExpectingDice predicate =
                 _ ->
                     Err NotExpectingDice
         )
+
+
+
+-- GENERATORS
+
+
+conflictGenerator : ConflictDice -> Result Error (Generator Conflict)
+conflictGenerator dice =
+    let
+        rolledToConflict fallout body acuity demonic =
+            Ok Conflict.start
+                |> Result.andThen (Conflict.takeDice body Conflict.proponent)
+                |> Result.andThen (Conflict.takeDice acuity Conflict.proponent)
+                |> Result.andThen (Conflict.takeDice demonic Conflict.opponent)
+                |> Result.andThen (Conflict.takeDice fallout Conflict.opponent)
+                |> Result.withDefault Conflict.start
+
+        heldToGenerator fallout body acuity demonic =
+            Random.map4
+                rolledToConflict
+                (Dice.generator body)
+                (Dice.generator acuity)
+                (Dice.generator demonic)
+                (Dice.generator fallout)
+    in
+    Maybe.map3
+        (heldToGenerator dice.fallout)
+        dice.patientBody
+        dice.healerAcuity
+        dice.demonicInfluence
+        |> Result.fromMaybe UnableToStartConflict
