@@ -4,7 +4,7 @@ import Dice
 import Die
 import Die.Size exposing (Size(..))
 import Expect exposing (Expectation)
-import Fallout exposing (Fallout, Outcome(..), State(..))
+import Fallout exposing (ConflictDice, Fallout, Outcome(..), State(..))
 import Pips
 import Test exposing (Test, describe, test)
 
@@ -77,20 +77,13 @@ diceCanBeTaken () =
         |> Result.andThen (Fallout.takePatientBodyDice <| Dice.init D6 Pips.two)
         |> Result.andThen (Fallout.takeHealerAcuityDice <| Dice.init D6 Pips.three)
         |> Result.andThen (Fallout.takeDemonicInfluenceDice <| Dice.init D10 Pips.one)
-        |> expectStateWith
-            (\state ->
-                case state of
-                    ExpectingDice dice ->
-                        dice
-                            |> Expect.all
-                                [ .fallout >> Expect.equal (Dice.init D10 Pips.three)
-                                , .patientBody >> Expect.equal (Dice.init D6 Pips.two |> Just)
-                                , .healerAcuity >> Expect.equal (Dice.init D6 Pips.three |> Just)
-                                , .demonicInfluence >> Expect.equal (Dice.init D10 Pips.one |> Just)
-                                ]
-
-                    _ ->
-                        Expect.fail "expected state to be expecting dice"
+        |> expectStateExpectingDiceWith
+            (Expect.all
+                [ .fallout >> Expect.equal (Dice.init D10 Pips.three)
+                , .patientBody >> Expect.equal (Dice.init D6 Pips.two |> Just)
+                , .healerAcuity >> Expect.equal (Dice.init D6 Pips.three |> Just)
+                , .demonicInfluence >> Expect.equal (Dice.init D10 Pips.one |> Just)
+                ]
             )
 
 
@@ -128,16 +121,8 @@ bodyDiceAreAutomaticallyTakenAfterAFailedAvoidRoll () =
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.four))
         |> Result.andThen (Fallout.roll rolledFalloutDice)
         |> Result.andThen (Fallout.rollPatientBody rolledBodyDice)
-        |> expectStateWith
-            (\state ->
-                case state of
-                    ExpectingDice dice ->
-                        dice.patientBody
-                            |> Expect.equal (Just <| Dice.init D6 Pips.three)
-
-                    _ ->
-                        Expect.fail "expected state to be expecting dice"
-            )
+        |> expectStateExpectingDiceWith
+            (.patientBody >> Expect.equal (Just <| Dice.init D6 Pips.three))
 
 
 canTakeBodyDiceIfNotTakenPreviously : () -> Expectation
@@ -151,18 +136,11 @@ canTakeBodyDiceIfNotTakenPreviously () =
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
         |> Result.andThen (Fallout.roll rolledFalloutDice)
         |> Result.andThen (Fallout.takePatientBodyDice <| Dice.init D6 Pips.two)
-        |> expectStateWith
-            (\state ->
-                case state of
-                    ExpectingDice dice ->
-                        dice
-                            |> Expect.all
-                                [ .fallout >> Expect.equal (Dice.init D10 Pips.three)
-                                , .patientBody >> Expect.equal (Dice.init D6 Pips.two |> Just)
-                                ]
-
-                    _ ->
-                        Expect.fail "expected state to be expecting dice"
+        |> expectStateExpectingDiceWith
+            (Expect.all
+                [ .fallout >> Expect.equal (Dice.init D10 Pips.three)
+                , .patientBody >> Expect.equal (Dice.init D6 Pips.two |> Just)
+                ]
             )
 
 
@@ -181,20 +159,13 @@ failedAvoidRollIsRequiredMedicalAttention () =
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.four))
         |> Result.andThen (Fallout.roll rolledFalloutDice)
         |> Result.andThen (Fallout.rollPatientBody rolledBodyDice)
-        |> expectStateWith
-            (\state ->
-                case state of
-                    ExpectingDice dice ->
-                        dice
-                            |> Expect.all
-                                [ .fallout >> Expect.equal (Dice.init D10 Pips.four)
-                                , .patientBody >> Expect.equal (Dice.init D6 Pips.three |> Just)
-                                , .healerAcuity >> Expect.equal Nothing
-                                , .demonicInfluence >> Expect.equal Nothing
-                                ]
-
-                    _ ->
-                        Expect.fail "expected to be expecting conflict dice"
+        |> expectStateExpectingDiceWith
+            (Expect.all
+                [ .fallout >> Expect.equal (Dice.init D10 Pips.four)
+                , .patientBody >> Expect.equal (Dice.init D6 Pips.three |> Just)
+                , .healerAcuity >> Expect.equal Nothing
+                , .demonicInfluence >> Expect.equal Nothing
+                ]
             )
 
 
@@ -208,16 +179,8 @@ upToNineteenIsRequiredMedicalAttention () =
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
         |> Result.andThen (Fallout.roll rolledFalloutDice)
-        |> expectStateWith
-            (\state ->
-                case state of
-                    ExpectingDice dice ->
-                        dice.fallout
-                            |> Expect.equal (Dice.init D10 Pips.three)
-
-                    _ ->
-                        Expect.fail "expected required medical attention"
-            )
+        |> expectStateExpectingDiceWith
+            (.fallout >> Expect.equal (Dice.init D10 Pips.three))
 
 
 medicalAttentionIsRequiredIfThePatientCanNotSee : () -> Expectation
@@ -235,15 +198,7 @@ medicalAttentionIsRequiredIfThePatientCanNotSee () =
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
         |> Result.andThen (Fallout.roll rolledFalloutDice)
         |> Result.andThen (Fallout.rollPatientBody rolledBodyDice)
-        |> expectStateWith
-            (\state ->
-                case state of
-                    ExpectingDice _ ->
-                        Expect.pass
-
-                    _ ->
-                        Expect.fail "expected to be expecting conflict dice"
-            )
+        |> expectStateExpectingDiceWith (always Expect.pass)
 
 
 seeingWithFourDiceIsRequiredMedicalAttention : () -> Expectation
@@ -261,15 +216,7 @@ seeingWithFourDiceIsRequiredMedicalAttention () =
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
         |> Result.andThen (Fallout.roll rolledFalloutDice)
         |> Result.andThen (Fallout.rollPatientBody rolledBodyDice)
-        |> expectStateWith
-            (\state ->
-                case state of
-                    ExpectingDice _ ->
-                        Expect.pass
-
-                    _ ->
-                        Expect.fail "expected to be expecting conflict dice"
-            )
+        |> expectStateExpectingDiceWith (always Expect.pass)
 
 
 seeingWithThreeDiceIsAvoidedMedicalAttention : () -> Expectation
@@ -425,3 +372,16 @@ expectStateWith stateToExpectation =
     Result.map Fallout.state
         >> Result.map stateToExpectation
         >> Result.withDefault (Expect.fail "expected Ok")
+
+
+expectStateExpectingDiceWith : (ConflictDice -> Expectation) -> Result error Fallout -> Expectation
+expectStateExpectingDiceWith diceToExpectaion =
+    expectStateWith
+        (\state ->
+            case state of
+                ExpectingDice dice ->
+                    diceToExpectaion dice
+
+                _ ->
+                    Expect.fail "expected to be expecting conflict dice"
+        )
