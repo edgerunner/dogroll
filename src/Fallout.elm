@@ -1,4 +1,4 @@
-module Fallout exposing (ConflictDice, Fallout, Outcome(..), State(..), init, roll, rollPatientBody, startConflict, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice)
+module Fallout exposing (ConflictDice, Fallout, Outcome(..), State(..), init, roll, rollPatientBody, startConflict, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice, test_roll)
 
 import Conflict exposing (Conflict)
 import Dice exposing (Dice)
@@ -47,7 +47,6 @@ type Outcome
 type Error
     = CanNotTakeFalloutDiceAfterRolling
     | CannotRollFalloutMoreThanOnce
-    | MustRollTheFalloutDice (Dice Held)
     | CannotTakePatientBodyDiceAfterRolling
     | NotExpectingDice
     | UnableToStartConflict
@@ -72,23 +71,21 @@ takeDice dice =
         >> Result.map (push (TookDice dice))
 
 
-roll : Dice Rolled -> Fallout -> Result Error Fallout
-roll rolledDice =
-    check
-        (\current ->
-            case current of
-                Pending pendingDice ->
-                    (rolledDice
-                        |> Dice.sizes
-                        |> List.foldl (Die.init >> Dice.add) Dice.empty
-                    )
-                        == pendingDice
-                        |> toError (MustRollTheFalloutDice pendingDice)
+roll : Fallout -> Result Error (Generator Fallout)
+roll fallout =
+    case state fallout of
+        Pending pendingDice ->
+            Dice.generator pendingDice
+                |> Random.map (RolledFallout >> push >> (|>) fallout)
+                |> Ok
 
-                _ ->
-                    Err CannotRollFalloutMoreThanOnce
-        )
-        >> Result.map (push (RolledFallout rolledDice))
+        _ ->
+            Err CannotRollFalloutMoreThanOnce
+
+
+test_roll : Dice Rolled -> Fallout -> Fallout
+test_roll dice =
+    push (RolledFallout dice)
 
 
 rollPatientBody : Dice Rolled -> Fallout -> Result Error Fallout
