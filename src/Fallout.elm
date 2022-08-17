@@ -1,8 +1,10 @@
-module Fallout exposing (ConflictDice, Fallout, Outcome(..), State(..), init, roll, rollPatientBody, startConflict, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice)
+module Fallout exposing (ConflictDice, Fallout, Outcome(..), State(..), init, roll, rollPatientBody, startConflict, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice, test_roll, test_rollPatientBody)
 
 import Conflict exposing (Conflict)
 import Dice exposing (Dice)
 import Die exposing (Held, Rolled)
+import Die.Size exposing (Size(..))
+import Pips exposing (Pips)
 import Random exposing (Generator)
 
 
@@ -47,7 +49,6 @@ type Outcome
 type Error
     = CanNotTakeFalloutDiceAfterRolling
     | CannotRollFalloutMoreThanOnce
-    | MustRollTheFalloutDice (Dice Held)
     | CannotTakePatientBodyDiceAfterRolling
     | NotExpectingDice
     | UnableToStartConflict
@@ -72,50 +73,56 @@ takeDice dice =
         >> Result.map (push (TookDice dice))
 
 
-roll : Dice Rolled -> Fallout -> Result Error Fallout
-roll rolledDice =
-    check
-        (\current ->
-            case current of
-                Pending pendingDice ->
-                    (rolledDice
-                        |> Dice.sizes
-                        |> List.foldl (Die.init >> Dice.add) Dice.empty
-                    )
-                        == pendingDice
-                        |> toError (MustRollTheFalloutDice pendingDice)
+roll : Fallout -> Result Error (Generator Fallout)
+roll fallout =
+    case state fallout of
+        Pending pendingDice ->
+            Dice.generator pendingDice
+                |> Random.map (RolledFallout >> push >> (|>) fallout)
+                |> Ok
 
-                _ ->
-                    Err CannotRollFalloutMoreThanOnce
-        )
-        >> Result.map (push (RolledFallout rolledDice))
+        _ ->
+            Err CannotRollFalloutMoreThanOnce
 
 
-rollPatientBody : Dice Rolled -> Fallout -> Result Error Fallout
-rollPatientBody dice fallout =
-    fallout |> push (RolledPatientBody dice) |> Ok
+test_roll : Dice Rolled -> Fallout -> Fallout
+test_roll dice =
+    push (RolledFallout dice)
 
 
-takePatientBodyDice : Dice Held -> Fallout -> Result Error Fallout
-takePatientBodyDice patientBodyDice =
+rollPatientBody : Pips -> Fallout -> Result Error (Generator Fallout)
+rollPatientBody pips fallout =
+    Dice.init D6 pips
+        |> Dice.generator
+        |> Random.map (RolledPatientBody >> push >> (|>) fallout)
+        |> Ok
+
+
+test_rollPatientBody : Dice Rolled -> Fallout -> Fallout
+test_rollPatientBody dice =
+    push (RolledPatientBody dice)
+
+
+takePatientBodyDice : Pips -> Fallout -> Result Error Fallout
+takePatientBodyDice pips =
     checkExpectingDice
         (.patientBody
             >> (==) Nothing
             >> toError CannotTakePatientBodyDiceAfterRolling
         )
-        >> Result.map (push (TookPatientBodyDice patientBodyDice))
+        >> Result.map (push (TookPatientBodyDice <| Dice.init D6 pips))
 
 
-takeHealerAcuityDice : Dice Held -> Fallout -> Result Error Fallout
-takeHealerAcuityDice healerAcuityDice =
+takeHealerAcuityDice : Pips -> Fallout -> Result Error Fallout
+takeHealerAcuityDice pips =
     checkExpectingDice Ok
-        >> Result.map (push (TookHealerAcuityDice healerAcuityDice))
+        >> Result.map (push (TookHealerAcuityDice <| Dice.init D6 pips))
 
 
-takeDemonicInfluenceDice : Dice Held -> Fallout -> Result Error Fallout
-takeDemonicInfluenceDice demonicInfluenceDice =
+takeDemonicInfluenceDice : Pips -> Fallout -> Result Error Fallout
+takeDemonicInfluenceDice pips =
     checkExpectingDice Ok
-        >> Result.map (push (TookDemonicInfluenceDice demonicInfluenceDice))
+        >> Result.map (push (TookDemonicInfluenceDice <| Dice.init D10 pips))
 
 
 startConflict : Fallout -> Result Error (Generator Fallout)
