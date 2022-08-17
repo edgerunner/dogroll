@@ -7,7 +7,7 @@ import Die.Size exposing (Size(..))
 import Expect exposing (Expectation)
 import Fallout exposing (ConflictDice, Fallout, Outcome(..), State(..))
 import Pips
-import Random exposing (Seed)
+import Random exposing (Generator, Seed)
 import Test exposing (Test, describe, test)
 import Tests.Fuzzer
 
@@ -355,7 +355,7 @@ diceCantBeRolledTwice () =
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D4 Pips.three))
         |> Result.andThen Fallout.roll
-        |> Result.map (Random.step >> (|>) (Random.initialSeed 0) >> Tuple.first)
+        |> Result.map (stepWith <| Random.initialSeed 0)
         |> Result.andThen Fallout.roll
         |> Expect.err
 
@@ -365,7 +365,7 @@ diceCantBeTakenAfterRoll () =
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D4 Pips.three))
         |> Result.andThen Fallout.roll
-        |> Result.map (Random.step >> (|>) (Random.initialSeed 0) >> Tuple.first)
+        |> Result.map (stepWith <| Random.initialSeed 0)
         |> Result.andThen (Fallout.takeDice (Dice.init D6 Pips.three))
         |> Expect.err
 
@@ -375,7 +375,7 @@ pendingDiceCanBeRolled () =
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D4 Pips.three))
         |> Result.andThen Fallout.roll
-        |> Result.map (Random.step >> (|>) (Random.initialSeed 0) >> Tuple.first)
+        |> Result.map (stepWith <| Random.initialSeed 0)
         |> Result.map Fallout.state
         |> (\resultingState ->
                 case resultingState of
@@ -438,3 +438,12 @@ expectStateExpectingDiceWith diceToExpectaion =
                 _ ->
                     Expect.fail "expected to be expecting conflict dice"
         )
+
+
+
+-- HELPERS
+
+
+stepWith : Seed -> Generator Fallout -> Fallout
+stepWith seed gen =
+    Random.step gen seed |> Tuple.first
