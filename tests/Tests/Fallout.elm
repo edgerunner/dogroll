@@ -71,9 +71,9 @@ conflictStartsWithMatchingDice seed =
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
         |> Result.map (Fallout.test_roll rolledFalloutDice)
-        |> Result.andThen (Fallout.takePatientBodyDice <| Dice.init D6 Pips.two)
-        |> Result.andThen (Fallout.takeHealerAcuityDice <| Dice.init D6 Pips.three)
-        |> Result.andThen (Fallout.takeDemonicInfluenceDice <| Dice.init D10 Pips.one)
+        |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
+        |> Result.andThen (Fallout.takeHealerAcuityDice Pips.three)
+        |> Result.andThen (Fallout.takeDemonicInfluenceDice Pips.one)
         |> Result.andThen Fallout.startConflict
         |> Result.map (Random.step >> (|>) seed >> Tuple.first)
         |> Result.map Fallout.state
@@ -107,11 +107,11 @@ allConflictDiceMustBeTaken () =
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
         |> Result.map (Fallout.test_roll rolledFalloutDice)
-        |> Result.andThen (Fallout.takePatientBodyDice <| Dice.init D6 Pips.two)
-        |> Result.andThen (Fallout.takeHealerAcuityDice <| Dice.init D6 Pips.three)
+        |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
+        |> Result.andThen (Fallout.takeHealerAcuityDice Pips.three)
         |> Expect.all
             [ Result.andThen Fallout.startConflict >> Expect.err
-            , Result.andThen (Fallout.takeDemonicInfluenceDice <| Dice.init D10 Pips.one)
+            , Result.andThen (Fallout.takeDemonicInfluenceDice Pips.one)
                 >> Result.andThen Fallout.startConflict
                 >> Expect.ok
             ]
@@ -122,9 +122,9 @@ diceCantBeTakenUnlessExpected () =
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
         |> Expect.all
-            [ Result.andThen (Fallout.takePatientBodyDice <| Dice.init D6 Pips.three) >> Expect.err
-            , Result.andThen (Fallout.takeHealerAcuityDice <| Dice.init D6 Pips.three) >> Expect.err
-            , Result.andThen (Fallout.takeDemonicInfluenceDice <| Dice.init D10 Pips.three) >> Expect.err
+            [ Result.andThen (Fallout.takePatientBodyDice Pips.three) >> Expect.err
+            , Result.andThen (Fallout.takeHealerAcuityDice Pips.three) >> Expect.err
+            , Result.andThen (Fallout.takeDemonicInfluenceDice Pips.three) >> Expect.err
             ]
 
 
@@ -138,9 +138,9 @@ diceCanBeTaken () =
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
         |> Result.map (Fallout.test_roll rolledFalloutDice)
-        |> Result.andThen (Fallout.takePatientBodyDice <| Dice.init D6 Pips.two)
-        |> Result.andThen (Fallout.takeHealerAcuityDice <| Dice.init D6 Pips.three)
-        |> Result.andThen (Fallout.takeDemonicInfluenceDice <| Dice.init D10 Pips.one)
+        |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
+        |> Result.andThen (Fallout.takeHealerAcuityDice Pips.three)
+        |> Result.andThen (Fallout.takeDemonicInfluenceDice Pips.one)
         |> expectStateExpectingDiceWith
             (Expect.all
                 [ .fallout >> Expect.equal (Dice.init D10 Pips.three)
@@ -166,7 +166,7 @@ bodyDiceCanNotBeManuallyTakenAfterAPreviousBodyRoll () =
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.four))
         |> Result.map (Fallout.test_roll rolledFalloutDice)
         |> Result.map (Fallout.test_rollPatientBody rolledBodyDice)
-        |> Result.andThen (Fallout.takePatientBodyDice <| Dice.init D6 Pips.two)
+        |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
         |> Expect.err
 
 
@@ -199,7 +199,7 @@ canTakeBodyDiceIfNotTakenPreviously () =
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
         |> Result.map (Fallout.test_roll rolledFalloutDice)
-        |> Result.andThen (Fallout.takePatientBodyDice <| Dice.init D6 Pips.two)
+        |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
         |> expectStateExpectingDiceWith
             (Expect.all
                 [ .fallout >> Expect.equal (Dice.init D10 Pips.three)

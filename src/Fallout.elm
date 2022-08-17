@@ -103,26 +103,26 @@ test_rollPatientBody dice =
     push (RolledPatientBody dice)
 
 
-takePatientBodyDice : Dice Held -> Fallout -> Result Error Fallout
-takePatientBodyDice patientBodyDice =
+takePatientBodyDice : Pips -> Fallout -> Result Error Fallout
+takePatientBodyDice pips =
     checkExpectingDice
         (.patientBody
             >> (==) Nothing
             >> toError CannotTakePatientBodyDiceAfterRolling
         )
-        >> Result.map (push (TookPatientBodyDice patientBodyDice))
+        >> Result.map (push (TookPatientBodyDice <| Dice.init D6 pips))
 
 
-takeHealerAcuityDice : Dice Held -> Fallout -> Result Error Fallout
-takeHealerAcuityDice healerAcuityDice =
+takeHealerAcuityDice : Pips -> Fallout -> Result Error Fallout
+takeHealerAcuityDice pips =
     checkExpectingDice Ok
-        >> Result.map (push (TookHealerAcuityDice healerAcuityDice))
+        >> Result.map (push (TookHealerAcuityDice <| Dice.init D6 pips))
 
 
-takeDemonicInfluenceDice : Dice Held -> Fallout -> Result Error Fallout
-takeDemonicInfluenceDice demonicInfluenceDice =
+takeDemonicInfluenceDice : Pips -> Fallout -> Result Error Fallout
+takeDemonicInfluenceDice pips =
     checkExpectingDice Ok
-        >> Result.map (push (TookDemonicInfluenceDice demonicInfluenceDice))
+        >> Result.map (push (TookDemonicInfluenceDice <| Dice.init D10 pips))
 
 
 startConflict : Fallout -> Result Error (Generator Fallout)
