@@ -1,12 +1,15 @@
 module Tests.Fallout exposing (suite)
 
+import Conflict
 import Dice
 import Die
 import Die.Size exposing (Size(..))
 import Expect exposing (Expectation)
 import Fallout exposing (ConflictDice, Fallout, Outcome(..), State(..))
 import Pips
+import Random exposing (Seed)
 import Test exposing (Test, describe, test)
+import Tests.Fuzzer
 
 
 suite : Test
@@ -51,8 +54,48 @@ suite =
             , test "dice can't be taken unless expected" diceCantBeTakenUnlessExpected
             ]
         , describe "starting a conflict"
-            [ test "all conflict dice must be taken" allConflictDiceMustBeTaken ]
+            [ test "all conflict dice must be taken" allConflictDiceMustBeTaken
+            , Test.fuzz Tests.Fuzzer.seed
+                "conflict starts with matching dice"
+                conflictStartsWithMatchingDice
+            ]
         ]
+
+
+conflictStartsWithMatchingDice : Seed -> Expectation
+conflictStartsWithMatchingDice seed =
+    let
+        rolledFalloutDice =
+            [ Die.cheat D10 10, Die.cheat D10 7, Die.cheat D10 6 ]
+                |> Dice.fromList
+    in
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
+        |> Result.andThen (Fallout.roll rolledFalloutDice)
+        |> Result.andThen (Fallout.takePatientBodyDice <| Dice.init D6 Pips.two)
+        |> Result.andThen (Fallout.takeHealerAcuityDice <| Dice.init D6 Pips.three)
+        |> Result.andThen (Fallout.takeDemonicInfluenceDice <| Dice.init D10 Pips.one)
+        |> Result.andThen Fallout.startConflict
+        |> Result.map (Random.step >> (|>) seed >> Tuple.first)
+        |> Result.map Fallout.state
+        |> (\stateResult ->
+                case stateResult of
+                    Ok (InConflict conflict) ->
+                        Conflict.state conflict
+                            |> Expect.all
+                                [ .proponent
+                                    >> .pool
+                                    >> Dice.hold
+                                    >> Expect.equal (Dice.init D6 Pips.five)
+                                , .opponent
+                                    >> .pool
+                                    >> Dice.hold
+                                    >> Expect.equal (Dice.init D10 Pips.four)
+                                ]
+
+                    _ ->
+                        Expect.fail "state is not in conflict"
+           )
 
 
 allConflictDiceMustBeTaken : () -> Expectation

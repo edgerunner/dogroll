@@ -215,6 +215,9 @@ handleEvents event currentState =
         ( TookDemonicInfluenceDice demonicInfluenceDice, ExpectingDice dice ) ->
             ExpectingDice { dice | demonicInfluence = Just demonicInfluenceDice }
 
+        ( StartedConflict conflict, _ ) ->
+            InConflict conflict
+
         _ ->
             currentState
 
@@ -282,10 +285,10 @@ conflictGenerator dice =
         heldToGenerator fallout body acuity demonic =
             Random.map4
                 rolledToConflict
+                (Dice.generator fallout)
                 (Dice.generator body)
                 (Dice.generator acuity)
                 (Dice.generator demonic)
-                (Dice.generator fallout)
     in
     Maybe.map3
         (heldToGenerator dice.fallout)
