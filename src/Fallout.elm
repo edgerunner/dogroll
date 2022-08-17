@@ -1,8 +1,10 @@
-module Fallout exposing (ConflictDice, Fallout, Outcome(..), State(..), init, roll, rollPatientBody, startConflict, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice, test_roll)
+module Fallout exposing (ConflictDice, Fallout, Outcome(..), State(..), init, roll, rollPatientBody, startConflict, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice, test_roll, test_rollPatientBody)
 
 import Conflict exposing (Conflict)
 import Dice exposing (Dice)
 import Die exposing (Held, Rolled)
+import Die.Size exposing (Size(..))
+import Pips exposing (Pips)
 import Random exposing (Generator)
 
 
@@ -88,9 +90,17 @@ test_roll dice =
     push (RolledFallout dice)
 
 
-rollPatientBody : Dice Rolled -> Fallout -> Result Error Fallout
-rollPatientBody dice fallout =
-    fallout |> push (RolledPatientBody dice) |> Ok
+rollPatientBody : Pips -> Fallout -> Result Error (Generator Fallout)
+rollPatientBody pips fallout =
+    Dice.init D6 pips
+        |> Dice.generator
+        |> Random.map (RolledPatientBody >> push >> (|>) fallout)
+        |> Ok
+
+
+test_rollPatientBody : Dice Rolled -> Fallout -> Fallout
+test_rollPatientBody dice =
+    push (RolledPatientBody dice)
 
 
 takePatientBodyDice : Dice Held -> Fallout -> Result Error Fallout

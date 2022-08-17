@@ -165,7 +165,7 @@ bodyDiceCanNotBeManuallyTakenAfterAPreviousBodyRoll () =
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.four))
         |> Result.map (Fallout.test_roll rolledFalloutDice)
-        |> Result.andThen (Fallout.rollPatientBody rolledBodyDice)
+        |> Result.map (Fallout.test_rollPatientBody rolledBodyDice)
         |> Result.andThen (Fallout.takePatientBodyDice <| Dice.init D6 Pips.two)
         |> Expect.err
 
@@ -184,7 +184,7 @@ bodyDiceAreAutomaticallyTakenAfterAFailedAvoidRoll () =
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.four))
         |> Result.map (Fallout.test_roll rolledFalloutDice)
-        |> Result.andThen (Fallout.rollPatientBody rolledBodyDice)
+        |> Result.map (Fallout.test_rollPatientBody rolledBodyDice)
         |> expectStateExpectingDiceWith
             (.patientBody >> Expect.equal (Just <| Dice.init D6 Pips.three))
 
@@ -222,7 +222,7 @@ failedAvoidRollIsRequiredMedicalAttention () =
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.four))
         |> Result.map (Fallout.test_roll rolledFalloutDice)
-        |> Result.andThen (Fallout.rollPatientBody rolledBodyDice)
+        |> Result.map (Fallout.test_rollPatientBody rolledBodyDice)
         |> expectStateExpectingDiceWith
             (Expect.all
                 [ .fallout >> Expect.equal (Dice.init D10 Pips.four)
@@ -261,7 +261,7 @@ medicalAttentionIsRequiredIfThePatientCanNotSee () =
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
         |> Result.map (Fallout.test_roll rolledFalloutDice)
-        |> Result.andThen (Fallout.rollPatientBody rolledBodyDice)
+        |> Result.map (Fallout.test_rollPatientBody rolledBodyDice)
         |> expectStateExpectingDiceWith (always Expect.pass)
 
 
@@ -279,7 +279,7 @@ seeingWithFourDiceIsRequiredMedicalAttention () =
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
         |> Result.map (Fallout.test_roll rolledFalloutDice)
-        |> Result.andThen (Fallout.rollPatientBody rolledBodyDice)
+        |> Result.map (Fallout.test_rollPatientBody rolledBodyDice)
         |> expectStateExpectingDiceWith (always Expect.pass)
 
 
@@ -297,7 +297,7 @@ seeingWithThreeDiceIsAvoidedMedicalAttention () =
     Ok Fallout.init
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
         |> Result.map (Fallout.test_roll rolledFalloutDice)
-        |> Result.andThen (Fallout.rollPatientBody rolledBodyDice)
+        |> Result.map (Fallout.test_rollPatientBody rolledBodyDice)
         |> expectState (Concluded False DoubleLongTerm)
 
 
