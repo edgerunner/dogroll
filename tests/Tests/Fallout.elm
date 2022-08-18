@@ -15,7 +15,10 @@ import Tests.Fuzzer
 suite : Test
 suite =
     describe "Fallout"
-        [ test "initial state is pending" initialStateIsPending
+        [ describe "initial state"
+            [ test "is pending if there are dice" initialStateIsPending
+            , test "having no dice is an error" noDiceIsError
+            ]
         , describe "rolling dice"
             [ test "pending dice can be rolled" pendingDiceCanBeRolled
             , test "dice can not be rolled twice" diceCantBeRolledTwice
@@ -81,7 +84,6 @@ noOnesOnTheFalloutDiceIsNoExperience : () -> Expectation
 noOnesOnTheFalloutDiceIsNoExperience () =
     Dice.init D4 Pips.four
         |> Fallout.init
-        |> Ok
         |> Result.map
             ([ 2, 3, 2, 4 ]
                 |> List.map (Die.cheat D4)
@@ -97,7 +99,6 @@ aOneOnTheFalloutDiceIsExperience : () -> Expectation
 aOneOnTheFalloutDiceIsExperience () =
     Dice.init D4 Pips.four
         |> Fallout.init
-        |> Ok
         |> Result.map
             ([ 2, 1, 1, 4 ]
                 |> List.map (Die.cheat D4)
@@ -113,7 +114,6 @@ statusIsIndeterminateBeforeFalloutIsRolled : () -> Expectation
 statusIsIndeterminateBeforeFalloutIsRolled () =
     Dice.init D10 Pips.three
         |> Fallout.init
-        |> Ok
         |> Result.map Fallout.experience
         |> Result.map (Expect.equal Indeterminate)
         |> Result.withDefault (Expect.fail "did not expect an error")
@@ -134,7 +134,6 @@ falloutSetupForConflict =
     in
     Dice.init D10 Pips.three
         |> Fallout.init
-        |> Ok
         |> Result.map (Fallout.test_roll rolledFalloutDice)
         |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
         |> Result.andThen (Fallout.takeHealerAcuityDice Pips.three)
@@ -278,7 +277,6 @@ conflictStartsWithMatchingDice seed =
     in
     Dice.init D10 Pips.three
         |> Fallout.init
-        |> Ok
         |> Result.map (Fallout.test_roll rolledFalloutDice)
         |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
         |> Result.andThen (Fallout.takeHealerAcuityDice Pips.three)
@@ -315,7 +313,6 @@ allConflictDiceMustBeTaken () =
     in
     Dice.init D10 Pips.three
         |> Fallout.init
-        |> Ok
         |> Result.map (Fallout.test_roll rolledFalloutDice)
         |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
         |> Result.andThen (Fallout.takeHealerAcuityDice Pips.three)
@@ -331,7 +328,6 @@ diceCantBeTakenUnlessExpected : () -> Expectation
 diceCantBeTakenUnlessExpected () =
     Dice.init D10 Pips.three
         |> Fallout.init
-        |> Ok
         |> Expect.all
             [ Result.andThen (Fallout.takePatientBodyDice Pips.three) >> Expect.err
             , Result.andThen (Fallout.takeHealerAcuityDice Pips.three) >> Expect.err
@@ -348,7 +344,6 @@ diceCanBeTaken () =
     in
     Dice.init D10 Pips.three
         |> Fallout.init
-        |> Ok
         |> Result.map (Fallout.test_roll rolledFalloutDice)
         |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
         |> Result.andThen (Fallout.takeHealerAcuityDice Pips.three)
@@ -376,7 +371,6 @@ bodyDiceCanNotBeManuallyTakenAfterAPreviousBodyRoll () =
     in
     Dice.init D10 Pips.four
         |> Fallout.init
-        |> Ok
         |> Result.map (Fallout.test_roll rolledFalloutDice)
         |> Result.map (Fallout.test_rollPatientBody rolledBodyDice)
         |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
@@ -396,7 +390,6 @@ bodyDiceAreAutomaticallyTakenAfterAFailedAvoidRoll () =
     in
     Dice.init D10 Pips.four
         |> Fallout.init
-        |> Ok
         |> Result.map (Fallout.test_roll rolledFalloutDice)
         |> Result.map (Fallout.test_rollPatientBody rolledBodyDice)
         |> expectStateExpectingDiceWith
@@ -412,7 +405,6 @@ canTakeBodyDiceIfNotTakenPreviously () =
     in
     Dice.init D10 Pips.three
         |> Fallout.init
-        |> Ok
         |> Result.map (Fallout.test_roll rolledFalloutDice)
         |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
         |> expectStateExpectingDiceWith
@@ -436,7 +428,6 @@ failedAvoidRollIsRequiredMedicalAttention () =
     in
     Dice.init D10 Pips.three
         |> Fallout.init
-        |> Ok
         |> Result.map (Fallout.test_roll rolledFalloutDice)
         |> Result.map (Fallout.test_rollPatientBody rolledBodyDice)
         |> expectStateExpectingDiceWith
@@ -458,7 +449,6 @@ upToNineteenIsRequiredMedicalAttention () =
     in
     Dice.init D10 Pips.three
         |> Fallout.init
-        |> Ok
         |> Result.map (Fallout.test_roll rolledFalloutDice)
         |> expectStateExpectingDiceWith
             (.fallout >> Expect.equal (Dice.init D10 Pips.three))
@@ -477,7 +467,6 @@ medicalAttentionIsRequiredIfThePatientCanNotSee () =
     in
     Dice.init D10 Pips.three
         |> Fallout.init
-        |> Ok
         |> Result.map (Fallout.test_roll rolledFalloutDice)
         |> Result.map (Fallout.test_rollPatientBody rolledBodyDice)
         |> expectStateExpectingDiceWith (always Expect.pass)
@@ -496,7 +485,6 @@ seeingWithFourDiceIsRequiredMedicalAttention () =
     in
     Dice.init D10 Pips.three
         |> Fallout.init
-        |> Ok
         |> Result.map (Fallout.test_roll rolledFalloutDice)
         |> Result.map (Fallout.test_rollPatientBody rolledBodyDice)
         |> expectStateExpectingDiceWith (always Expect.pass)
@@ -515,7 +503,6 @@ seeingWithThreeDiceIsAvoidedMedicalAttention () =
     in
     Dice.init D10 Pips.three
         |> Fallout.init
-        |> Ok
         |> Result.map (Fallout.test_roll rolledFalloutDice)
         |> Result.map (Fallout.test_rollPatientBody rolledBodyDice)
         |> expectState (Concluded DoubleLongTerm)
@@ -530,7 +517,6 @@ upToFifteenIsAvoidableMedicalAttention () =
     in
     Dice.init D10 Pips.three
         |> Fallout.init
-        |> Ok
         |> Result.map (Fallout.test_roll rolledFalloutDice)
         |> expectState (ExpectingPatientBody rolledFalloutDice)
 
@@ -539,7 +525,6 @@ twentyIsImminentDeath : () -> Expectation
 twentyIsImminentDeath () =
     Dice.init D10 Pips.three
         |> Fallout.init
-        |> Ok
         |> Result.map
             ([ Die.cheat D10 10, Die.cheat D10 10, Die.cheat D10 6 ]
                 |> Dice.fromList
@@ -552,7 +537,6 @@ upToElevenIsLongTermFallout : () -> Expectation
 upToElevenIsLongTermFallout () =
     Dice.init D6 Pips.three
         |> Fallout.init
-        |> Ok
         |> Result.map
             ([ Die.cheat D6 6, Die.cheat D6 3, Die.cheat D6 2 ]
                 |> Dice.fromList
@@ -565,7 +549,6 @@ upToSevenIsShortTermFallout : () -> Expectation
 upToSevenIsShortTermFallout () =
     Dice.init D4 Pips.three
         |> Fallout.init
-        |> Ok
         |> Result.map
             ([ Die.cheat D4 3, Die.cheat D4 3, Die.cheat D4 3 ]
                 |> Dice.fromList
@@ -578,7 +561,6 @@ diceCantBeRolledTwice : () -> Expectation
 diceCantBeRolledTwice () =
     Dice.init D4 Pips.three
         |> Fallout.init
-        |> Ok
         |> Result.andThen Fallout.roll
         |> Result.map (stepWith <| Random.initialSeed 0)
         |> Result.andThen Fallout.roll
@@ -589,7 +571,6 @@ pendingDiceCanBeRolled : () -> Expectation
 pendingDiceCanBeRolled () =
     Dice.init D4 Pips.three
         |> Fallout.init
-        |> Ok
         |> Result.andThen Fallout.roll
         |> Result.map (stepWith <| Random.initialSeed 0)
         |> Result.map Fallout.state
@@ -609,12 +590,18 @@ pendingDiceCanBeRolled () =
            )
 
 
+noDiceIsError : () -> Expectation
+noDiceIsError () =
+    Dice.empty
+        |> Fallout.init
+        |> Expect.err
+
+
 initialStateIsPending : () -> Expectation
 initialStateIsPending () =
     [ Dice.init D4 Pips.three, Dice.init D6 Pips.four ]
         |> Dice.combine
         |> Fallout.init
-        |> Ok
         |> expectStateWith
             (\state ->
                 case state of

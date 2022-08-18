@@ -106,7 +106,7 @@ type Outcome
 
 
 type Error
-    = CanNotTakeFalloutDiceAfterRolling
+    = FalloutDiceCantBeEmpty
     | CannotRollFalloutMoreThanOnce
     | CannotTakePatientBodyDiceAfterRolling
     | NotExpectingDice
@@ -116,9 +116,13 @@ type Error
     | ConflictNotOver
 
 
-init : Dice Held -> Fallout
+init : Dice Held -> Result Error Fallout
 init dice =
-    Fallout [ TookDice dice ]
+    if dice /= Dice.empty then
+        Ok <| Fallout [ TookDice dice ]
+
+    else
+        Err FalloutDiceCantBeEmpty
 
 
 roll : Fallout -> Result Error (Generator Fallout)
