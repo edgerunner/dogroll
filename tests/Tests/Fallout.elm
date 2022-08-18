@@ -63,8 +63,49 @@ suite =
                 matchingConflictCanBeUsedToDetermineFallout
             , test "a non-matching conflict is an error"
                 nonMatchingConflictIsAnError
+            , test "an ongoing conflict is an error" ongoingConflictIsAnError
             ]
         ]
+
+
+ongoingConflictIsAnError : () -> Expectation
+ongoingConflictIsAnError () =
+    let
+        rolledFalloutDice =
+            [ Die.cheat D10 10, Die.cheat D10 7, Die.cheat D10 6 ]
+                |> Dice.fromList
+
+        proponentDice =
+            [ 6, 4, 3, 3, 1 ] |> List.map (Die.cheat D6) |> Dice.fromList
+
+        opponentDice =
+            [ 8, 2, 9, 4 ] |> List.map (Die.cheat D10) |> Dice.fromList
+
+        fallout =
+            Ok Fallout.init
+                |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
+                |> Result.map (Fallout.test_roll rolledFalloutDice)
+                |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
+                |> Result.andThen (Fallout.takeHealerAcuityDice Pips.three)
+                |> Result.andThen (Fallout.takeDemonicInfluenceDice Pips.one)
+                |> Result.map (Fallout.test_startConflict proponentDice opponentDice)
+
+        conflict =
+            fallout
+                |> Result.map Fallout.state
+                |> (\state ->
+                        case state of
+                            Ok (InConflict conflict_) ->
+                                conflict_
+
+                            _ ->
+                                Conflict.start
+                   )
+    in
+    fallout
+        |> Result.map (Fallout.endConflict conflict)
+        |> Result.andThen identity
+        |> Expect.err
 
 
 nonMatchingConflictIsAnError : () -> Expectation
@@ -138,6 +179,7 @@ matchingConflictCanBeUsedToDetermineFallout () =
     in
     fallout
         |> Result.map2 Fallout.endConflict conflict
+        |> Result.andThen identity
         |> Expect.ok
 
 

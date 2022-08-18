@@ -1,6 +1,6 @@
 module Fallout exposing (ConflictDice, Error(..), Fallout, Outcome(..), State(..), endConflict, init, roll, rollPatientBody, startConflict, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice, test_roll, test_rollPatientBody, test_startConflict)
 
-import Conflict exposing (Conflict)
+import Conflict exposing (Conflict, Raise(..))
 import Dice exposing (Dice)
 import Die exposing (Held, Rolled)
 import Die.Size exposing (Size(..))
@@ -54,6 +54,7 @@ type Error
     | UnableToStartConflict
     | NotInConflict
     | WrongConflict
+    | ConflictNotOver
 
 
 init : Fallout
@@ -159,7 +160,16 @@ endConflict endedConflict =
             case current of
                 InConflict ongoingConflict ->
                     if Conflict.match ongoingConflict endedConflict then
-                        Ok ()
+                        endedConflict
+                            |> Conflict.state
+                            |> (\conflictState ->
+                                    case conflictState.raise of
+                                        GivenUp _ ->
+                                            Ok ()
+
+                                        _ ->
+                                            Err ConflictNotOver
+                               )
 
                     else
                         Err WrongConflict
