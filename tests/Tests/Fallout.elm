@@ -5,7 +5,7 @@ import Dice
 import Die
 import Die.Size exposing (Size(..))
 import Expect exposing (Expectation)
-import Fallout exposing (ConflictDice, Fallout, Outcome(..), State(..))
+import Fallout exposing (ConflictDice, Experience(..), Fallout, Outcome(..), State(..))
 import Pips
 import Random exposing (Generator, Seed)
 import Test exposing (Test, describe, test)
@@ -69,7 +69,54 @@ suite =
             , test "outcome is injury if the opponent (GM) gives"
                 outcomeIsInjuryIfTheOpponentGives
             ]
+        , describe "experience"
+            [ test "status is indeterminate before fallout is rolled"
+                statusIsIndeterminateBeforeFalloutIsRolled
+            , test "a 1 on the fallout dice is experience"
+                aOneOnTheFalloutDiceIsExperience
+            , test "no 1's on the fallout dice is no experience"
+                noOnesOnTheFalloutDiceIsNoExperience
+            ]
         ]
+
+
+noOnesOnTheFalloutDiceIsNoExperience : () -> Expectation
+noOnesOnTheFalloutDiceIsNoExperience () =
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice <| Dice.init D4 Pips.four)
+        |> Result.map
+            ([ 2, 3, 2, 4 ]
+                |> List.map (Die.cheat D4)
+                |> Dice.fromList
+                |> Fallout.test_roll
+            )
+        |> Result.map Fallout.experience
+        |> Result.map (Expect.equal NoExperience)
+        |> Result.withDefault (Expect.fail "did not expect an error")
+
+
+aOneOnTheFalloutDiceIsExperience : () -> Expectation
+aOneOnTheFalloutDiceIsExperience () =
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice <| Dice.init D4 Pips.four)
+        |> Result.map
+            ([ 2, 1, 1, 4 ]
+                |> List.map (Die.cheat D4)
+                |> Dice.fromList
+                |> Fallout.test_roll
+            )
+        |> Result.map Fallout.experience
+        |> Result.map (Expect.equal <| Experience (Die.cheat D4 1))
+        |> Result.withDefault (Expect.fail "did not expect an error")
+
+
+statusIsIndeterminateBeforeFalloutIsRolled : () -> Expectation
+statusIsIndeterminateBeforeFalloutIsRolled () =
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice <| Dice.init D4 Pips.four)
+        |> Result.map Fallout.experience
+        |> Result.map (Expect.equal Indeterminate)
+        |> Result.withDefault (Expect.fail "did not expect an error")
 
 
 falloutSetupForConflict : Result Fallout.Error Fallout
@@ -121,7 +168,7 @@ outcomeIsInjuryIfTheOpponentGives () =
         |> Result.map
             (\state ->
                 case state of
-                    Concluded _ DoubleLongTerm ->
+                    Concluded DoubleLongTerm ->
                         Expect.pass
 
                     _ ->
@@ -154,7 +201,7 @@ outcomeIsDeathIfTheProponentGives () =
         |> Result.map
             (\state ->
                 case state of
-                    Concluded _ Dying ->
+                    Concluded Dying ->
                         Expect.pass
 
                     _ ->
@@ -458,7 +505,7 @@ seeingWithThreeDiceIsAvoidedMedicalAttention () =
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
         |> Result.map (Fallout.test_roll rolledFalloutDice)
         |> Result.map (Fallout.test_rollPatientBody rolledBodyDice)
-        |> expectState (Concluded False DoubleLongTerm)
+        |> expectState (Concluded DoubleLongTerm)
 
 
 upToFifteenIsAvoidableMedicalAttention : () -> Expectation
@@ -483,7 +530,7 @@ twentyIsImminentDeath () =
                 |> Dice.fromList
                 |> Fallout.test_roll
             )
-        |> expectState (Concluded False Dying)
+        |> expectState (Concluded Dying)
 
 
 upToElevenIsLongTermFallout : () -> Expectation
@@ -495,7 +542,7 @@ upToElevenIsLongTermFallout () =
                 |> Dice.fromList
                 |> Fallout.test_roll
             )
-        |> expectState (Concluded False LongTerm)
+        |> expectState (Concluded LongTerm)
 
 
 upToSevenIsShortTermFallout : () -> Expectation
@@ -507,7 +554,7 @@ upToSevenIsShortTermFallout () =
                 |> Dice.fromList
                 |> Fallout.test_roll
             )
-        |> expectState (Concluded False ShortTerm)
+        |> expectState (Concluded ShortTerm)
 
 
 diceCantBeRolledTwice : () -> Expectation

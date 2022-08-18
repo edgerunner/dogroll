@@ -1,8 +1,8 @@
-module Fallout exposing (ConflictDice, Error(..), Fallout, Outcome(..), State(..), endConflict, init, roll, rollPatientBody, startConflict, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice, test_roll, test_rollPatientBody, test_startConflict)
+module Fallout exposing (ConflictDice, Error(..), Experience(..), Fallout, Outcome(..), State(..), endConflict, experience, init, roll, rollPatientBody, startConflict, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice, test_roll, test_rollPatientBody, test_startConflict)
 
 import Conflict exposing (Conflict, Raise(..), Side(..))
 import Dice exposing (Dice)
-import Die exposing (Held, Rolled)
+import Die exposing (Die, Held, Rolled)
 import Die.Size exposing (Size(..))
 import Pips exposing (Pips)
 import Random exposing (Generator)
@@ -28,7 +28,7 @@ type State
     | ExpectingPatientBody (Dice Rolled)
     | ExpectingDice ConflictDice
     | InConflict Conflict
-    | Concluded Bool Outcome
+    | Concluded Outcome
 
 
 type alias ConflictDice =
@@ -203,10 +203,10 @@ handleEvents event currentState =
                     falloutDice |> Dice.best 2 |> Dice.total
             in
             if falloutSum <= 7 then
-                Concluded False ShortTerm
+                Concluded ShortTerm
 
             else if falloutSum <= 11 then
-                Concluded False LongTerm
+                Concluded LongTerm
 
             else if falloutSum <= 15 then
                 ExpectingPatientBody falloutDice
@@ -223,7 +223,7 @@ handleEvents event currentState =
                     }
 
             else
-                Concluded False Dying
+                Concluded Dying
 
         ( RolledPatientBody patientBodyDice, ExpectingPatientBody falloutDice ) ->
             if
@@ -236,7 +236,7 @@ handleEvents event currentState =
                             |> Dice.total
                        )
             then
-                Concluded False DoubleLongTerm
+                Concluded DoubleLongTerm
 
             else
                 ExpectingDice
@@ -268,10 +268,10 @@ handleEvents event currentState =
         ( EndedConflict endedConflict, InConflict _ ) ->
             case Conflict.state endedConflict |> .go of
                 Proponent ->
-                    Concluded False Dying
+                    Concluded Dying
 
                 Opponent ->
-                    Concluded False DoubleLongTerm
+                    Concluded DoubleLongTerm
 
         _ ->
             currentState
@@ -280,6 +280,34 @@ handleEvents event currentState =
 initialState : State
 initialState =
     Pending Dice.empty
+
+
+
+-- EXPERIENCE
+
+
+type Experience
+    = Indeterminate
+    | Experience (Die Rolled)
+    | NoExperience
+
+
+experience : Fallout -> Experience
+experience (Fallout events) =
+    case events of
+        [] ->
+            Indeterminate
+
+        (RolledFallout dice) :: _ ->
+            dice
+                |> Dice.toList
+                |> List.filter (Die.face >> (==) 1)
+                |> List.head
+                |> Maybe.map Experience
+                |> Maybe.withDefault NoExperience
+
+        _ :: rest ->
+            experience (Fallout rest)
 
 
 
