@@ -2,7 +2,7 @@ module Fallout exposing (ConflictDice, Error(..), Experience(..), Fallout, Outco
 
 import Conflict exposing (Conflict, Raise(..), Side(..))
 import Dice exposing (Dice)
-import Die exposing (Held, Rolled)
+import Die exposing (Die, Held, Rolled)
 import Die.Size exposing (Size(..))
 import Pips exposing (Pips)
 import Random exposing (Generator)
@@ -284,11 +284,25 @@ initialState =
 
 type Experience
     = Indeterminate
+    | Experience (Die Rolled)
 
 
 experience : Fallout -> Experience
-experience _ =
-    Indeterminate
+experience (Fallout events) =
+    case events of
+        [] ->
+            Indeterminate
+
+        (RolledFallout dice) :: _ ->
+            dice
+                |> Dice.toList
+                |> List.reverse
+                |> List.head
+                |> Maybe.map Experience
+                |> Maybe.withDefault Indeterminate
+
+        _ :: rest ->
+            experience (Fallout rest)
 
 
 

@@ -72,8 +72,25 @@ suite =
         , describe "experience"
             [ test "status is indeterminate before fallout is rolled"
                 statusIsIndeterminateBeforeFalloutIsRolled
+            , test "a 1 on the fallout dice is experience"
+                aOneOnTheFalloutDiceIsExperience
             ]
         ]
+
+
+aOneOnTheFalloutDiceIsExperience : () -> Expectation
+aOneOnTheFalloutDiceIsExperience () =
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice <| Dice.init D4 Pips.four)
+        |> Result.map
+            ([ 2, 1, 1, 4 ]
+                |> List.map (Die.cheat D4)
+                |> Dice.fromList
+                |> Fallout.test_roll
+            )
+        |> Result.map Fallout.experience
+        |> Result.map (Expect.equal <| Experience (Die.cheat D4 1))
+        |> Result.withDefault (Expect.fail "did not expect an error")
 
 
 statusIsIndeterminateBeforeFalloutIsRolled : () -> Expectation
