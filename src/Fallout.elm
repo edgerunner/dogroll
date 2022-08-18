@@ -28,7 +28,7 @@ type State
     | ExpectingPatientBody (Dice Rolled)
     | ExpectingDice ConflictDice
     | InConflict Conflict
-    | Concluded Bool Outcome
+    | Concluded Outcome
 
 
 type alias ConflictDice =
@@ -203,10 +203,10 @@ handleEvents event currentState =
                     falloutDice |> Dice.best 2 |> Dice.total
             in
             if falloutSum <= 7 then
-                Concluded False ShortTerm
+                Concluded ShortTerm
 
             else if falloutSum <= 11 then
-                Concluded False LongTerm
+                Concluded LongTerm
 
             else if falloutSum <= 15 then
                 ExpectingPatientBody falloutDice
@@ -223,7 +223,7 @@ handleEvents event currentState =
                     }
 
             else
-                Concluded False Dying
+                Concluded Dying
 
         ( RolledPatientBody patientBodyDice, ExpectingPatientBody falloutDice ) ->
             if
@@ -236,7 +236,7 @@ handleEvents event currentState =
                             |> Dice.total
                        )
             then
-                Concluded False DoubleLongTerm
+                Concluded DoubleLongTerm
 
             else
                 ExpectingDice
@@ -268,10 +268,10 @@ handleEvents event currentState =
         ( EndedConflict endedConflict, InConflict _ ) ->
             case Conflict.state endedConflict |> .go of
                 Proponent ->
-                    Concluded False Dying
+                    Concluded Dying
 
                 Opponent ->
-                    Concluded False DoubleLongTerm
+                    Concluded DoubleLongTerm
 
         _ ->
             currentState

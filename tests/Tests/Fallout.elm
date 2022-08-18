@@ -121,7 +121,7 @@ outcomeIsInjuryIfTheOpponentGives () =
         |> Result.map
             (\state ->
                 case state of
-                    Concluded _ DoubleLongTerm ->
+                    Concluded DoubleLongTerm ->
                         Expect.pass
 
                     _ ->
@@ -154,7 +154,7 @@ outcomeIsDeathIfTheProponentGives () =
         |> Result.map
             (\state ->
                 case state of
-                    Concluded _ Dying ->
+                    Concluded Dying ->
                         Expect.pass
 
                     _ ->
@@ -458,7 +458,7 @@ seeingWithThreeDiceIsAvoidedMedicalAttention () =
         |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
         |> Result.map (Fallout.test_roll rolledFalloutDice)
         |> Result.map (Fallout.test_rollPatientBody rolledBodyDice)
-        |> expectState (Concluded False DoubleLongTerm)
+        |> expectState (Concluded DoubleLongTerm)
 
 
 upToFifteenIsAvoidableMedicalAttention : () -> Expectation
@@ -483,7 +483,7 @@ twentyIsImminentDeath () =
                 |> Dice.fromList
                 |> Fallout.test_roll
             )
-        |> expectState (Concluded False Dying)
+        |> expectState (Concluded Dying)
 
 
 upToElevenIsLongTermFallout : () -> Expectation
@@ -495,7 +495,7 @@ upToElevenIsLongTermFallout () =
                 |> Dice.fromList
                 |> Fallout.test_roll
             )
-        |> expectState (Concluded False LongTerm)
+        |> expectState (Concluded LongTerm)
 
 
 upToSevenIsShortTermFallout : () -> Expectation
@@ -507,7 +507,7 @@ upToSevenIsShortTermFallout () =
                 |> Dice.fromList
                 |> Fallout.test_roll
             )
-        |> expectState (Concluded False ShortTerm)
+        |> expectState (Concluded ShortTerm)
 
 
 diceCantBeRolledTwice : () -> Expectation
