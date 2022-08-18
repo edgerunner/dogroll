@@ -1,4 +1,63 @@
-module Fallout exposing (ConflictDice, Error(..), Experience(..), Fallout, Outcome(..), State(..), endConflict, experience, init, roll, rollPatientBody, startConflict, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice, test_roll, test_rollPatientBody, test_startConflict)
+module Fallout exposing
+    ( Fallout, init
+    , takeDice, takeHealerAcuityDice, takePatientBodyDice, takeDemonicInfluenceDice, endConflict
+    , roll, rollPatientBody, startConflict
+    , test_roll, test_rollPatientBody, test_startConflict
+    , State(..), ConflictDice, Outcome(..), state
+    , Experience(..), experience
+    , Error(..)
+    )
+
+{-| The fallout module encapsulates the core logic behind resolving the fallout from
+a regular conflict. It records and reduces events to calculate its state.
+
+
+## Fallout and events
+
+@docs Fallout, init
+
+
+## Actions
+
+These have the signature `Fallout -> Result Error Fallout`.
+If they are successful, they return the new fallout with the new event.
+If they fail, they return the error. Failing actions don't create events.
+
+@docs takeDice, takeHealerAcuityDice, takePatientBodyDice, takeDemonicInfluenceDice, endConflict
+
+
+### Generator actions
+
+These actions return a generator that produces the next fallout instance
+with a new event when seeded. `Fallout -> Result Error (Generator Fallout)`.
+
+@docs roll, rollPatientBody, startConflict
+
+
+#### Testing generators
+
+Generators are impossible to test directly. These functions
+are stand-in event creators that replace the generator actions
+for testing purposes.
+
+@docs test_roll, test_rollPatientBody, test_startConflict
+
+
+## State
+
+State represents the resolution of the fallout.
+
+@docs State, ConflictDice, Outcome, state
+
+
+### Experience
+
+Experience is a parallel state, representing if the fallout subject
+can choose from the _experience fallout list_
+
+@docs Experience, experience
+
+-}
 
 import Conflict exposing (Conflict, Raise(..), Side(..))
 import Dice exposing (Dice)
