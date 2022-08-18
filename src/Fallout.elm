@@ -282,9 +282,14 @@ initialState =
     Pending Dice.empty
 
 
+
+-- EXPERIENCE
+
+
 type Experience
     = Indeterminate
     | Experience (Die Rolled)
+    | NoExperience
 
 
 experience : Fallout -> Experience
@@ -296,10 +301,10 @@ experience (Fallout events) =
         (RolledFallout dice) :: _ ->
             dice
                 |> Dice.toList
-                |> List.reverse
+                |> List.filter (Die.face >> (==) 1)
                 |> List.head
                 |> Maybe.map Experience
-                |> Maybe.withDefault Indeterminate
+                |> Maybe.withDefault NoExperience
 
         _ :: rest ->
             experience (Fallout rest)
