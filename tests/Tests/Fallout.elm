@@ -72,8 +72,8 @@ suite =
         ]
 
 
-outcomeIsInjuryIfTheOpponentGives : () -> Expectation
-outcomeIsInjuryIfTheOpponentGives () =
+falloutSetupForConflict : Result Fallout.Error Fallout
+falloutSetupForConflict =
     let
         rolledFalloutDice =
             [ Die.cheat D10 10, Die.cheat D10 7, Die.cheat D10 6 ]
@@ -84,18 +84,21 @@ outcomeIsInjuryIfTheOpponentGives () =
 
         opponentDice =
             [ 8, 2, 9, 4 ] |> List.map (Die.cheat D10) |> Dice.fromList
+    in
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
+        |> Result.map (Fallout.test_roll rolledFalloutDice)
+        |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
+        |> Result.andThen (Fallout.takeHealerAcuityDice Pips.three)
+        |> Result.andThen (Fallout.takeDemonicInfluenceDice Pips.one)
+        |> Result.map (Fallout.test_startConflict proponentDice opponentDice)
 
-        fallout =
-            Ok Fallout.init
-                |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
-                |> Result.map (Fallout.test_roll rolledFalloutDice)
-                |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
-                |> Result.andThen (Fallout.takeHealerAcuityDice Pips.three)
-                |> Result.andThen (Fallout.takeDemonicInfluenceDice Pips.one)
-                |> Result.map (Fallout.test_startConflict proponentDice opponentDice)
 
+outcomeIsInjuryIfTheOpponentGives : () -> Expectation
+outcomeIsInjuryIfTheOpponentGives () =
+    let
         conflict =
-            fallout
+            falloutSetupForConflict
                 |> Result.map Fallout.state
                 |> (\state ->
                         case state of
@@ -111,7 +114,7 @@ outcomeIsInjuryIfTheOpponentGives () =
                 |> Result.andThen (Conflict.give Conflict.opponent)
                 |> Result.mapError (always Fallout.UnableToStartConflict)
     in
-    fallout
+    falloutSetupForConflict
         |> Result.map2 Fallout.endConflict conflict
         |> Result.andThen identity
         |> Result.map Fallout.state
@@ -130,27 +133,8 @@ outcomeIsInjuryIfTheOpponentGives () =
 outcomeIsDeathIfTheProponentGives : () -> Expectation
 outcomeIsDeathIfTheProponentGives () =
     let
-        rolledFalloutDice =
-            [ Die.cheat D10 10, Die.cheat D10 7, Die.cheat D10 6 ]
-                |> Dice.fromList
-
-        proponentDice =
-            [ 6, 4, 3, 3, 1 ] |> List.map (Die.cheat D6) |> Dice.fromList
-
-        opponentDice =
-            [ 8, 2, 9, 4 ] |> List.map (Die.cheat D10) |> Dice.fromList
-
-        fallout =
-            Ok Fallout.init
-                |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
-                |> Result.map (Fallout.test_roll rolledFalloutDice)
-                |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
-                |> Result.andThen (Fallout.takeHealerAcuityDice Pips.three)
-                |> Result.andThen (Fallout.takeDemonicInfluenceDice Pips.one)
-                |> Result.map (Fallout.test_startConflict proponentDice opponentDice)
-
         conflict =
-            fallout
+            falloutSetupForConflict
                 |> Result.map Fallout.state
                 |> (\state ->
                         case state of
@@ -163,7 +147,7 @@ outcomeIsDeathIfTheProponentGives () =
                 |> Conflict.give Conflict.proponent
                 |> Result.mapError (always Fallout.UnableToStartConflict)
     in
-    fallout
+    falloutSetupForConflict
         |> Result.map2 Fallout.endConflict conflict
         |> Result.andThen identity
         |> Result.map Fallout.state
@@ -182,27 +166,8 @@ outcomeIsDeathIfTheProponentGives () =
 ongoingConflictIsAnError : () -> Expectation
 ongoingConflictIsAnError () =
     let
-        rolledFalloutDice =
-            [ Die.cheat D10 10, Die.cheat D10 7, Die.cheat D10 6 ]
-                |> Dice.fromList
-
-        proponentDice =
-            [ 6, 4, 3, 3, 1 ] |> List.map (Die.cheat D6) |> Dice.fromList
-
-        opponentDice =
-            [ 8, 2, 9, 4 ] |> List.map (Die.cheat D10) |> Dice.fromList
-
-        fallout =
-            Ok Fallout.init
-                |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
-                |> Result.map (Fallout.test_roll rolledFalloutDice)
-                |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
-                |> Result.andThen (Fallout.takeHealerAcuityDice Pips.three)
-                |> Result.andThen (Fallout.takeDemonicInfluenceDice Pips.one)
-                |> Result.map (Fallout.test_startConflict proponentDice opponentDice)
-
         conflict =
-            fallout
+            falloutSetupForConflict
                 |> Result.map Fallout.state
                 |> (\state ->
                         case state of
@@ -213,7 +178,7 @@ ongoingConflictIsAnError () =
                                 Conflict.start
                    )
     in
-    fallout
+    falloutSetupForConflict
         |> Result.map (Fallout.endConflict conflict)
         |> Result.andThen identity
         |> Expect.err
@@ -222,31 +187,12 @@ ongoingConflictIsAnError () =
 nonMatchingConflictIsAnError : () -> Expectation
 nonMatchingConflictIsAnError () =
     let
-        rolledFalloutDice =
-            [ Die.cheat D10 10, Die.cheat D10 7, Die.cheat D10 6 ]
-                |> Dice.fromList
-
-        proponentDice =
-            [ 6, 4, 3, 3, 1 ] |> List.map (Die.cheat D6) |> Dice.fromList
-
-        opponentDice =
-            [ 8, 2, 9, 4 ] |> List.map (Die.cheat D10) |> Dice.fromList
-
-        fallout =
-            Ok Fallout.init
-                |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
-                |> Result.map (Fallout.test_roll rolledFalloutDice)
-                |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
-                |> Result.andThen (Fallout.takeHealerAcuityDice Pips.three)
-                |> Result.andThen (Fallout.takeDemonicInfluenceDice Pips.one)
-                |> Result.map (Fallout.test_startConflict proponentDice opponentDice)
-
         conflict =
             Conflict.start
                 |> Conflict.give Conflict.proponent
                 |> Result.mapError (always Fallout.UnableToStartConflict)
     in
-    fallout
+    falloutSetupForConflict
         |> Result.map2 Fallout.endConflict conflict
         |> Result.andThen identity
         |> Expect.err
@@ -255,27 +201,8 @@ nonMatchingConflictIsAnError () =
 matchingConflictCanBeUsedToDetermineFallout : () -> Expectation
 matchingConflictCanBeUsedToDetermineFallout () =
     let
-        rolledFalloutDice =
-            [ Die.cheat D10 10, Die.cheat D10 7, Die.cheat D10 6 ]
-                |> Dice.fromList
-
-        proponentDice =
-            [ 6, 4, 3, 3, 1 ] |> List.map (Die.cheat D6) |> Dice.fromList
-
-        opponentDice =
-            [ 8, 2, 9, 4 ] |> List.map (Die.cheat D10) |> Dice.fromList
-
-        fallout =
-            Ok Fallout.init
-                |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
-                |> Result.map (Fallout.test_roll rolledFalloutDice)
-                |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
-                |> Result.andThen (Fallout.takeHealerAcuityDice Pips.three)
-                |> Result.andThen (Fallout.takeDemonicInfluenceDice Pips.one)
-                |> Result.map (Fallout.test_startConflict proponentDice opponentDice)
-
         conflict =
-            fallout
+            falloutSetupForConflict
                 |> Result.map Fallout.state
                 |> (\state ->
                         case state of
@@ -288,7 +215,7 @@ matchingConflictCanBeUsedToDetermineFallout () =
                 |> Conflict.give Conflict.proponent
                 |> Result.mapError (always Fallout.UnableToStartConflict)
     in
-    fallout
+    falloutSetupForConflict
         |> Result.map2 Fallout.endConflict conflict
         |> Result.andThen identity
         |> Expect.ok
