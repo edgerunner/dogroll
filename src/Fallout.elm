@@ -52,6 +52,8 @@ type Error
     | CannotTakePatientBodyDiceAfterRolling
     | NotExpectingDice
     | UnableToStartConflict
+    | NotInConflict
+    | WrongConflict
 
 
 init : Fallout
@@ -151,8 +153,21 @@ test_startConflict proponentDice opponentDice =
 
 
 endConflict : Conflict -> Fallout -> Result Error Fallout
-endConflict conflict =
-    push (EndedConflict conflict) >> Ok
+endConflict endedConflict =
+    check
+        (\current ->
+            case current of
+                InConflict ongoingConflict ->
+                    if Conflict.match ongoingConflict endedConflict then
+                        Ok ()
+
+                    else
+                        Err WrongConflict
+
+                _ ->
+                    Err NotInConflict
+        )
+        >> Result.map (push (EndedConflict endedConflict))
 
 
 

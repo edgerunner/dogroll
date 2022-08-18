@@ -1,4 +1,4 @@
-module Conflict exposing (Conflict, Error(..), Player, Raise(..), See(..), Side(..), State, give, initialState, keptDie, opponent, otherSide, play, player, proponent, raise, see, start, state, takeDice, takeFallout)
+module Conflict exposing (Conflict, Error(..), Player, Raise(..), See(..), Side(..), State, give, initialState, keptDie, match, opponent, otherSide, play, player, proponent, raise, see, start, state, takeDice, takeFallout)
 
 import Dice
 import Die
@@ -428,3 +428,12 @@ keptDie =
                     _ ->
                         Nothing
            )
+
+
+match : Conflict -> Conflict -> Bool
+match (Conflict events1) (Conflict events2) =
+    List.map2
+        (==)
+        (List.reverse events1)
+        (List.reverse events2)
+        |> List.all identity
