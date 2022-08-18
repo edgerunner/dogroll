@@ -1,6 +1,6 @@
 module Fallout exposing (ConflictDice, Error(..), Fallout, Outcome(..), State(..), endConflict, init, roll, rollPatientBody, startConflict, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice, test_roll, test_rollPatientBody, test_startConflict)
 
-import Conflict exposing (Conflict, Raise(..))
+import Conflict exposing (Conflict, Raise(..), Side(..))
 import Dice exposing (Dice)
 import Die exposing (Held, Rolled)
 import Die.Size exposing (Size(..))
@@ -264,6 +264,14 @@ handleEvents event currentState =
 
         ( StartedConflict conflict, _ ) ->
             InConflict conflict
+
+        ( EndedConflict endedConflict, InConflict _ ) ->
+            case Conflict.state endedConflict |> .go of
+                Proponent ->
+                    Concluded False Dying
+
+                _ ->
+                    currentState
 
         _ ->
             currentState
