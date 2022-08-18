@@ -5,7 +5,7 @@ import Dice
 import Die
 import Die.Size exposing (Size(..))
 import Expect exposing (Expectation)
-import Fallout exposing (ConflictDice, Fallout, Outcome(..), State(..))
+import Fallout exposing (ConflictDice, Experience(..), Fallout, Outcome(..), State(..))
 import Pips
 import Random exposing (Generator, Seed)
 import Test exposing (Test, describe, test)
@@ -69,7 +69,20 @@ suite =
             , test "outcome is injury if the opponent (GM) gives"
                 outcomeIsInjuryIfTheOpponentGives
             ]
+        , describe "experience"
+            [ test "status is indeterminate before fallout is rolled"
+                statusIsIndeterminateBeforeFalloutIsRolled
+            ]
         ]
+
+
+statusIsIndeterminateBeforeFalloutIsRolled : () -> Expectation
+statusIsIndeterminateBeforeFalloutIsRolled () =
+    Ok Fallout.init
+        |> Result.andThen (Fallout.takeDice <| Dice.init D4 Pips.four)
+        |> Result.map Fallout.experience
+        |> Result.map (Expect.equal Indeterminate)
+        |> Result.withDefault (Expect.fail "did not expect an error")
 
 
 falloutSetupForConflict : Result Fallout.Error Fallout

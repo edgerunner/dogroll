@@ -1,4 +1,4 @@
-module Fallout exposing (ConflictDice, Error(..), Fallout, Outcome(..), State(..), endConflict, init, roll, rollPatientBody, startConflict, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice, test_roll, test_rollPatientBody, test_startConflict)
+module Fallout exposing (ConflictDice, Error(..), Experience(..), Fallout, Outcome(..), State(..), endConflict, experience, init, roll, rollPatientBody, startConflict, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice, test_roll, test_rollPatientBody, test_startConflict)
 
 import Conflict exposing (Conflict, Raise(..), Side(..))
 import Dice exposing (Dice)
@@ -280,6 +280,15 @@ handleEvents event currentState =
 initialState : State
 initialState =
     Pending Dice.empty
+
+
+type Experience
+    = Indeterminate
+
+
+experience : Fallout -> Experience
+experience _ =
+    Indeterminate
 
 
 
