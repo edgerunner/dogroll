@@ -270,8 +270,8 @@ handleEvents event currentState =
                 Proponent ->
                     Concluded False Dying
 
-                _ ->
-                    currentState
+                Opponent ->
+                    Concluded False DoubleLongTerm
 
         _ ->
             currentState

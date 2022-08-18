@@ -66,8 +66,65 @@ suite =
             , test "an ongoing conflict is an error" ongoingConflictIsAnError
             , test "outcome is death if the proponent (healer) gives"
                 outcomeIsDeathIfTheProponentGives
+            , test "outcome is injury if the opponent (GM) gives"
+                outcomeIsInjuryIfTheOpponentGives
             ]
         ]
+
+
+outcomeIsInjuryIfTheOpponentGives : () -> Expectation
+outcomeIsInjuryIfTheOpponentGives () =
+    let
+        rolledFalloutDice =
+            [ Die.cheat D10 10, Die.cheat D10 7, Die.cheat D10 6 ]
+                |> Dice.fromList
+
+        proponentDice =
+            [ 6, 4, 3, 3, 1 ] |> List.map (Die.cheat D6) |> Dice.fromList
+
+        opponentDice =
+            [ 8, 2, 9, 4 ] |> List.map (Die.cheat D10) |> Dice.fromList
+
+        fallout =
+            Ok Fallout.init
+                |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
+                |> Result.map (Fallout.test_roll rolledFalloutDice)
+                |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
+                |> Result.andThen (Fallout.takeHealerAcuityDice Pips.three)
+                |> Result.andThen (Fallout.takeDemonicInfluenceDice Pips.one)
+                |> Result.map (Fallout.test_startConflict proponentDice opponentDice)
+
+        conflict =
+            fallout
+                |> Result.map Fallout.state
+                |> (\state ->
+                        case state of
+                            Ok (InConflict conflict_) ->
+                                Ok conflict_
+
+                            _ ->
+                                Ok Conflict.start
+                   )
+                |> Result.andThen (Conflict.play (Die.cheat D6 4) Conflict.proponent)
+                |> Result.andThen (Conflict.play (Die.cheat D6 6) Conflict.proponent)
+                |> Result.andThen (Conflict.raise Conflict.proponent)
+                |> Result.andThen (Conflict.give Conflict.opponent)
+                |> Result.mapError (always Fallout.UnableToStartConflict)
+    in
+    fallout
+        |> Result.map2 Fallout.endConflict conflict
+        |> Result.andThen identity
+        |> Result.map Fallout.state
+        |> Result.map
+            (\state ->
+                case state of
+                    Concluded _ DoubleLongTerm ->
+                        Expect.pass
+
+                    _ ->
+                        Expect.fail "expected outcome to be injury (2x Long term)"
+            )
+        |> Result.withDefault (Expect.fail "did not expect an error")
 
 
 outcomeIsDeathIfTheProponentGives : () -> Expectation
