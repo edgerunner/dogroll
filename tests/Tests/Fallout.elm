@@ -164,17 +164,7 @@ outcomeIsInjuryIfTheOpponentGives () =
     falloutSetupForConflict
         |> Result.map2 Fallout.endConflict conflict
         |> Result.andThen identity
-        |> Result.map Fallout.state
-        |> Result.map
-            (\state ->
-                case state of
-                    Concluded DoubleLongTerm ->
-                        Expect.pass
-
-                    _ ->
-                        Expect.fail "expected outcome to be injury (2x Long term)"
-            )
-        |> Result.withDefault (Expect.fail "did not expect an error")
+        |> expectState (Concluded DoubleLongTerm)
 
 
 outcomeIsDeathIfTheProponentGives : () -> Expectation
@@ -197,17 +187,7 @@ outcomeIsDeathIfTheProponentGives () =
     falloutSetupForConflict
         |> Result.map2 Fallout.endConflict conflict
         |> Result.andThen identity
-        |> Result.map Fallout.state
-        |> Result.map
-            (\state ->
-                case state of
-                    Concluded Dying ->
-                        Expect.pass
-
-                    _ ->
-                        Expect.fail "expected outcome to be death"
-            )
-        |> Result.withDefault (Expect.fail "did not expect an error")
+        |> expectState (Concluded Dying)
 
 
 ongoingConflictIsAnError : () -> Expectation
@@ -283,10 +263,10 @@ conflictStartsWithMatchingDice seed =
         |> Result.andThen (Fallout.takeDemonicInfluenceDice Pips.one)
         |> Result.andThen Fallout.startConflict
         |> Result.map (stepWith seed)
-        |> Result.map Fallout.state
-        |> (\stateResult ->
-                case stateResult of
-                    Ok (InConflict conflict) ->
+        |> expectStateWith
+            (\state ->
+                case state of
+                    InConflict conflict ->
                         Conflict.state conflict
                             |> Expect.all
                                 [ .proponent
@@ -301,7 +281,7 @@ conflictStartsWithMatchingDice seed =
 
                     _ ->
                         Expect.fail "state is not in conflict"
-           )
+            )
 
 
 allConflictDiceMustBeTaken : () -> Expectation
@@ -573,21 +553,18 @@ pendingDiceCanBeRolled () =
         |> Fallout.init
         |> Result.andThen Fallout.roll
         |> Result.map (stepWith <| Random.initialSeed 0)
-        |> Result.map Fallout.state
-        |> (\resultingState ->
-                case resultingState of
-                    Err _ ->
-                        Expect.fail "Should be able to roll without errors"
-
-                    Ok (Pending _) ->
+        |> expectStateWith
+            (\state ->
+                case state of
+                    Pending _ ->
                         Expect.fail "Should not stay in pending state"
 
-                    Ok (InConflict _) ->
+                    InConflict _ ->
                         Expect.fail "Should not go to conflict state right away"
 
-                    Ok _ ->
+                    _ ->
                         Expect.pass
-           )
+            )
 
 
 noDiceIsError : () -> Expectation
@@ -642,10 +619,6 @@ expectStateExpectingDiceWith diceToExpectaion =
                 _ ->
                     Expect.fail "expected to be expecting conflict dice"
         )
-
-
-
--- HELPERS
 
 
 stepWith : Seed -> Generator Fallout -> Fallout
