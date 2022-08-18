@@ -172,15 +172,7 @@ outcomeIsDeathIfTheProponentGives () =
     let
         conflict =
             falloutSetupForConflict
-                |> Result.map Fallout.state
-                |> (\state ->
-                        case state of
-                            Ok (InConflict conflict_) ->
-                                conflict_
-
-                            _ ->
-                                Conflict.start
-                   )
+                |> extractConflict
                 |> Conflict.give Conflict.proponent
                 |> Result.mapError (always Fallout.UnableToStartConflict)
     in
@@ -195,15 +187,7 @@ ongoingConflictIsAnError () =
     let
         conflict =
             falloutSetupForConflict
-                |> Result.map Fallout.state
-                |> (\state ->
-                        case state of
-                            Ok (InConflict conflict_) ->
-                                conflict_
-
-                            _ ->
-                                Conflict.start
-                   )
+                |> extractConflict
     in
     falloutSetupForConflict
         |> Result.map (Fallout.endConflict conflict)
@@ -230,15 +214,7 @@ matchingConflictCanBeUsedToDetermineFallout () =
     let
         conflict =
             falloutSetupForConflict
-                |> Result.map Fallout.state
-                |> (\state ->
-                        case state of
-                            Ok (InConflict conflict_) ->
-                                conflict_
-
-                            _ ->
-                                Conflict.start
-                   )
+                |> extractConflict
                 |> Conflict.give Conflict.proponent
                 |> Result.mapError (always Fallout.UnableToStartConflict)
     in
@@ -624,3 +600,16 @@ expectStateExpectingDiceWith diceToExpectaion =
 stepWith : Seed -> Generator Fallout -> Fallout
 stepWith seed gen =
     Random.step gen seed |> Tuple.first
+
+
+extractConflict : Result Fallout.Error Fallout -> Conflict.Conflict
+extractConflict =
+    Result.map Fallout.state
+        >> (\state ->
+                case state of
+                    Ok (InConflict conflict_) ->
+                        conflict_
+
+                    _ ->
+                        Conflict.start
+           )
