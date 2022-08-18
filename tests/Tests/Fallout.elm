@@ -58,7 +58,50 @@ suite =
                 "conflict starts with matching dice"
                 conflictStartsWithMatchingDice
             ]
+        , describe "ending a conflict"
+            [ test "a matching conflict can be used to determine fallout" matchingConflictCanBeUsedToDetermineFallout ]
         ]
+
+
+matchingConflictCanBeUsedToDetermineFallout : () -> Expectation
+matchingConflictCanBeUsedToDetermineFallout () =
+    let
+        rolledFalloutDice =
+            [ Die.cheat D10 10, Die.cheat D10 7, Die.cheat D10 6 ]
+                |> Dice.fromList
+
+        proponentDice =
+            [ 6, 4, 3, 3, 1 ] |> List.map (Die.cheat D6) |> Dice.fromList
+
+        opponentDice =
+            [ 8, 2, 9, 4 ] |> List.map (Die.cheat D10) |> Dice.fromList
+
+        fallout =
+            Ok Fallout.init
+                |> Result.andThen (Fallout.takeDice (Dice.init D10 Pips.three))
+                |> Result.map (Fallout.test_roll rolledFalloutDice)
+                |> Result.andThen (Fallout.takePatientBodyDice Pips.two)
+                |> Result.andThen (Fallout.takeHealerAcuityDice Pips.three)
+                |> Result.andThen (Fallout.takeDemonicInfluenceDice Pips.one)
+                |> Result.map (Fallout.test_startConflict proponentDice opponentDice)
+
+        conflict =
+            fallout
+                |> Result.map Fallout.state
+                |> (\state ->
+                        case state of
+                            Ok (InConflict conflict_) ->
+                                conflict_
+
+                            _ ->
+                                Conflict.start
+                   )
+                |> Conflict.give Conflict.proponent
+                |> Result.mapError (always Fallout.UnableToStartConflict)
+    in
+    fallout
+        |> Result.map2 Fallout.endConflict conflict
+        |> Expect.ok
 
 
 conflictStartsWithMatchingDice : Seed -> Expectation
@@ -75,7 +118,7 @@ conflictStartsWithMatchingDice seed =
         |> Result.andThen (Fallout.takeHealerAcuityDice Pips.three)
         |> Result.andThen (Fallout.takeDemonicInfluenceDice Pips.one)
         |> Result.andThen Fallout.startConflict
-        |> Result.map (Random.step >> (|>) seed >> Tuple.first)
+        |> Result.map (stepWith seed)
         |> Result.map Fallout.state
         |> (\stateResult ->
                 case stateResult of

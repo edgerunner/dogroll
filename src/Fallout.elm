@@ -1,4 +1,4 @@
-module Fallout exposing (ConflictDice, Fallout, Outcome(..), State(..), init, roll, rollPatientBody, startConflict, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice, test_roll, test_rollPatientBody)
+module Fallout exposing (ConflictDice, Error(..), Fallout, Outcome(..), State(..), endConflict, init, roll, rollPatientBody, startConflict, state, takeDemonicInfluenceDice, takeDice, takeHealerAcuityDice, takePatientBodyDice, test_roll, test_rollPatientBody, test_startConflict)
 
 import Conflict exposing (Conflict)
 import Dice exposing (Dice)
@@ -138,6 +138,21 @@ startConflict fallout =
                     _ ->
                         Err UnableToStartConflict
            )
+
+
+test_startConflict : Dice Rolled -> Dice Rolled -> Fallout -> Fallout
+test_startConflict proponentDice opponentDice =
+    Conflict.start
+        |> Conflict.takeDice proponentDice Conflict.proponent
+        |> Result.andThen (Conflict.takeDice opponentDice Conflict.opponent)
+        |> Result.withDefault Conflict.start
+        |> StartedConflict
+        |> push
+
+
+endConflict : Conflict -> Fallout -> Result Error Fallout
+endConflict conflict =
+    push (EndedConflict conflict) >> Ok
 
 
 
