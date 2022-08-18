@@ -1,6 +1,6 @@
 module Fallout exposing
     ( Fallout, init
-    , takeDice, takeHealerAcuityDice, takePatientBodyDice, takeDemonicInfluenceDice, endConflict
+    , takeHealerAcuityDice, takePatientBodyDice, takeDemonicInfluenceDice, endConflict
     , roll, rollPatientBody, startConflict
     , test_roll, test_rollPatientBody, test_startConflict
     , State(..), ConflictDice, Outcome(..), state
@@ -23,7 +23,7 @@ These have the signature `Fallout -> Result Error Fallout`.
 If they are successful, they return the new fallout with the new event.
 If they fail, they return the error. Failing actions don't create events.
 
-@docs takeDice, takeHealerAcuityDice, takePatientBodyDice, takeDemonicInfluenceDice, endConflict
+@docs takeHealerAcuityDice, takePatientBodyDice, takeDemonicInfluenceDice, endConflict
 
 
 ### Generator actions
@@ -116,23 +116,9 @@ type Error
     | ConflictNotOver
 
 
-init : Fallout
-init =
-    Fallout []
-
-
-takeDice : Dice Held -> Fallout -> Result Error Fallout
-takeDice dice =
-    check
-        (\current ->
-            case current of
-                Pending _ ->
-                    Ok ()
-
-                _ ->
-                    Err CanNotTakeFalloutDiceAfterRolling
-        )
-        >> Result.map (push (TookDice dice))
+init : Dice Held -> Fallout
+init dice =
+    Fallout [ TookDice dice ]
 
 
 roll : Fallout -> Result Error (Generator Fallout)
