@@ -40,24 +40,27 @@ view config state =
 
 finishedView : Config msg -> Manager.FinishedState -> Html msg
 finishedView config state =
-    case state.followUp of
-        Nothing ->
-            Html.main_ [ Attr.id "finished" ]
-                [ UI.pool [ UI.poolCaption "This conflict is over" ]
-                , UI.button "Start a new conflict"
-                    |> Html.map (always config.restart)
-                ]
-
-        Just die ->
-            Html.main_ [ Attr.id "finished", Attr.class "follow-up" ]
-                [ UI.pool
-                    [ UI.poolCaption "You can keep this die"
-                    , Die.View.rolled Die.View.regular die
-                        |> Html.map (always config.restart)
-                    ]
-                , UI.button "Start follow-up conflict"
-                    |> Html.map (always config.restart)
-                ]
+    Html.main_
+        ([ Attr.id "finished" ]
+            |> optionally (always <| (::) (Attr.class "follow-up")) state.followUp
+            |> when ((::) (Attr.class "fallout")) (state.fallout /= Dice.empty)
+        )
+        [ [ UI.poolCaption "This conflict is over" ]
+            |> optionally
+                (\die ->
+                    always
+                        [ UI.poolCaption "You can keep this die"
+                        , Die.View.rolled Die.View.regular die
+                            |> Html.map (always config.restart)
+                        ]
+                )
+                state.followUp
+            |> UI.pool
+        , UI.button "Start a new conflict"
+            |> Html.map (always config.restart)
+        , diceSet "my-fallout" state.fallout
+            |> Html.map (always config.noop)
+        ]
 
 
 progressView : Config msg -> Manager.InProgressState -> Html msg
@@ -377,3 +380,17 @@ joinButtons config state =
 with : a -> (a -> b) -> b
 with =
     (|>)
+
+
+optionally : (a -> b -> b) -> Maybe a -> b -> b
+optionally transform =
+    Maybe.map transform >> Maybe.withDefault identity
+
+
+when : (a -> a) -> Bool -> a -> a
+when transform predicate =
+    if predicate then
+        transform
+
+    else
+        identity

@@ -1,8 +1,8 @@
 module Conflict.Manager exposing (Effect(..), Error(..), FinishedState, InProgressState, Manager, PendingParticipantsState, State(..), addSpectator, conflict, followUp, id, init, opponent, proponent, register, spectators, stateId, takeAction)
 
 import Conflict exposing (Conflict, Side)
-import Dice
-import Die exposing (Die, Rolled)
+import Dice exposing (Dice)
+import Die exposing (Die, Held, Rolled)
 import Set exposing (Set)
 
 
@@ -72,6 +72,7 @@ type alias FinishedState =
     { id : Id
     , you : Maybe Conflict.Side
     , followUp : Maybe (Die Rolled)
+    , fallout : Dice Held
     }
 
 
@@ -290,6 +291,7 @@ getFinishedStateUpdates pro opp followUp_ model =
             { id = model.id
             , you = Nothing
             , followUp = Nothing
+            , fallout = Dice.empty
             }
 
         spectatorUpdates =
@@ -312,6 +314,11 @@ getFinishedStateUpdates pro opp followUp_ model =
 
                         else
                             Nothing
+                    , fallout =
+                        model.conflict
+                            |> Conflict.state
+                            |> Conflict.player side
+                            |> .fallout
                 }
                 |> StateUpdate [ participant.id ]
                 |> (::)
