@@ -71,7 +71,7 @@ type alias InProgressState =
 type alias FinishedState =
     { id : Id
     , you : Maybe Conflict.Side
-    , followUp : Maybe ( Conflict.Side, Die Rolled )
+    , followUp : Maybe (Die Rolled)
     }
 
 
@@ -289,14 +289,7 @@ getFinishedStateUpdates pro opp followUp_ model =
         common =
             { id = model.id
             , you = Nothing
-            , followUp =
-                followUp_
-                    |> Maybe.map
-                        (model.conflict
-                            |> Conflict.state
-                            |> .go
-                            |> Tuple.pair
-                        )
+            , followUp = Nothing
             }
 
         spectatorUpdates =
@@ -305,7 +298,21 @@ getFinishedStateUpdates pro opp followUp_ model =
                 |> List.singleton
 
         participantUpdate side participant =
-            Finished { common | you = Just side }
+            Finished
+                { common
+                    | you = Just side
+                    , followUp =
+                        if
+                            model.conflict
+                                |> Conflict.state
+                                |> .go
+                                |> (==) side
+                        then
+                            followUp_
+
+                        else
+                            Nothing
+                }
                 |> StateUpdate [ participant.id ]
                 |> (::)
     in

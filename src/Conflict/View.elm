@@ -48,25 +48,16 @@ finishedView config state =
                     |> Html.map (always config.restart)
                 ]
 
-        Just ( side, die ) ->
-            case state.you |> Maybe.map ((==) side) of
-                Just True ->
-                    Html.main_ [ Attr.id "finished", Attr.class "follow-up" ]
-                        [ UI.pool
-                            [ UI.poolCaption "You can keep this die"
-                            , Die.View.rolled Die.View.regular die
-                                |> Html.map (always config.restart)
-                            ]
-                        , UI.button "Start follow-up conflict"
-                            |> Html.map (always config.restart)
-                        ]
-
-                _ ->
-                    Html.main_ [ Attr.id "finished" ]
-                        [ UI.pool [ UI.poolCaption "This conflict is over" ]
-                        , UI.button "Start a new conflict"
-                            |> Html.map (always config.restart)
-                        ]
+        Just die ->
+            Html.main_ [ Attr.id "finished", Attr.class "follow-up" ]
+                [ UI.pool
+                    [ UI.poolCaption "You can keep this die"
+                    , Die.View.rolled Die.View.regular die
+                        |> Html.map (always config.restart)
+                    ]
+                , UI.button "Start follow-up conflict"
+                    |> Html.map (always config.restart)
+                ]
 
 
 progressView : Config msg -> Manager.InProgressState -> Html msg
